@@ -40,9 +40,17 @@ function FeedContent() {
     if (proj !== null) setSelectedProject(proj);
   }, [searchParams]);
 
-  // Fetch Memories directly via Supabase client (uses localStorage credentials)
+  // Fetch Memories directly via Supabase client with instant local cache
   const fetchMemories = async () => {
-    setLoading(true);
+    // 1. Instant load from local cache if available (0ms load time)
+    const cached = localStorage.getItem("aethos_cached_memories");
+    if (cached) {
+      try {
+        setMemories(JSON.parse(cached));
+        setLoading(false);
+      } catch {}
+    }
+
     try {
       const db = getSupabase();
       const { data, error } = await db
@@ -51,6 +59,7 @@ function FeedContent() {
         .order("created_at", { ascending: false });
       if (!error && data) {
         setMemories(data as Memory[]);
+        localStorage.setItem("aethos_cached_memories", JSON.stringify(data));
       }
     } catch (e) {
       console.error("Failed to fetch memories:", e);
