@@ -25,6 +25,9 @@ ENV/
 .env.development.local
 .env.test.local
 .env.production.local
+#custom
+uiux/
+docs/
 
 # OS & IDE
 desktop.ini
