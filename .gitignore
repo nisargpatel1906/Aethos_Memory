@@ -32,6 +32,7 @@ ENV/
 # Custom Ignored Folders
 uiux/
 docs/
+test_script/
 
 # OS & IDE
 desktop.ini
