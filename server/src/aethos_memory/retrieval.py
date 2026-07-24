@@ -6,7 +6,7 @@ from aethos_memory.providers import call_embedding, call_extraction
 def plain_search(query: str, project: str = "global") -> list[dict[str, Any]]:
     """Strategy 1: Single pass vector similarity search."""
     embedding = call_embedding(query)
-    return similarity_search(embedding, project=project, threshold=0.75, limit=5)
+    return similarity_search(embedding, project=project, threshold=0.5, limit=8)
 
 
 def conditional_retry_search(query: str, project: str = "global") -> list[dict[str, Any]]:
@@ -27,8 +27,12 @@ def conditional_retry_search(query: str, project: str = "global") -> list[dict[s
         rewritten = query
 
     new_embedding = call_embedding(rewritten)
-    # Search broadened project context
-    return similarity_search(new_embedding, project="global", threshold=0.65, limit=5)
+    # Search broadened project context at a lower threshold
+    broader = similarity_search(new_embedding, project="global", threshold=0.4, limit=8)
+    if broader:
+        return broader
+    # Last resort: search original query at very low threshold globally
+    return similarity_search(call_embedding(query), project="global", threshold=0.35, limit=5)
 
 
 def retry_and_rerank_search(query: str, project: str = "global") -> list[dict[str, Any]]:
