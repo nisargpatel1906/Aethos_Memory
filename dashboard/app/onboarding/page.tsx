@@ -6,40 +6,40 @@ import { getUserId } from "../../lib/supabaseClient";
 
 type ToolId = "claude_desktop" | "claude_code" | "cursor" | "opencode";
 
-const TOOLS: {
+const AI_TOOLS: {
   id: ToolId;
-  label: string;
+  name: string;
   configPath: { win: string; mac: string } | { cmd: string };
 }[] = [
   {
     id: "claude_desktop",
-    label: "Claude Desktop",
+    name: "Claude Desktop",
     configPath: {
       win: "%APPDATA%\\Claude\\claude_desktop_config.json",
       mac: "~/Library/Application Support/Claude/claude_desktop_config.json",
     },
   },
   {
-    id: "claude_code",
-    label: "Claude Code",
-    configPath: { cmd: "claude mcp add — see snippet below" },
-  },
-  {
     id: "cursor",
-    label: "Cursor",
+    name: "Cursor",
     configPath: { win: "%USERPROFILE%\\.cursor\\mcp.json", mac: "~/.cursor/mcp.json" },
   },
   {
     id: "opencode",
-    label: "OpenCode",
+    name: "OpenCode",
     configPath: {
       win: "%USERPROFILE%\\.config\\opencode\\opencode.jsonc",
       mac: "~/.config/opencode/opencode.jsonc",
     },
   },
+  {
+    id: "claude_code",
+    name: "Claude Code",
+    configPath: { cmd: "Terminal Command" },
+  },
 ];
 
-type DbStatus = "idle" | "running" | "ok" | "manual" | "error";
+type DbStatus = "idle" | "setting_up" | "ready" | "manual_sql" | "error";
 
 export default function OnboardingPage() {
   const [userId, setUserId] = useState("");
@@ -48,25 +48,29 @@ export default function OnboardingPage() {
   const [dbStatus, setDbStatus] = useState<DbStatus>("idle");
   const [dbMessage, setDbMessage] = useState("");
   const [manualSql, setManualSql] = useState("");
-  const [sqlCopied, setSqlCopied] = useState(false);
 
   const [form, setForm] = useState({
     supabaseUrl: "",
     supabaseServiceKey: "",
     groqApiKey: "",
     geminiApiKey: "",
-    project: "global",
   });
 
   useEffect(() => {
     setUserId(getUserId());
+    // Auto fill from localStorage if available
+    const savedUrl = localStorage.getItem("aethos_supabase_url") || "";
+    const savedKey = localStorage.getItem("aethos_supabase_key") || "";
+    if (savedUrl && savedKey) {
+      setForm((p) => ({ ...p, supabaseUrl: savedUrl, supabaseServiceKey: savedKey }));
+    }
   }, []);
 
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   const handleSetupDb = async () => {
     if (!form.supabaseUrl || !form.supabaseServiceKey) return;
-    setDbStatus("running");
+    setDbStatus("setting_up");
     setDbMessage("");
 
     try {
@@ -81,30 +85,32 @@ export default function OnboardingPage() {
       const data = await res.json();
 
       if (data.success) {
-        setDbStatus("ok");
-        setDbMessage(data.message);
+        setDbStatus("ready");
+        setDbMessage("Database ready! Your AI Memory Bank is active.");
+        localStorage.setItem("aethos_supabase_url", form.supabaseUrl);
+        localStorage.setItem("aethos_supabase_key", form.supabaseServiceKey);
       } else if (data.manualRequired) {
-        setDbStatus("manual");
+        setDbStatus("manual_sql");
         setDbMessage(data.message);
         setManualSql(data.sql || "");
       } else {
         setDbStatus("error");
-        setDbMessage(data.error || "Setup failed.");
+        setDbMessage(data.error || "Setup failed. Double check your URL and secret key.");
       }
     } catch {
       setDbStatus("error");
-      setDbMessage("Network error — check that your Supabase URL is correct.");
+      setDbMessage("Could not connect to database. Check your network or URL.");
     }
   };
 
   const getSnippet = () => {
     const env: Record<string, string> = {
-      SUPABASE_URL: form.supabaseUrl || "https://xxxx.supabase.co",
-      SUPABASE_SERVICE_ROLE_KEY: form.supabaseServiceKey || "eyJh...",
-      GROQ_API_KEY: form.groqApiKey || "gsk_...",
-      GEMINI_API_KEY: form.geminiApiKey || "AIza...",
-      AETHOS_USER_ID: userId || "your-user-id",
-      AETHOS_PROJECT: form.project || "global",
+      SUPABASE_URL: form.supabaseUrl || "<YOUR_SUPABASE_URL>",
+      SUPABASE_SERVICE_ROLE_KEY: form.supabaseServiceKey || "<YOUR_SECRET_KEY>",
+      GROQ_API_KEY: form.groqApiKey || "<YOUR_GROQ_API_KEY>",
+      GEMINI_API_KEY: form.geminiApiKey || "<YOUR_GEMINI_API_KEY>",
+      AETHOS_USER_ID: userId || "user-id",
+      AETHOS_PROJECT: "global",
     };
 
     if (selectedTool === "claude_code") {
@@ -127,238 +133,190 @@ export default function OnboardingPage() {
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const copySql = () => {
-    navigator.clipboard.writeText(manualSql);
-    setSqlCopied(true);
-    setTimeout(() => setSqlCopied(false), 2500);
-  };
-
-  const tool = TOOLS.find((t) => t.id === selectedTool)!;
-  const configPath = "cmd" in tool.configPath
-    ? null
-    : tool.configPath;
-
-  const canSetupDb = form.supabaseUrl && form.supabaseServiceKey;
-  const canCopy = form.supabaseUrl && form.supabaseServiceKey && form.groqApiKey && form.geminiApiKey;
-
-  // Progress: 1=Supabase, 2=API keys, 3=Tool picker, 4=Snippet
-  const progress = [
-    canSetupDb,
-    !!(form.groqApiKey && form.geminiApiKey),
-    true, // tool is always picked
-    canCopy,
-  ];
-  const doneCount = progress.filter(Boolean).length;
+  const currentTool = AI_TOOLS.find((t) => t.id === selectedTool)!;
+  const filePath = "win" in currentTool.configPath ? currentTool.configPath : null;
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-color)", padding: "2rem 1rem" }}>
-      <div style={{ maxWidth: "680px", margin: "0 auto" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-color)", padding: "2.5rem 1rem" }}>
+      <div style={{ maxWidth: "660px", margin: "0 auto" }}>
 
-        {/* Header */}
+        {/* Page Header */}
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <Link href="/" style={{ fontSize: "0.8125rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", textDecoration: "none" }}>
-            ← Back
-          </Link>
-          <h1 style={{ fontSize: "1.875rem", fontWeight: 800, letterSpacing: "-0.02em", margin: "0.75rem 0 0.375rem" }}>
-            Connect your AI tool
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+            <div className="pulse-dot" />
+            <span style={{ color: "#10b981", fontWeight: 700, fontFamily: "var(--font-mono)", fontSize: "0.875rem" }}>
+              Aethos Memory
+            </span>
+          </div>
+          <h1 style={{ fontSize: "2rem", fontWeight: 800, letterSpacing: "-0.02em", marginBottom: "0.5rem" }}>
+            Connect Your AI Memory Bank
           </h1>
           <p style={{ color: "var(--text-secondary)", fontSize: "0.9375rem" }}>
-            3 fields + 1 click. Done in under 2 minutes.
+            Follow these 3 simple steps so your AI tools never forget your context.
           </p>
-
-          {/* Progress bar */}
-          <div style={{ display: "flex", gap: "4px", marginTop: "1.25rem", justifyContent: "center" }}>
-            {progress.map((done, i) => (
-              <div key={i} style={{
-                width: "48px", height: "4px", borderRadius: "2px",
-                backgroundColor: done ? "#10b981" : "var(--border-color)",
-                transition: "background-color 0.3s",
-              }} />
-            ))}
-          </div>
-          <div style={{ marginTop: "0.375rem", fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>
-            {doneCount}/4 steps complete
-          </div>
         </div>
 
-        {/* ── Step 1: Supabase ── */}
-        <div className="bg-surface border-subtle" style={{ padding: "1.5rem", borderRadius: "8px", marginBottom: "1rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "0.875rem" }}>
-            <h2 style={{ fontSize: "0.9375rem", fontWeight: 700 }}>
-              <span style={{ color: canSetupDb ? "#10b981" : "var(--text-secondary)", fontFamily: "var(--font-mono)", marginRight: "0.5rem" }}>
-                {dbStatus === "ok" ? "✓" : "1"}
+        {/* ── STEP 1: Database Link & Secret Key ── */}
+        <div className="bg-surface border-subtle" style={{ padding: "1.5rem", borderRadius: "8px", marginBottom: "1.25rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
+              <span style={{
+                width: "24px", height: "24px", borderRadius: "50%",
+                backgroundColor: dbStatus === "ready" ? "#10b981" : "#1d4ed8",
+                color: "#fff", fontWeight: 700, fontSize: "0.75rem",
+                display: "flex", alignItems: "center", justifyContent: "center"
+              }}>
+                {dbStatus === "ready" ? "✓" : "1"}
               </span>
-              Supabase Database
-            </h2>
+              <h2 style={{ fontSize: "1rem", fontWeight: 700 }}>Step 1: Connect Database</h2>
+            </div>
             <a href="https://supabase.com/dashboard/projects" target="_blank" rel="noopener noreferrer"
               style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "#10b981", textDecoration: "none" }}>
-              Open Supabase →
+              Get Supabase Keys →
             </a>
           </div>
 
-          <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginBottom: "1rem" }}>
-            Create a free project at <strong style={{ color: "var(--text-primary)" }}>supabase.com</strong>, then go to{" "}
-            <strong style={{ color: "var(--text-primary)" }}>Project Settings → API</strong> to copy your URL and service_role key.
-          </p>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem", marginBottom: "0.875rem" }}>
-            <input type="text" placeholder="Project URL: https://xxxx.supabase.co"
-              value={form.supabaseUrl} onChange={(e) => set("supabaseUrl", e.target.value)}
-              className="input-field" />
-            <input type="password" placeholder="service_role key: service_role_key..."
-              value={form.supabaseServiceKey} onChange={(e) => set("supabaseServiceKey", e.target.value)}
-              className="input-field" />
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginBottom: "1rem" }}>
+            <div>
+              <label style={{ display: "block", fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", marginBottom: "0.25rem" }}>
+                Database URL
+              </label>
+              <input
+                type="text"
+                placeholder="https://xxxx.supabase.co"
+                value={form.supabaseUrl}
+                onChange={(e) => set("supabaseUrl", e.target.value)}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", marginBottom: "0.25rem" }}>
+                Secret Database Key (service_role)
+              </label>
+              <input
+                type="password"
+                placeholder="Secret key from Project Settings → API"
+                value={form.supabaseServiceKey}
+                onChange={(e) => set("supabaseServiceKey", e.target.value)}
+                className="input-field"
+              />
+            </div>
           </div>
 
-          {/* Setup DB button */}
           <button
             onClick={handleSetupDb}
-            disabled={!canSetupDb || dbStatus === "running" || dbStatus === "ok"}
+            disabled={!form.supabaseUrl || !form.supabaseServiceKey || dbStatus === "setting_up" || dbStatus === "ready"}
             style={{
               width: "100%",
-              padding: "0.625rem",
-              borderRadius: "4px",
+              padding: "0.75rem",
+              borderRadius: "5px",
               border: "none",
-              fontWeight: 600,
+              fontWeight: 700,
               fontSize: "0.875rem",
-              cursor: canSetupDb && dbStatus !== "ok" ? "pointer" : "not-allowed",
-              backgroundColor: dbStatus === "ok" ? "#10b981" : canSetupDb ? "#1d4ed8" : "var(--border-color)",
-              color: dbStatus === "ok" ? "#0b1326" : "#fff",
-              opacity: (!canSetupDb || dbStatus === "running") ? 0.6 : 1,
+              cursor: form.supabaseUrl && form.supabaseServiceKey && dbStatus !== "ready" ? "pointer" : "not-allowed",
+              backgroundColor: dbStatus === "ready" ? "#10b981" : form.supabaseUrl && form.supabaseServiceKey ? "#10b981" : "var(--border-color)",
+              color: "#0b1326",
               transition: "all 0.2s",
             }}
           >
-            {dbStatus === "running" ? "⚙️ Setting up database…"
-              : dbStatus === "ok" ? "✓ Database ready"
-              : "⚡ Setup Database (one click)"}
+            {dbStatus === "setting_up" ? "Setting up database…"
+              : dbStatus === "ready" ? "✓ Database Connected & Ready"
+              : "Auto-Setup Database"}
           </button>
 
-          {/* Status messages */}
-          {dbStatus === "ok" && (
-            <div style={{ marginTop: "0.625rem", padding: "0.625rem 0.875rem", borderRadius: "4px", backgroundColor: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.3)", color: "#34d399", fontSize: "0.8125rem" }}>
-              ✓ {dbMessage}
-            </div>
-          )}
-          {dbStatus === "error" && (
-            <div style={{ marginTop: "0.625rem", padding: "0.625rem 0.875rem", borderRadius: "4px", backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", fontSize: "0.8125rem" }}>
-              ✗ {dbMessage}
-            </div>
-          )}
-          {dbStatus === "manual" && (
-            <div style={{ marginTop: "0.625rem", padding: "0.875rem", borderRadius: "4px", backgroundColor: "rgba(251,191,36,0.07)", border: "1px solid rgba(251,191,36,0.3)" }}>
-              <div style={{ fontSize: "0.8125rem", color: "#fbbf24", marginBottom: "0.5rem" }}>⚠ {dbMessage}</div>
-              <a href={`${form.supabaseUrl}/project/default/sql/new`} target="_blank" rel="noopener noreferrer"
-                style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "#10b981", textDecoration: "none" }}>
-                Open SQL Editor →
-              </a>
-              <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem" }}>
-                <button onClick={copySql} style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", backgroundColor: "#15203b", border: "1px solid var(--border-color)", color: "var(--text-primary)", padding: "0.25rem 0.625rem", borderRadius: "3px", cursor: "pointer" }}>
-                  {sqlCopied ? "Copied!" : "Copy SQL"}
-                </button>
-              </div>
+          {dbMessage && (
+            <div style={{
+              marginTop: "0.75rem", padding: "0.625rem 0.875rem", borderRadius: "4px",
+              backgroundColor: dbStatus === "ready" ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)",
+              border: `1px solid ${dbStatus === "ready" ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)"}`,
+              color: dbStatus === "ready" ? "#34d399" : "#f87171", fontSize: "0.8125rem"
+            }}>
+              {dbMessage}
             </div>
           )}
         </div>
 
-        {/* ── Step 2: API Keys ── */}
-        <div className="bg-surface border-subtle" style={{ padding: "1.5rem", borderRadius: "8px", marginBottom: "1rem" }}>
-          <h2 style={{ fontSize: "0.9375rem", fontWeight: 700, marginBottom: "0.875rem" }}>
-            <span style={{ color: form.groqApiKey && form.geminiApiKey ? "#10b981" : "var(--text-secondary)", fontFamily: "var(--font-mono)", marginRight: "0.5rem" }}>
-              {form.groqApiKey && form.geminiApiKey ? "✓" : "2"}
+        {/* ── STEP 2: Pick Your AI Tool ── */}
+        <div className="bg-surface border-subtle" style={{ padding: "1.5rem", borderRadius: "8px", marginBottom: "1.25rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", marginBottom: "1rem" }}>
+            <span style={{
+              width: "24px", height: "24px", borderRadius: "50%",
+              backgroundColor: "#10b981", color: "#0b1326",
+              fontWeight: 700, fontSize: "0.75rem",
+              display: "flex", alignItems: "center", justifyContent: "center"
+            }}>
+              2
             </span>
-            API Keys — both free
-          </h2>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
-                <label style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>
-                  GROQ_API_KEY — extracts facts from conversations
-                </label>
-                <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: "0.7rem", fontFamily: "var(--font-mono)", color: "#10b981", textDecoration: "none" }}>
-                  Get free →
-                </a>
-              </div>
-              <input type="password" placeholder="gsk_..."
-                value={form.groqApiKey} onChange={(e) => set("groqApiKey", e.target.value)}
-                className="input-field" />
-            </div>
-
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
-                <label style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>
-                  GEMINI_API_KEY — generates embeddings for search
-                </label>
-                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: "0.7rem", fontFamily: "var(--font-mono)", color: "#10b981", textDecoration: "none" }}>
-                  Get free →
-                </a>
-              </div>
-              <input type="password" placeholder="AIza..."
-                value={form.geminiApiKey} onChange={(e) => set("geminiApiKey", e.target.value)}
-                className="input-field" />
-            </div>
+            <h2 style={{ fontSize: "1rem", fontWeight: 700 }}>Step 2: Pick Your AI Tool</h2>
           </div>
-        </div>
 
-        {/* ── Step 3: Tool picker ── */}
-        <div className="bg-surface border-subtle" style={{ padding: "1.5rem", borderRadius: "8px", marginBottom: "1rem" }}>
-          <h2 style={{ fontSize: "0.9375rem", fontWeight: 700, marginBottom: "0.875rem" }}>
-            <span style={{ color: "#10b981", fontFamily: "var(--font-mono)", marginRight: "0.5rem" }}>✓</span>
-            Which AI tool do you use?
-          </h2>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "1rem" }}>
-            {TOOLS.map((t) => (
-              <button key={t.id} onClick={() => setSelectedTool(t.id)} style={{
-                padding: "0.75rem 1rem",
-                borderRadius: "5px",
-                border: selectedTool === t.id ? "1px solid #10b981" : "1px solid var(--border-color)",
-                backgroundColor: selectedTool === t.id ? "rgba(16,185,129,0.1)" : "var(--bg-color)",
-                color: selectedTool === t.id ? "#34d399" : "var(--text-secondary)",
-                fontFamily: "var(--font-mono)",
-                fontWeight: selectedTool === t.id ? 600 : 400,
-                fontSize: "0.875rem",
-                cursor: "pointer",
-                textAlign: "left",
-                transition: "all 0.15s",
-              }}>
-                {t.label} {selectedTool === t.id && "✓"}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+            {AI_TOOLS.map((tool) => (
+              <button
+                key={tool.id}
+                onClick={() => setSelectedTool(tool.id)}
+                style={{
+                  padding: "0.75rem 1rem",
+                  borderRadius: "5px",
+                  border: selectedTool === tool.id ? "1px solid #10b981" : "1px solid var(--border-color)",
+                  backgroundColor: selectedTool === tool.id ? "rgba(16,185,129,0.1)" : "var(--bg-color)",
+                  color: selectedTool === tool.id ? "#34d399" : "var(--text-secondary)",
+                  fontWeight: selectedTool === tool.id ? 600 : 400,
+                  fontSize: "0.875rem",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  transition: "all 0.15s",
+                }}
+              >
+                {tool.name} {selectedTool === tool.id && "✓"}
               </button>
             ))}
           </div>
-
-          {/* Config path hint */}
-          {configPath && (
-            <div style={{ backgroundColor: "rgba(59,130,246,0.07)", border: "1px solid rgba(59,130,246,0.2)", padding: "0.75rem", borderRadius: "5px", fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "#93c5fd" }}>
-              <div style={{ marginBottom: "0.25rem", fontWeight: 600 }}>📁 Paste snippet into:</div>
-              <div style={{ color: "#60a5fa" }}>Windows: {configPath.win}</div>
-              <div style={{ color: "#60a5fa" }}>Mac/Linux: {configPath.mac}</div>
-            </div>
-          )}
         </div>
 
-        {/* ── Step 4: Generated Snippet ── */}
-        <div className="bg-surface border-subtle" style={{ padding: "1.5rem", borderRadius: "8px", marginBottom: "1.25rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "0.875rem" }}>
-            <h2 style={{ fontSize: "0.9375rem", fontWeight: 700 }}>
-              <span style={{ color: canCopy ? "#10b981" : "var(--text-secondary)", fontFamily: "var(--font-mono)", marginRight: "0.5rem" }}>
-                {canCopy ? "✓" : "4"}
+        {/* ── STEP 3: Copy Code & Done ── */}
+        <div className="bg-surface border-subtle" style={{ padding: "1.5rem", borderRadius: "8px", marginBottom: "1.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
+              <span style={{
+                width: "24px", height: "24px", borderRadius: "50%",
+                backgroundColor: "#10b981", color: "#0b1326",
+                fontWeight: 700, fontSize: "0.75rem",
+                display: "flex", alignItems: "center", justifyContent: "center"
+              }}>
+                3
               </span>
-              Your MCP config — auto-generated
-            </h2>
-            {canCopy && <span style={{ fontSize: "0.75rem", color: "#34d399", fontFamily: "var(--font-mono)" }}>All fields filled ✓</span>}
+              <h2 style={{ fontSize: "1rem", fontWeight: 700 }}>Step 3: Copy 1-Click Code</h2>
+            </div>
           </div>
+
+          {/* Config Path Info */}
+          {filePath && (
+            <div style={{
+              backgroundColor: "rgba(59,130,246,0.07)",
+              border: "1px solid rgba(59,130,246,0.2)",
+              padding: "0.75rem 1rem",
+              borderRadius: "5px",
+              fontSize: "0.8125rem",
+              fontFamily: "var(--font-mono)",
+              color: "#93c5fd",
+              marginBottom: "1rem",
+            }}>
+              <div>File location for {currentTool.name}:</div>
+              <div style={{ color: "#60a5fa", marginTop: "0.25rem" }}>Windows: {filePath.win}</div>
+              <div style={{ color: "#60a5fa" }}>Mac/Linux: {filePath.mac}</div>
+            </div>
+          )}
 
           <div style={{ position: "relative" }}>
             <pre style={{
               backgroundColor: "var(--bg-color)",
               border: "1px solid var(--border-color)",
-              padding: "1rem 1rem 1rem 1rem",
+              padding: "1rem",
               borderRadius: "5px",
-              fontSize: "0.72rem",
+              fontSize: "0.75rem",
               fontFamily: "var(--font-mono)",
-              color: canCopy ? "#e2e8f0" : "#64748b",
+              color: "#e2e8f0",
               maxHeight: "220px",
               overflow: "auto",
               whiteSpace: "pre-wrap",
@@ -367,47 +325,45 @@ export default function OnboardingPage() {
             }}>
               {getSnippet()}
             </pre>
-            <button onClick={copySnippet} style={{
-              position: "absolute", top: "0.5rem", right: "0.5rem",
-              backgroundColor: copied ? "#10b981" : "#1e2d4d",
-              border: "1px solid var(--border-color)",
-              color: copied ? "#0b1326" : "var(--text-primary)",
-              padding: "0.3rem 0.625rem",
-              borderRadius: "3px",
-              cursor: "pointer",
-              fontSize: "0.72rem",
-              fontFamily: "var(--font-mono)",
-              fontWeight: 600,
-            }}>
-              {copied ? "✓ Copied!" : "Copy"}
-            </button>
-          </div>
 
-          <div style={{ marginTop: "0.875rem", fontSize: "0.8125rem", color: "var(--text-secondary)", lineHeight: 1.6 }}>
-            {selectedTool === "claude_code"
-              ? "Run the command above in your terminal, then restart Claude Code."
-              : `Paste this into the config file shown above, then restart ${tool.label}.`}
+            <button
+              onClick={copySnippet}
+              style={{
+                position: "absolute",
+                top: "0.5rem",
+                right: "0.5rem",
+                backgroundColor: copied ? "#10b981" : "#1e2d4d",
+                border: "1px solid var(--border-color)",
+                color: copied ? "#0b1326" : "#fff",
+                padding: "0.375rem 0.75rem",
+                borderRadius: "3px",
+                cursor: "pointer",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+              }}
+            >
+              {copied ? "✓ Copied Code!" : "Copy Code"}
+            </button>
           </div>
         </div>
 
-        {/* Done CTA */}
-        <Link href="/feed" style={{
-          display: "block", textAlign: "center",
-          backgroundColor: "#10b981", color: "#0b1326",
-          fontWeight: 700, fontSize: "1rem",
-          padding: "1rem", borderRadius: "6px",
-          textDecoration: "none", marginBottom: "1rem",
-        }}>
-          Done — Open my Memory Dashboard →
+        {/* Done CTA Button */}
+        <Link
+          href="/feed"
+          style={{
+            display: "block",
+            textAlign: "center",
+            backgroundColor: "#10b981",
+            color: "#0b1326",
+            fontWeight: 700,
+            fontSize: "1rem",
+            padding: "1rem",
+            borderRadius: "6px",
+            textDecoration: "none",
+          }}
+        >
+          Open Memory Dashboard →
         </Link>
-
-        <p style={{ textAlign: "center", fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
-          Need help?{" "}
-          <a href="https://github.com/nisargpatel1906/Aethos_Memory" target="_blank" rel="noopener noreferrer"
-            style={{ color: "#10b981", textDecoration: "none" }}>
-            View setup guide on GitHub →
-          </a>
-        </p>
       </div>
     </div>
   );
