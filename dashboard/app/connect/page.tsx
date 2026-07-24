@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import AethosLogo from "../components/AethosLogo";
 
 const SCHEMA_SQL = `
 create extension if not exists vector;
@@ -48,7 +49,7 @@ export default function ConnectPage() {
   const [sqlCopied, setSqlCopied] = useState(false);
 
   useEffect(() => {
-    const savedUrl = localStorage.getItem("aethos_supabase_url") || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+    const savedUrl = localStorage.getItem("aethos_supabase_url") || "";
     const savedKey = localStorage.getItem("aethos_supabase_key") || "";
     const savedUser = localStorage.getItem("aethos_user_id") || "";
     setUrl(savedUrl);
@@ -119,8 +120,8 @@ export default function ConnectPage() {
         padding: "3rem 2.5rem",
       }}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "3rem" }}>
-            <div className="pulse-dot" />
+          <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", marginBottom: "3rem" }}>
+            <AethosLogo size={32} />
             <span style={{ color: "#10b981", fontWeight: 700, fontSize: "1.125rem", fontFamily: "var(--font-mono)" }}>
               Aethos Memory
             </span>

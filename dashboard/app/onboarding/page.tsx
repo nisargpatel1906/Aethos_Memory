@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { getUserId } from "../../lib/supabaseClient";
+import AethosLogo from "../components/AethosLogo";
 
 type ToolId = "claude_desktop" | "claude_code" | "cursor" | "opencode";
 
@@ -142,8 +143,8 @@ export default function OnboardingPage() {
 
         {/* Page Header */}
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-            <div className="pulse-dot" />
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.625rem", marginBottom: "0.5rem" }}>
+            <AethosLogo size={28} />
             <span style={{ color: "#10b981", fontWeight: 700, fontFamily: "var(--font-mono)", fontSize: "0.875rem" }}>
               Aethos Memory
             </span>
