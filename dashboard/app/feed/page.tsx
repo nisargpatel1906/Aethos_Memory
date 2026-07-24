@@ -35,7 +35,6 @@ function FeedContent() {
   const [quickAddContent, setQuickAddContent] = useState("");
   const [quickAdding, setQuickAdding] = useState(false);
 
-  // Fetch Memories directly via Supabase client (uses localStorage credentials)
   const fetchMemories = async () => {
     setLoading(true);
     try {
@@ -54,7 +53,6 @@ function FeedContent() {
     setLoading(false);
   };
 
-  // Quick Add — inserts memory using localStorage credentials
   const handleQuickAdd = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter" || !quickAddContent.trim()) return;
     setQuickAdding(true);
@@ -89,7 +87,6 @@ function FeedContent() {
     fetchMemories();
   }, []);
 
-  // Filter Memories whenever selection changes
   useEffect(() => {
     let result = memories;
 
@@ -148,26 +145,25 @@ function FeedContent() {
     }
   };
 
-  // Tool source badge with icon and unique colour per AI client
   const getToolBadge = (tool: string | null) => {
     const name = (tool || "").toLowerCase().replace(/[\s_-]/g, "");
 
-    const toolMap: Record<string, { label: string; icon: string; bg: string; border: string; color: string }> = {
-      claude:           { label: "Claude",       icon: "✦",  bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.4)",  color: "#e8a44a" },
-      claudedesktop:    { label: "Claude Desktop",icon: "✦",  bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.4)",  color: "#e8a44a" },
-      claudecode:       { label: "Claude Code",  icon: "✦",  bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.4)",  color: "#e8a44a" },
-      opencode:         { label: "OpenCode",     icon: "⬡",  bg: "rgba(139,92,246,0.12)",  border: "rgba(139,92,246,0.4)",  color: "#a78bfa" },
-      codex:            { label: "Codex",        icon: "◈",  bg: "rgba(20,184,166,0.12)",  border: "rgba(20,184,166,0.4)",  color: "#2dd4bf" },
-      antigravity:      { label: "Antigravity",  icon: "⬆",  bg: "rgba(16,185,129,0.12)",  border: "rgba(16,185,129,0.4)",  color: "#34d399" },
-      cursor:           { label: "Cursor",       icon: "⊹",  bg: "rgba(59,130,246,0.12)",  border: "rgba(59,130,246,0.4)",  color: "#60a5fa" },
-      geminicli:        { label: "Gemini CLI",   icon: "◆",  bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.4)",  color: "#fbbf24" },
-      gemini:           { label: "Gemini",       icon: "◆",  bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.4)",  color: "#fbbf24" },
-      webdashboard:     { label: "Web Dashboard",icon: "⊞",  bg: "rgba(244,114,182,0.12)", border: "rgba(244,114,182,0.4)", color: "#f472b6" },
-      webdashboardintegrationtest: { label: "Web Dashboard", icon: "⊞", bg: "rgba(244,114,182,0.12)", border: "rgba(244,114,182,0.4)", color: "#f472b6" },
-      mcpclient:        { label: "MCP Client",   icon: "⟡",  bg: "rgba(148,163,184,0.12)", border: "rgba(148,163,184,0.4)", color: "#94a3b8" },
+    const toolMap: Record<string, { label: string; bg: string; border: string; color: string }> = {
+      claude:           { label: "Claude",        bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.4)",  color: "#e8a44a" },
+      claudedesktop:    { label: "Claude Desktop", bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.4)",  color: "#e8a44a" },
+      claudecode:       { label: "Claude Code",   bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.4)",  color: "#e8a44a" },
+      opencode:         { label: "OpenCode",      bg: "rgba(139,92,246,0.12)",  border: "rgba(139,92,246,0.4)",  color: "#a78bfa" },
+      codex:            { label: "Codex",         bg: "rgba(20,184,166,0.12)",  border: "rgba(20,184,166,0.4)",  color: "#2dd4bf" },
+      antigravity:      { label: "Antigravity",   bg: "rgba(16,185,129,0.12)",  border: "rgba(16,185,129,0.4)",  color: "#34d399" },
+      cursor:           { label: "Cursor",        bg: "rgba(59,130,246,0.12)",  border: "rgba(59,130,246,0.4)",  color: "#60a5fa" },
+      geminicli:        { label: "Gemini CLI",    bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.4)",  color: "#fbbf24" },
+      gemini:           { label: "Gemini",        bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.4)",  color: "#fbbf24" },
+      webdashboard:     { label: "Web Dashboard", bg: "rgba(244,114,182,0.12)", border: "rgba(244,114,182,0.4)", color: "#f472b6" },
+      webdashboardintegrationtest: { label: "Web Dashboard", bg: "rgba(244,114,182,0.12)", border: "rgba(244,114,182,0.4)", color: "#f472b6" },
+      mcpclient:        { label: "MCP Client",    bg: "rgba(148,163,184,0.12)", border: "rgba(148,163,184,0.4)", color: "#94a3b8" },
     };
 
-    const match = toolMap[name] ?? { label: tool || "Unknown", icon: "○", bg: "rgba(148,163,184,0.1)", border: "rgba(148,163,184,0.3)", color: "#94a3b8" };
+    const match = toolMap[name] ?? { label: tool || "Unknown", bg: "rgba(148,163,184,0.1)", border: "rgba(148,163,184,0.3)", color: "#94a3b8" };
 
     return (
       <span
@@ -211,6 +207,7 @@ function FeedContent() {
     <div style={{ maxWidth: "1000px" }}>
       {/* Setup banner for new users */}
       <SetupBanner memoryCount={memories.length} />
+
       {/* Filter Control Header Bar */}
       <div
         className="bg-surface border-subtle"
@@ -330,7 +327,7 @@ function FeedContent() {
           <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem", maxWidth: "480px", margin: "0 auto 1.75rem" }}>
             {[
               { done: true,  step: "1", label: "Dashboard connected" },
-              { done: false, step: "2", label: "Copy your MCP config snippet", link: "/onboarding" },
+              { done: false, step: "2", label: "Copy your MCP config snippet", link: "/setup" },
               { done: false, step: "3", label: "Paste into your AI tool and restart it" },
               { done: false, step: "4", label: "Use your AI normally — memories appear here" },
             ].map((item) => (
@@ -347,7 +344,7 @@ function FeedContent() {
           </div>
 
           <div style={{ textAlign: "center", display: "flex", gap: "0.75rem", justifyContent: "center" }}>
-            <Link href="/onboarding" style={{ display: "inline-block" }}>
+            <Link href="/setup" style={{ display: "inline-block" }}>
               <button className="btn-primary">Copy MCP Config →</button>
             </Link>
             <Link href="/add" style={{ display: "inline-block" }}>
@@ -356,7 +353,6 @@ function FeedContent() {
           </div>
         </div>
       ) : filteredMemories.length === 0 ? (
-        /* Filtered empty state */
         <div className="bg-surface border-subtle" style={{ padding: "2.5rem", textAlign: "center", borderRadius: "6px", color: "var(--text-secondary)" }}>
           <div style={{ display: "flex", justifyContent: "center", color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -388,6 +384,7 @@ function FeedContent() {
               <span style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>Saving…</span>
             )}
           </div>
+
           {filteredMemories.map((item) => (
             <div
               key={item.id}
@@ -420,10 +417,24 @@ function FeedContent() {
                 </div>
               ) : (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
-                  <p style={{ fontSize: "0.9375rem", lineHeight: "1.5", color: "var(--text-primary)" }}>
+                  <p
+                    onClick={() => router.push(`/feed/${item.id}`)}
+                    style={{ fontSize: "0.9375rem", lineHeight: "1.5", color: "var(--text-primary)", cursor: "pointer", flex: 1 }}
+                    title="Click to view full memory details"
+                  >
                     {item.content}
                   </p>
-                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
+                    <button
+                      onClick={() => router.push(`/feed/${item.id}`)}
+                      title="View Details"
+                      style={{ background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", display: "flex", alignItems: "center" }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    </button>
                     <button
                       onClick={() => {
                         setEditingId(item.id);
@@ -488,9 +499,21 @@ function FeedContent() {
                   {getCategoryBadge(item.category)}
                 </div>
 
-                <span style={{ color: "var(--text-secondary)" }}>
-                  {formatRelativeTime(item.created_at)}
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <span style={{ color: "var(--text-secondary)" }}>
+                    {formatRelativeTime(item.created_at)}
+                  </span>
+                  <Link
+                    href={`/feed/${item.id}`}
+                    style={{ color: "#10b981", textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "0.25rem" }}
+                  >
+                    View Details
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                      <polyline points="12 5 19 12 12 19"/>
+                    </svg>
+                  </Link>
+                </div>
               </div>
             </div>
           ))}
