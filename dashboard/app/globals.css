@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
 :root {
   --bg-color: #0b1326;
   --surface-color: #15203b;
@@ -23,12 +21,17 @@
 }
 
 html, body {
-  background-color: var(--bg-color) !important;
-  color: var(--text-primary) !important;
+  background-color: #0b1326 !important;
+  color: #f8fafc !important;
   font-family: var(--font-inter);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+main {
+  background-color: #0b1326;
+  color: #f8fafc;
 }
 
 code, pre, kbd, samp {
@@ -45,8 +48,8 @@ code {
 }
 
 pre {
-  background-color: var(--bg-color);
-  color: #f8fafc;
+  background-color: #0b1326 !important;
+  color: #f8fafc !important;
   font-family: var(--font-mono);
   border-radius: 6px;
 }
@@ -66,7 +69,7 @@ a {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-color);
+  background: #0b1326;
 }
 ::-webkit-scrollbar-thumb {
   background: #1e293b;
@@ -132,7 +135,7 @@ a {
 }
 
 .input-field {
-  background-color: var(--bg-color);
+  background-color: #0b1326;
   border: 1px solid var(--border-color);
   color: var(--text-primary);
   padding: 0.625rem 0.875rem;
