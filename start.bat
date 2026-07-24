@@ -12,7 +12,13 @@ if not exist node_modules (
     call npm install
 )
 
-echo Starting dev server on http://localhost:3000...
-call npm run dev
+if exist .next (
+    echo Launching pre-built production server for maximum speed...
+    call npm run start
+) else (
+    echo Building production app for first run...
+    call npm run build
+    call npm run start
+)
 
 pause

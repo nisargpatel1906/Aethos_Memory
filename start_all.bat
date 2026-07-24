@@ -4,8 +4,8 @@ echo ====================================================
 echo      Aethos Memory - Web App & MCP Server Launch
 echo ====================================================
 echo.
-echo [1/2] Starting Next.js Web Dashboard...
-start "Aethos Dashboard (http://localhost:3000)" cmd /k "cd /d %~dp0dashboard && npm run dev"
+echo [1/2] Launching Fast Production Web Dashboard...
+start "Aethos Dashboard (http://localhost:3000)" cmd /k "cd /d %~dp0dashboard && npm run build && npm run start"
 
 echo [2/2] Checking MCP Server Virtual Environment...
 if exist "%~dp0server\.venv\Scripts\python.exe" (
