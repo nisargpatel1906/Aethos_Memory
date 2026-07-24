@@ -1,0 +1,599 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1650" width="100%" height="100%" role="img" aria-label="Aethos Memory Master System Architecture &amp; Animated Workflow Cascade">
+  <defs>
+    <!-- Background Radial Glows -->
+    <radialGradient id="bgGlow" cx="50%" cy="20%" r="80%">
+      <stop offset="0%" stop-color="#0E1626" stop-opacity="0.98"/>
+      <stop offset="40%" stop-color="#080D18" stop-opacity="0.99"/>
+      <stop offset="100%" stop-color="#030509" stop-opacity="1"/>
+    </radialGradient>
+    
+    <radialGradient id="hubGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#39CD96" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#39CD96" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="blueGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="purpleGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#A855F7" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#A855F7" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Component Card Gradients -->
+    <linearGradient id="cardBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141D2D" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#0E1422" stop-opacity="1"/>
+    </linearGradient>
+
+    <linearGradient id="innerCardBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B101B" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#060A12" stop-opacity="1"/>
+    </linearGradient>
+
+    <!-- Accent Header Gradients -->
+    <linearGradient id="primaryHeaderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#39CD96"/>
+      <stop offset="50%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#A855F7"/>
+    </linearGradient>
+
+    <linearGradient id="greenBar" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#39CD96"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+
+    <linearGradient id="blueBar" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </linearGradient>
+
+    <linearGradient id="purpleBar" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#A855F7"/>
+      <stop offset="100%" stop-color="#EC4899"/>
+    </linearGradient>
+
+    <linearGradient id="roseBar" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F43F5E"/>
+      <stop offset="100%" stop-color="#FB7185"/>
+    </linearGradient>
+
+    <!-- Grid Background Pattern -->
+    <pattern id="gridPaper" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M 32 0 L 0 0 0 32" fill="none" stroke="#ffffff" stroke-opacity="0.045" stroke-width="1"/>
+    </pattern>
+
+    <!-- Filters for Glow & Drop Shadows -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#000000" flood-opacity="0.65"/>
+    </filter>
+
+    <!-- SVG Animation Motion Paths -->
+    <path id="pIn" d="M 800,180 L 800,240"/>
+    <path id="pT1" d="M 570,345 C 570,385 215,380 215,405"/>
+    <path id="pT2" d="M 720,345 C 720,385 595,385 595,405"/>
+    <path id="pT3" d="M 880,345 C 880,385 975,385 975,405"/>
+    <path id="pT4" d="M 1030,345 C 1030,385 1355,380 1355,405"/>
+    <path id="pC1" d="M 235,575 L 575,575"/>
+    <path id="pC2" d="M 615,575 L 955,575"/>
+    <path id="pC3" d="M 995,575 L 1335,575"/>
+
+    <!-- Pipeline Step Motion Paths (Internal Flow) -->
+    <!-- Pipeline A (Write): Step 1 -> Step 2 -> Step 4 -> Step 3 -->
+    <path id="pPipeA12" d="M 353 768 L 395 768"/>
+    <path id="pPipeA24" d="M 564 871 L 564 885"/>
+    <path id="pPipeA43" d="M 395 988 L 353 988"/>
+
+    <!-- Pipeline B (Recall): Step 1 -> Step 2 -> Step 4 -> Step 3 -->
+    <path id="pPipeB12" d="M 1143 768 L 1185 768"/>
+    <path id="pPipeB24" d="M 1354 871 L 1354 885"/>
+    <path id="pPipeB43" d="M 1185 988 L 1143 988"/>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="1600" height="1650" fill="#030509"/>
+  <rect width="1600" height="1650" fill="url(#gridPaper)"/>
+  <rect width="1600" height="1650" fill="url(#bgGlow)"/>
+
+  <!-- Ambient Glow Blobs -->
+  <circle cx="800" cy="290" r="350" fill="url(#hubGlow)"/>
+  <circle cx="1280" cy="1320" r="420" fill="url(#blueGlow)"/>
+  <circle cx="320" cy="1320" r="400" fill="url(#purpleGlow)"/>
+
+  <!-- ==================== HEADER BANNER ==================== -->
+  <g transform="translate(40, 25)">
+    <rect width="1520" height="75" rx="16" fill="url(#cardBg)" stroke="#39CD96" stroke-width="1.8" stroke-opacity="0.9" filter="url(#shadow)"/>
+    
+    <!-- Official Aethos Memory Logo Icon -->
+    <g transform="translate(22, 12) scale(0.145)">
+      <path d="M30.0001 210.663V247.56L176.27 336.508L319.246 247.56V210.663L176.27 296.317L30.0001 210.663Z" fill="#39CD96"/>
+      <path d="M176.27 266.667L319.246 181.672V144.116L176.27 229.77L30.0001 143.457V180.354L176.27 266.667Z" fill="#39CD96"/>
+      <path d="M319.246 102.607V113.808L190.107 189.579V146.752L252.7 109.196L176.27 61.7568L99.8409 109.196L161.116 146.752L160.457 189.579L30.0001 113.808V102.607L176.27 13L319.246 102.607Z" fill="#39CD96"/>
+    </g>
+
+    <text x="88" y="42" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="900" letter-spacing="1.5">AETHOS MEMORY</text>
+    <text x="88" y="62" fill="#39CD96" font-family="system-ui, -apple-system, sans-serif" font-size="13.5" font-weight="600" letter-spacing="0.5">Universal Cross-Tool Context Bank — Complete System Architecture &amp; Execution Workflows</text>
+
+    <!-- Live System Badge -->
+    <g transform="translate(1280, 21)">
+      <rect width="220" height="34" rx="17" fill="#070A12" stroke="#39CD96" stroke-width="1.5"/>
+      <circle cx="22" cy="17" r="5" fill="#39CD96">
+        <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <text x="38" y="22" fill="#39CD96" font-family="Consolas, monospace" font-size="11.5" font-weight="700" letter-spacing="1.2">SYSTEM LIVE &amp; ACTIVE</text>
+    </g>
+  </g>
+
+  <!-- ==================== SECTION 1: CASCADE ROUTER & TOPOLOGY ==================== -->
+  <!-- Top Box: IDE / Client Layer -->
+  <g transform="translate(530, 120)">
+    <rect width="540" height="60" rx="14" fill="url(#cardBg)" stroke="#ffffff" stroke-opacity="0.15" stroke-width="1" filter="url(#shadow)"/>
+    <g transform="translate(25, 33)" stroke="#39CD96" stroke-width="2" stroke-linecap="round" fill="none">
+      <path d="M -6 -5 L 0 0 L -6 5"/>
+      <line x1="2" y1="5" x2="8" y2="5"/>
+    </g>
+    <text x="50" y="34" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="16" font-weight="700">Your AI Assistant / IDE Client</text>
+    <text x="50" y="50" fill="#94A3B8" font-family="Consolas, monospace" font-size="11"><tspan fill="#39CD96" font-weight="700">Claude Code · Cursor · Antigravity · Windsurf · Goose</tspan></text>
+    <circle cx="510" cy="30" r="4.5" fill="#39CD96">
+      <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Request Pipe Protocol Label & Motion Dots -->
+  <use href="#pIn" stroke="#39CD96" stroke-width="1.8" stroke-dasharray="4 5" opacity="0.5"/>
+  <text x="814" y="208" fill="#39CD96" font-family="Consolas, monospace" font-size="11.5" font-weight="700">mcp://aethos-memory/stdio</text>
+  <g fill="#39CD96">
+    <circle r="4">
+      <animateMotion dur="1.5s" repeatCount="indefinite" begin="0s"><mpath href="#pIn"/></animateMotion>
+      <animate attributeName="opacity" values="0;1;1;0" dur="1.5s" begin="0s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="4">
+      <animateMotion dur="1.5s" repeatCount="indefinite" begin="0.5s"><mpath href="#pIn"/></animateMotion>
+      <animate attributeName="opacity" values="0;1;1;0" dur="1.5s" begin="0.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Central Hub: FastMCP Server -->
+  <g transform="translate(420, 240)">
+    <rect width="760" height="105" rx="18" fill="url(#cardBg)" stroke="#39CD96" stroke-width="2" filter="url(#shadow)"/>
+    
+    <!-- Official Aethos Memory Logo & Spinning Core -->
+    <g transform="translate(28, 14)">
+      <circle cx="38" cy="38" r="34" fill="none" stroke="#39CD96" stroke-width="1.4" opacity="0.5" stroke-dasharray="4 6">
+        <animateTransform attributeName="transform" type="rotate" from="0 38 38" to="360 38 38" dur="20s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="38" cy="38" r="24" fill="url(#hubGlow)">
+        <animate attributeName="r" values="20;28;20" dur="2.5s" repeatCount="indefinite"/>
+      </circle>
+      <!-- Scaled Official Logo -->
+      <g transform="translate(9, 9) scale(0.17)">
+        <path d="M30.0001 210.663V247.56L176.27 336.508L319.246 247.56V210.663L176.27 296.317L30.0001 210.663Z" fill="#39CD96"/>
+        <path d="M176.27 266.667L319.246 181.672V144.116L176.27 229.77L30.0001 143.457V180.354L176.27 266.667Z" fill="#39CD96"/>
+        <path d="M319.246 102.607V113.808L190.107 189.579V146.752L252.7 109.196L176.27 61.7568L99.8409 109.196L161.116 146.752L160.457 189.579L30.0001 113.808V102.607L176.27 13L319.246 102.607Z" fill="#39CD96"/>
+      </g>
+    </g>
+
+    <text x="118" y="40" fill="url(#primaryHeaderGrad)" font-family="system-ui, sans-serif" font-size="22" font-weight="900" letter-spacing="0.5">Aethos Memory — FastMCP Context Engine</text>
+    <text x="118" y="64" fill="#94A3B8" font-family="Consolas, monospace" font-size="11.5"><tspan fill="#39CD96" font-weight="700">FastMCP Python Server (stdio)</tspan> · <tspan fill="#38BDF8" font-weight="700">Gemini 768-dim Vectors</tspan> · <tspan fill="#F43F5E" font-weight="700">Groq Llama-3 Extraction</tspan></text>
+    <text x="118" y="84" fill="#64748B" font-family="Consolas, monospace" font-size="11.5">Supabase pgvector · HNSW Cosine Search · 83.3% Hit@1 LLM Reranker · Zero Lock-In</text>
+  </g>
+
+  <!-- Fan-out Topology Paths -->
+  <g stroke="#39CD96" stroke-width="1.4" fill="none" stroke-dasharray="4 5" opacity="0.35">
+    <use href="#pT1"/><use href="#pT2"/><use href="#pT3"/><use href="#pT4"/>
+  </g>
+
+  <!-- Cycle Animated Dots from Server to 4 Tiers -->
+  <g fill="#39CD96">
+    <g>
+      <animate attributeName="opacity" values="1;1;0;0;1" keyTimes="0;0.23;0.27;0.96;1" dur="16s" repeatCount="indefinite"/>
+      <circle r="4"><animateMotion dur="1.4s" repeatCount="indefinite" begin="0s"><mpath href="#pT1"/></animateMotion></circle>
+    </g>
+    <g fill="#38BDF8">
+      <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.24;0.28;0.48;0.52;1" dur="16s" repeatCount="indefinite"/>
+      <circle r="4"><animateMotion dur="1.4s" repeatCount="indefinite" begin="0s"><mpath href="#pT2"/></animateMotion></circle>
+    </g>
+    <g fill="#F43F5E">
+      <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.49;0.53;0.73;0.77;1" dur="16s" repeatCount="indefinite"/>
+      <circle r="4"><animateMotion dur="1.4s" repeatCount="indefinite" begin="0s"><mpath href="#pT3"/></animateMotion></circle>
+    </g>
+    <g fill="#A855F7">
+      <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.74;0.78;0.985;1" dur="16s" repeatCount="indefinite"/>
+      <circle r="4"><animateMotion dur="1.4s" repeatCount="indefinite" begin="0s"><mpath href="#pT4"/></animateMotion></circle>
+    </g>
+  </g>
+
+  <!-- 4 TIER CARDS -->
+  <!-- Tier 1: Remember -->
+  <g transform="translate(40, 405)">
+    <rect width="350" height="140" rx="16" fill="url(#cardBg)" stroke="#39CD96" stroke-width="1.5" stroke-opacity="0.6" filter="url(#shadow)"/>
+    <rect width="350" height="140" rx="16" fill="none" stroke="#39CD96" stroke-width="2" stroke-opacity="0.9">
+      <animate attributeName="stroke-opacity" values="0.9;0.9;0.2;0.2;0.9" keyTimes="0;0.23;0.27;0.96;1" dur="16s" repeatCount="indefinite"/>
+    </rect>
+    <path d="M 0 16 C 0 7, 7 0, 16 0 L 334 0 C 343 0, 350 7, 350 16 L 350 5 L 0 5 Z" fill="url(#greenBar)"/>
+    <text x="20" y="30" fill="#39CD96" font-family="Consolas, monospace" font-size="11.5" font-weight="800" letter-spacing="1.5">TIER 1 · REMEMBER() WRITE PIPELINE</text>
+    <circle cx="324" cy="25" r="5" fill="#39CD96">
+      <animate attributeName="opacity" values="1;0.4;1" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <line x1="20" y1="42" x2="330" y2="42" stroke="#ffffff" stroke-opacity="0.08"/>
+    <text x="20" y="66" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="13.5" font-weight="600">• Groq Llama-3 Fact Decomposition</text>
+    <text x="20" y="88" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="12.5">• Gemini 768-dim Fact Vectorizing</text>
+    <text x="20" y="110" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="12.5">• Supabase Atomic ADD/UPDATE/DELETE</text>
+  </g>
+
+  <!-- Tier 2: Recall -->
+  <g transform="translate(420, 405)">
+    <rect width="350" height="140" rx="16" fill="url(#cardBg)" stroke="#38BDF8" stroke-width="1.5" stroke-opacity="0.6" filter="url(#shadow)"/>
+    <rect width="350" height="140" rx="16" fill="none" stroke="#38BDF8" stroke-width="2" stroke-opacity="0.2">
+      <animate attributeName="stroke-opacity" values="0.2;0.2;0.9;0.9;0.2;0.2" keyTimes="0;0.24;0.28;0.48;0.52;1" dur="16s" repeatCount="indefinite"/>
+    </rect>
+    <path d="M 0 16 C 0 7, 7 0, 16 0 L 334 0 C 343 0, 350 7, 350 16 L 350 5 L 0 5 Z" fill="url(#blueBar)"/>
+    <text x="20" y="30" fill="#38BDF8" font-family="Consolas, monospace" font-size="11.5" font-weight="800" letter-spacing="1.5">TIER 2 · RECALL() SEARCH ENGINE</text>
+    <circle cx="324" cy="25" r="5" fill="#38BDF8">
+      <animate attributeName="opacity" values="1;0.4;1" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <line x1="20" y1="42" x2="330" y2="42" stroke="#ffffff" stroke-opacity="0.08"/>
+    <text x="20" y="66" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="13.5" font-weight="600">• Single Pass Vector Similarity Search</text>
+    <text x="20" y="88" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="12.5">• Conditional LLM Query Expansion Retry</text>
+    <text x="20" y="110" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="12.5" font-weight="700">• 83.3% Hit@1 Accuracy LLM Reranker</text>
+  </g>
+
+  <!-- Tier 3: Forget & List -->
+  <g transform="translate(800, 405)">
+    <rect width="350" height="140" rx="16" fill="url(#cardBg)" stroke="#F43F5E" stroke-width="1.5" stroke-opacity="0.6" filter="url(#shadow)"/>
+    <rect width="350" height="140" rx="16" fill="none" stroke="#F43F5E" stroke-width="2" stroke-opacity="0.2">
+      <animate attributeName="stroke-opacity" values="0.2;0.2;0.9;0.9;0.2;0.2" keyTimes="0;0.49;0.53;0.73;0.77;1" dur="16s" repeatCount="indefinite"/>
+    </rect>
+    <path d="M 0 16 C 0 7, 7 0, 16 0 L 334 0 C 343 0, 350 7, 350 16 L 350 5 L 0 5 Z" fill="url(#roseBar)"/>
+    <text x="20" y="30" fill="#F43F5E" font-family="Consolas, monospace" font-size="11.5" font-weight="800" letter-spacing="1.5">TIER 3 · FORGET() &amp; LIST_MEMORIES()</text>
+    <circle cx="324" cy="25" r="5" fill="#F43F5E">
+      <animate attributeName="opacity" values="1;0.4;1" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <line x1="20" y1="42" x2="330" y2="42" stroke="#ffffff" stroke-opacity="0.08"/>
+    <text x="20" y="66" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="13.5" font-weight="600">• Semantic Deletion by ID or Description</text>
+    <text x="20" y="88" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="12.5">• Full Project Memory Context Load</text>
+    <text x="20" y="110" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="12.5">• Strict User &amp; Project Tag Isolation</text>
+  </g>
+
+  <!-- Tier 4: Dashboard -->
+  <g transform="translate(1180, 405)">
+    <rect width="350" height="140" rx="16" fill="url(#cardBg)" stroke="#A855F7" stroke-width="1.5" stroke-opacity="0.6" filter="url(#shadow)"/>
+    <rect width="350" height="140" rx="16" fill="none" stroke="#A855F7" stroke-width="2" stroke-opacity="0.2">
+      <animate attributeName="stroke-opacity" values="0.2;0.2;0.9;0.9;0.2" keyTimes="0;0.74;0.78;0.985;1" dur="16s" repeatCount="indefinite"/>
+    </rect>
+    <path d="M 0 16 C 0 7, 7 0, 16 0 L 334 0 C 343 0, 350 7, 350 16 L 350 5 L 0 5 Z" fill="url(#purpleBar)"/>
+    <text x="20" y="30" fill="#A855F7" font-family="Consolas, monospace" font-size="11.5" font-weight="800" letter-spacing="1.5">TIER 4 · DASHBOARD &amp; REALTIME</text>
+    <circle cx="324" cy="25" r="5" fill="#A855F7">
+      <animate attributeName="opacity" values="1;0.4;1" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <line x1="20" y1="42" x2="330" y2="42" stroke="#ffffff" stroke-opacity="0.08"/>
+    <text x="20" y="66" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="13.5" font-weight="600">• Next.js 14 Interactive Feed App</text>
+    <text x="20" y="88" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="12.5">• Supabase Realtime WebSocket Sync</text>
+    <text x="20" y="110" fill="#A855F7" font-family="system-ui, sans-serif" font-size="12.5" font-weight="700">• Serverless Vercel /api/reembed Route</text>
+  </g>
+
+  <!-- Cascade Lines & Labels under Tiers -->
+  <g stroke="#64748B" stroke-width="1.4" fill="none" stroke-dasharray="4 5" opacity="0.65">
+    <use href="#pC1"/><use href="#pC2"/><use href="#pC3"/>
+  </g>
+  <polygon points="575,571 583,575 575,579" fill="#64748B"/>
+  <polygon points="955,571 963,575 955,579" fill="#64748B"/>
+  <polygon points="1335,571 1343,575 1335,579" fill="#64748B"/>
+
+  <text x="405" y="565" fill="#64748B" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+    fact stored?
+    <animate attributeName="fill" values="#64748B;#64748B;#39CD96;#39CD96;#64748B;#64748B" keyTimes="0;0.21;0.23;0.29;0.32;1" dur="16s" repeatCount="indefinite"/>
+  </text>
+  <text x="785" y="565" fill="#64748B" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+    query missed?
+    <animate attributeName="fill" values="#64748B;#64748B;#38BDF8;#38BDF8;#64748B;#64748B" keyTimes="0;0.46;0.48;0.54;0.57;1" dur="16s" repeatCount="indefinite"/>
+  </text>
+  <text x="1165" y="565" fill="#64748B" font-family="Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">
+    realtime push?
+    <animate attributeName="fill" values="#64748B;#64748B;#A855F7;#A855F7;#64748B;#64748B" keyTimes="0;0.71;0.73;0.79;0.82;1" dur="16s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- ==================== SECTION 2 & 3: DEEP-DIVE PIPELINE STEPS ==================== -->
+  <!-- LEFT COLUMN: REMEMBER PIPELINE (x=40..770) -->
+  <g transform="translate(40, 610)">
+    <rect width="730" height="515" rx="18" fill="url(#cardBg)" stroke="#39CD96" stroke-width="1.8" stroke-opacity="0.8" filter="url(#shadow)"/>
+    <path d="M 0 18 C 0 8, 8 0, 18 0 L 712 0 C 722 0, 730 8, 730 18 L 730 42 L 0 42 Z" fill="#141F2E"/>
+    <text x="22" y="27" fill="#39CD96" font-family="system-ui, sans-serif" font-size="16" font-weight="800" letter-spacing="0.5">EXECUTION PIPELINE A: remember() Write &amp; Fact Extraction</text>
+
+    <!-- Sub-step 1: Prompt & Embedding -->
+    <g transform="translate(18, 56)">
+      <rect width="335" height="210" rx="14" fill="url(#innerCardBg)" stroke="#334155" stroke-width="1.2"/>
+      <rect width="335" height="36" rx="14" fill="#162232"/>
+      <circle cx="22" cy="18" r="11" fill="#39CD96"/>
+      <text x="22" y="22" fill="#0F172A" font-size="11" font-weight="900" text-anchor="middle">1</text>
+      
+      <!-- Vector Icon 1: Lightning Bolt -->
+      <g transform="translate(42, 9) scale(0.7)" stroke="#39CD96" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+      </g>
+      <text x="64" y="23" fill="#F8FAFC" font-size="13" font-weight="700">Input &amp; Raw Embedding</text>
+
+      <text x="16" y="58" fill="#CBD5E1" font-size="12" font-weight="700">remember(content, project):</text>
+      <text x="16" y="80" fill="#94A3B8" font-size="11" font-family="monospace">• Raw statement received from AI client</text>
+      <text x="16" y="100" fill="#94A3B8" font-size="11" font-family="monospace">• Gemini API: gemini-embedding-001</text>
+      <text x="16" y="120" fill="#94A3B8" font-size="11" font-family="monospace">• Generates 768-dim float vector</text>
+      <text x="16" y="140" fill="#94A3B8" font-size="11" font-family="monospace">• Queries Supabase for dedup context</text>
+      
+      <rect x="14" y="160" width="307" height="36" rx="8" fill="#071712" stroke="#39CD96" stroke-width="1"/>
+      <text x="24" y="182" fill="#39CD96" font-size="11" font-weight="700">Fetches top 5 existing memories (&gt;0.65)</text>
+    </g>
+
+    <!-- Sub-step 2: Groq Fact Extraction -->
+    <g transform="translate(377, 56)">
+      <rect width="335" height="210" rx="14" fill="url(#innerCardBg)" stroke="#F43F5E" stroke-width="1.2" stroke-opacity="0.7"/>
+      <rect width="335" height="36" rx="14" fill="#2B141F"/>
+      <circle cx="22" cy="18" r="11" fill="#F43F5E"/>
+      <text x="22" y="22" fill="#0F172A" font-size="11" font-weight="900" text-anchor="middle">2</text>
+      
+      <!-- Vector Icon 2: Brain Network -->
+      <g transform="translate(42, 9) scale(0.7)" stroke="#F43F5E" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M12 2a5 5 0 0 0-5 5c0 1.5.7 2.8 1.7 3.7A5 5 0 0 0 4 15a5 5 0 0 0 5 5h6a5 5 0 0 0 5-5 5 5 0 0 0-4.7-4.3A5 5 0 0 0 17 7a5 5 0 0 0-5-5z"/>
+      </g>
+      <text x="64" y="23" fill="#F8FAFC" font-size="13" font-weight="700">Groq Fact Decomposition</text>
+
+      <text x="16" y="58" fill="#CBD5E1" font-size="12" font-weight="700">Atomic Fact Decision Matrix:</text>
+      <text x="16" y="80" fill="#39CD96" font-size="11" font-family="monospace">• ADD: Insert new preference/fact</text>
+      <text x="16" y="100" fill="#38BDF8" font-size="11" font-family="monospace">• UPDATE: Replace outdated memory (id)</text>
+      <text x="16" y="120" fill="#F43F5E" font-size="11" font-family="monospace">• DELETE: Remove retracted decision (id)</text>
+      <text x="16" y="140" fill="#94A3B8" font-size="11" font-family="monospace">• SKIP: Ignore fluff / task noise</text>
+      
+      <rect x="14" y="160" width="307" height="36" rx="8" fill="#1C0910" stroke="#F43F5E" stroke-width="1"/>
+      <text x="24" y="182" fill="#FB7185" font-size="11" font-weight="700">Ultra-fast structured JSON output</text>
+    </g>
+
+    <!-- Sub-step 3: Vector re-embed & DB write -->
+    <g transform="translate(18, 285)">
+      <rect width="335" height="210" rx="14" fill="url(#innerCardBg)" stroke="#3ECF8E" stroke-width="1.2" stroke-opacity="0.7"/>
+      <rect width="335" height="36" rx="14" fill="#112920"/>
+      <circle cx="22" cy="18" r="11" fill="#3ECF8E"/>
+      <text x="22" y="22" fill="#0F172A" font-size="11" font-weight="900" text-anchor="middle">3</text>
+      
+      <!-- Vector Icon 3: Database Disk -->
+      <g transform="translate(42, 9) scale(0.7)" stroke="#3ECF8E" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M12 2C6.5 2 2 3.8 2 6v12c0 2.2 4.5 4 10 4s10-1.8 10-4V6c0-2.2-4.5-4-10-4z"/>
+        <path d="M2 12c0 2.2 4.5 4 10 4s10-1.8 10-4"/>
+      </g>
+      <text x="64" y="23" fill="#F8FAFC" font-size="13" font-weight="700">Vector Re-Embed &amp; DB Write</text>
+
+      <text x="16" y="58" fill="#CBD5E1" font-size="12" font-weight="700">Atomic Vector Persistence:</text>
+      <text x="16" y="80" fill="#38BDF8" font-size="11" font-family="monospace">• Embed each atomic fact via Gemini</text>
+      <text x="16" y="100" fill="#3ECF8E" font-size="11" font-family="monospace">• db.insert_memory(content, emb...)</text>
+      <text x="16" y="120" fill="#3ECF8E" font-size="11" font-family="monospace">• db.update_memory(id, content...)</text>
+      <text x="16" y="140" fill="#F43F5E" font-size="11" font-family="monospace">• db.delete_memory(id)</text>
+      
+      <rect x="14" y="160" width="307" height="36" rx="8" fill="#071913" stroke="#3ECF8E" stroke-width="1"/>
+      <text x="24" y="182" fill="#3ECF8E" font-size="11" font-weight="700">Postgres HNSW vector index updated</text>
+    </g>
+
+    <!-- Sub-step 4: Response & Realtime Broadcast -->
+    <g transform="translate(377, 285)">
+      <rect width="335" height="210" rx="14" fill="url(#innerCardBg)" stroke="#39CD96" stroke-width="1.2" stroke-opacity="0.7"/>
+      <rect width="335" height="36" rx="14" fill="#12281F"/>
+      <circle cx="22" cy="18" r="11" fill="#39CD96"/>
+      <text x="22" y="22" fill="#0F172A" font-size="11" font-weight="900" text-anchor="middle">4</text>
+      
+      <!-- Vector Icon 4: Signal Broadcast -->
+      <g transform="translate(42, 9) scale(0.7)" stroke="#39CD96" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M4.9 19.1C3.1 17.3 2 14.8 2 12s1.1-5.3 2.9-7.1M19.1 4.9C20.9 6.7 22 9.2 22 12s-1.1 5.3-2.9 7.1M7.8 16.2C6.7 15.1 6 13.6 6 12s.7-3.1 1.8-4.2M16.2 7.8C17.3 8.9 18 10.4 18 12s-.7 3.1-1.8 4.2"/>
+      </g>
+      <text x="64" y="23" fill="#F8FAFC" font-size="13" font-weight="700">Response &amp; Realtime Sync</text>
+
+      <text x="16" y="58" fill="#CBD5E1" font-size="12" font-weight="700">Client Feedback &amp; Web Push:</text>
+      <text x="16" y="80" fill="#39CD96" font-size="11" font-family="monospace">• Returns formatted status summary</text>
+      <text x="16" y="100" fill="#E2E8F0" font-size="10.5" font-family="monospace">  'Stored: "Use Next.js 14..."'</text>
+      <text x="16" y="120" fill="#A855F7" font-size="11" font-family="monospace">• Supabase Realtime WebSocket Event</text>
+      <text x="16" y="140" fill="#A855F7" font-size="11" font-family="monospace">• Pushes record directly to Web UI</text>
+      
+      <rect x="14" y="160" width="307" height="36" rx="8" fill="#081813" stroke="#39CD96" stroke-width="1"/>
+      <text x="24" y="182" fill="#39CD96" font-size="11" font-weight="700">Zero manual page refresh required</text>
+    </g>
+
+    <!-- Animated Data Flow Lines between Steps -->
+    <use href="#pPipeA12" stroke="#39CD96" stroke-width="1.8" marker-end="url(#arrow-green)"/>
+    <use href="#pPipeA24" stroke="#F43F5E" stroke-width="1.8" marker-end="url(#arrow-green)"/>
+    <use href="#pPipeA43" stroke="#39CD96" stroke-width="1.8" marker-end="url(#arrow-green)"/>
+  </g>
+
+  <!-- RIGHT COLUMN: RECALL PIPELINE (x=830..1560) -->
+  <g transform="translate(830, 610)">
+    <rect width="730" height="515" rx="18" fill="url(#cardBg)" stroke="#38BDF8" stroke-width="1.8" stroke-opacity="0.8" filter="url(#shadow)"/>
+    <path d="M 0 18 C 0 8, 8 0, 18 0 L 712 0 C 722 0, 730 8, 730 18 L 730 42 L 0 42 Z" fill="#142232"/>
+    <text x="22" y="27" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="16" font-weight="800" letter-spacing="0.5">EXECUTION PIPELINE B: recall() Smart Search &amp; Reranking</text>
+
+    <!-- Sub-step 1: Query Embedding -->
+    <g transform="translate(18, 56)">
+      <rect width="335" height="210" rx="14" fill="url(#innerCardBg)" stroke="#334155" stroke-width="1.2"/>
+      <rect width="335" height="36" rx="14" fill="#14263B"/>
+      <circle cx="22" cy="18" r="11" fill="#38BDF8"/>
+      <text x="22" y="22" fill="#0F172A" font-size="11" font-weight="900" text-anchor="middle">1</text>
+      
+      <!-- Vector Icon 5: Search Glass -->
+      <g transform="translate(42, 9) scale(0.7)" stroke="#38BDF8" stroke-width="2" fill="none" stroke-linecap="round">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </g>
+      <text x="64" y="23" fill="#F8FAFC" font-size="13" font-weight="700">Query &amp; Vector Similarity</text>
+
+      <text x="16" y="58" fill="#CBD5E1" font-size="12" font-weight="700">recall(query, project):</text>
+      <text x="16" y="80" fill="#38BDF8" font-size="11" font-family="monospace">• q_emb = call_embedding(query)</text>
+      <text x="16" y="100" fill="#3ECF8E" font-size="11" font-family="monospace">• Supabase RPC match_memories()</text>
+      <text x="16" y="120" fill="#94A3B8" font-size="11" font-family="monospace">• Cosine distance search (thresh &gt;= 0.5)</text>
+      <text x="16" y="140" fill="#94A3B8" font-size="11" font-family="monospace">• User ID &amp; Project tag scoped</text>
+      
+      <rect x="14" y="160" width="307" height="36" rx="8" fill="#091726" stroke="#38BDF8" stroke-width="1"/>
+      <text x="24" y="182" fill="#38BDF8" font-size="11" font-weight="700">Fetches initial candidate pool</text>
+    </g>
+
+    <!-- Sub-step 2: Conditional Retry Expansion -->
+    <g transform="translate(377, 56)">
+      <rect width="335" height="210" rx="14" fill="url(#innerCardBg)" stroke="#FB7185" stroke-width="1.2" stroke-opacity="0.7"/>
+      <rect width="335" height="36" rx="14" fill="#2E1624"/>
+      <circle cx="22" cy="18" r="11" fill="#FB7185"/>
+      <text x="22" y="22" fill="#0F172A" font-size="11" font-weight="900" text-anchor="middle">2</text>
+      
+      <!-- Vector Icon 6: Retry Sync -->
+      <g transform="translate(42, 9) scale(0.7)" stroke="#FB7185" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+      </g>
+      <text x="64" y="23" fill="#F8FAFC" font-size="13" font-weight="700">Conditional Query Expansion</text>
+
+      <text x="16" y="58" fill="#CBD5E1" font-size="12" font-weight="700">On Initial Miss / Low Hits:</text>
+      <text x="16" y="80" fill="#FB7185" font-size="11" font-family="monospace">• Groq LLM query keyword rewriter</text>
+      <text x="16" y="100" fill="#94A3B8" font-size="11" font-family="monospace">• Converts query into broader concept</text>
+      <text x="16" y="120" fill="#94A3B8" font-size="11" font-family="monospace">• Secondary search at threshold 0.4</text>
+      <text x="16" y="140" fill="#94A3B8" font-size="11" font-family="monospace">• Broadens search across global scope</text>
+      
+      <rect x="14" y="160" width="307" height="36" rx="8" fill="#1C0913" stroke="#FB7185" stroke-width="1"/>
+      <text x="24" y="182" fill="#39CD96" font-size="11" font-weight="700">Prevents zero-result search drops</text>
+    </g>
+
+    <!-- Sub-step 3: LLM Reranking Pass -->
+    <g transform="translate(18, 285)">
+      <rect width="335" height="210" rx="14" fill="url(#innerCardBg)" stroke="#A855F7" stroke-width="1.2" stroke-opacity="0.7"/>
+      <rect width="335" height="36" rx="14" fill="#251633"/>
+      <circle cx="22" cy="18" r="11" fill="#A855F7"/>
+      <text x="22" y="22" fill="#0F172A" font-size="11" font-weight="900" text-anchor="middle">3</text>
+      
+      <!-- Vector Icon 7: Trophy Star -->
+      <g transform="translate(42, 9) scale(0.7)" stroke="#A855F7" stroke-width="2" fill="none" stroke-linecap="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </g>
+      <text x="64" y="23" fill="#F8FAFC" font-size="13" font-weight="700">LLM Relevance Reranking</text>
+
+      <text x="16" y="58" fill="#CBD5E1" font-size="12" font-weight="700">Active Rerank Engine Strategy:</text>
+      <text x="16" y="80" fill="#A855F7" font-size="11" font-family="monospace">• Prompt sent to Groq / OpenRouter</text>
+      <text x="16" y="100" fill="#94A3B8" font-size="11" font-family="monospace">• Judges true semantic utility vs query</text>
+      <text x="16" y="120" fill="#94A3B8" font-size="11" font-family="monospace">• Filters superficial keyword matches</text>
+      <text x="16" y="140" fill="#A855F7" font-size="11" font-family="monospace">• Returns ordered relevant_ids JSON</text>
+      
+      <rect x="14" y="160" width="307" height="36" rx="8" fill="#180A24" stroke="#A855F7" stroke-width="1"/>
+      <text x="24" y="182" fill="#39CD96" font-size="11" font-weight="700">Evaluated 83.3% Hit@1 / 0.875 MRR</text>
+    </g>
+
+    <!-- Sub-step 4: Context Injection -->
+    <g transform="translate(377, 285)">
+      <rect width="335" height="210" rx="14" fill="url(#innerCardBg)" stroke="#38BDF8" stroke-width="1.2" stroke-opacity="0.7"/>
+      <rect width="335" height="36" rx="14" fill="#14263B"/>
+      <circle cx="22" cy="18" r="11" fill="#38BDF8"/>
+      <text x="22" y="22" fill="#0F172A" font-size="11" font-weight="900" text-anchor="middle">4</text>
+      
+      <!-- Vector Icon 8: Context Lightbulb -->
+      <g transform="translate(42, 9) scale(0.7)" stroke="#38BDF8" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M9 18h6m-4 3h2M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"/>
+      </g>
+      <text x="64" y="23" fill="#F8FAFC" font-size="13" font-weight="700">Context Window Injection</text>
+
+      <text x="16" y="58" fill="#CBD5E1" font-size="12" font-weight="700">Context Loaded into Prompt:</text>
+      <text x="16" y="80" fill="#38BDF8" font-size="11" font-family="monospace">• Formatted list of ordered facts</text>
+      <text x="16" y="100" fill="#E2E8F0" font-size="10.5" font-family="monospace">  'Found 2 relevant memories:'</text>
+      <text x="16" y="120" fill="#E2E8F0" font-size="10.5" font-family="monospace">  '1. Use Next.js 14 (preference)'</text>
+      <text x="16" y="140" fill="#E2E8F0" font-size="10.5" font-family="monospace">  '2. Dashboard on Vercel (decision)'</text>
+      
+      <rect x="14" y="160" width="307" height="36" rx="8" fill="#091726" stroke="#38BDF8" stroke-width="1"/>
+      <text x="24" y="182" fill="#38BDF8" font-size="11" font-weight="700">Immediate cross-tool memory context</text>
+    </g>
+
+    <!-- Animated Data Flow Lines between Steps -->
+    <use href="#pPipeB12" stroke="#38BDF8" stroke-width="1.8" marker-end="url(#arrow-blue)"/>
+    <use href="#pPipeB24" stroke="#FB7185" stroke-width="1.8" marker-end="url(#arrow-blue)"/>
+    <use href="#pPipeB43" stroke="#38BDF8" stroke-width="1.8" marker-end="url(#arrow-blue)"/>
+  </g>
+
+  <!-- ==================== SECTION 4: STORAGE & DASHBOARD REALTIME SYNC ==================== -->
+  <g transform="translate(40, 1160)">
+    <rect width="1520" height="370" rx="18" fill="url(#cardBg)" stroke="#3ECF8E" stroke-width="1.8" stroke-opacity="0.9" filter="url(#shadow)"/>
+    <path d="M 0 18 C 0 8, 8 0, 18 0 L 1502 0 C 1512 0, 1520 8, 1520 18 L 1520 44 L 0 44 Z" fill="#11271D"/>
+    <text x="22" y="28" fill="#3ECF8E" font-family="system-ui, sans-serif" font-size="16" font-weight="800" letter-spacing="0.5">STORAGE, MANAGEMENT &amp; UNIVERSAL REALTIME SYNC ARCHITECTURE</text>
+
+    <!-- Column 1: Next.js Dashboard UI -->
+    <g transform="translate(22, 58)">
+      <rect width="470" height="290" rx="14" fill="url(#innerCardBg)" stroke="#A855F7" stroke-width="1.2" stroke-opacity="0.7"/>
+      <rect width="470" height="34" rx="14" fill="#251633"/>
+      
+      <!-- Vector Icon 9: Monitor Screen -->
+      <g transform="translate(18, 7) scale(0.7)" stroke="#A855F7" stroke-width="2" fill="none" stroke-linecap="round">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <line x1="8" y1="21" x2="16" y2="21"/>
+        <line x1="12" y1="17" x2="12" y2="21"/>
+      </g>
+      <text x="42" y="22" fill="#A855F7" font-size="13.5" font-weight="700">Next.js 14 Web Application</text>
+      <text x="452" y="22" fill="#94A3B8" font-size="11" text-anchor="end">Management UI</text>
+
+      <text x="18" y="58" fill="#F8FAFC" font-size="12" font-weight="700">Dashboard App Pages:</text>
+      <text x="18" y="78" fill="#94A3B8" font-size="11">• Feed View (/), Setup Generator (/setup), Projects (/projects)</text>
+      
+      <rect x="18" y="95" width="434" height="90" rx="10" fill="#180C26" stroke="#A855F7" stroke-width="1"/>
+      <text x="28" y="118" fill="#A855F7" font-size="11.5" font-weight="700">Serverless Re-embed Route (/api/reembed/route.ts)</text>
+      <text x="28" y="138" fill="#94A3B8" font-size="11">• Keeps Gemini API Key hidden server-side on Vercel</text>
+      <text x="28" y="158" fill="#94A3B8" font-size="11">• Re-embeds edited text &amp; updates Supabase DB atomically</text>
+
+      <text x="18" y="208" fill="#39CD96" font-size="12" font-weight="700">Supabase Realtime WebSockets:</text>
+      <text x="18" y="230" fill="#94A3B8" font-size="11">• Listens on memories table changes (INSERT/UPDATE/DELETE)</text>
+      <text x="18" y="250" fill="#94A3B8" font-size="11">• Updates memory cards in web browser instantly</text>
+    </g>
+
+    <!-- Column 2: Central Supabase Postgres -->
+    <g transform="translate(515, 58)">
+      <rect width="490" height="290" rx="14" fill="url(#innerCardBg)" stroke="#3ECF8E" stroke-width="1.5"/>
+      <rect width="490" height="34" rx="14" fill="#112920"/>
+      
+      <!-- Vector Icon 3: Database Disk -->
+      <g transform="translate(18, 7) scale(0.7)" stroke="#3ECF8E" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M12 2C6.5 2 2 3.8 2 6v12c0 2.2 4.5 4 10 4s10-1.8 10-4V6c0-2.2-4.5-4-10-4z"/>
+        <path d="M2 12c0 2.2 4.5 4 10 4s10-1.8 10-4"/>
+      </g>
+      <text x="42" y="22" fill="#3ECF8E" font-size="13.5" font-weight="700">Central Context Bank — Supabase Postgres + pgvector</text>
+      <text x="472" y="22" fill="#94A3B8" font-size="11" text-anchor="end">Database Layer</text>
+
+      <g transform="translate(18, 50)">
+        <text x="0" y="18" fill="#E2E8F0" font-size="12" font-weight="700">Table Schema: memories</text>
+        <text x="0" y="38" fill="#94A3B8" font-size="11" font-family="monospace">• id: uuid (primary key, default gen_random_uuid())</text>
+        <text x="0" y="56" fill="#94A3B8" font-size="11" font-family="monospace">• user_id: uuid (indexed, RLS isolation)</text>
+        <text x="0" y="74" fill="#94A3B8" font-size="11" font-family="monospace">• project: text (indexed, default 'global')</text>
+        <text x="0" y="92" fill="#94A3B8" font-size="11" font-family="monospace">• content: text (atomic statement statement)</text>
+        <text x="0" y="110" fill="#94A3B8" font-size="11" font-family="monospace">• category: text (preference, decision, fact...)</text>
+        <text x="0" y="128" fill="#38BDF8" font-size="11" font-family="monospace">• embedding: vector(768) (HNSW Cosine Index)</text>
+        <text x="0" y="146" fill="#94A3B8" font-size="11" font-family="monospace">• source_tool: text ('MCP Client', 'Dashboard')</text>
+
+        <rect x="0" y="160" width="454" height="60" rx="10" fill="#0A1D16" stroke="#3ECF8E" stroke-width="1"/>
+        <text x="16" y="182" fill="#3ECF8E" font-size="11.5" font-weight="700">RPC Function: match_memories()</text>
+        <text x="16" y="202" fill="#94A3B8" font-size="10.5">Wraps pgvector cosine distance search for PostgREST RPC compatibility</text>
+      </g>
+    </g>
+
+    <!-- Column 3: Privacy & Security Guarantee -->
+    <g transform="translate(1030, 58)">
+      <rect width="470" height="290" rx="14" fill="url(#innerCardBg)" stroke="#39CD96" stroke-width="1.2" stroke-opacity="0.7"/>
+      <rect width="470" height="34" rx="14" fill="#12281F"/>
+      
+      <!-- Vector Icon 10: Shield Lock -->
+      <g transform="translate(18, 7) scale(0.7)" stroke="#39CD96" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </g>
+      <text x="42" y="22" fill="#39CD96" font-size="13.5" font-weight="700">Privacy, Security &amp; Zero Lock-In Guarantee</text>
+
+      <text x="18" y="58" fill="#CBD5E1" font-size="12" font-weight="700">Core Architecture Directives:</text>
+      <text x="18" y="82" fill="#94A3B8" font-size="11.5">• 100% Self-Hosted &amp; Private in your Supabase DB</text>
+      <text x="18" y="106" fill="#94A3B8" font-size="11.5">• Zero Central Proxy Servers touching your data</text>
+      <text x="18" y="130" fill="#94A3B8" font-size="11.5">• BYOK (Bring Your Own Keys): Gemini &amp; Groq free tiers</text>
+      <text x="18" y="154" fill="#94A3B8" font-size="11.5">• Stateless Local MCP Server spawned per session</text>
+
+      <rect x="18" y="175" width="434" height="65" rx="10" fill="#0C1F18" stroke="#39CD96" stroke-width="1"/>
+      <text x="28" y="197" fill="#39CD96" font-size="11.5" font-weight="700">Cross-Tool Memory Persistence</text>
+      <text x="28" y="217" fill="#94A3B8" font-size="11">Store facts once in Claude Code, access them in Cursor, Antigravity &amp; OpenCode.</text>
+    </g>
+  </g>
+
+  <!-- ==================== FOOTER ==================== -->
+  <g transform="translate(40, 1590)">
+    <text x="760" y="20" fill="#64748B" font-family="Consolas, monospace" font-size="12" letter-spacing="3" font-weight="700" text-anchor="middle">AETHOS MEMORY · MASTER UNIFIED SYSTEM ARCHITECTURE &amp; WORKFLOW CASCADE</text>
+  </g>
+
+</svg>
