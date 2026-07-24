@@ -109,11 +109,12 @@ export function getSupabase(): SupabaseClient {
  */
 export function getUserId(): string {
   if (typeof window === "undefined") return "server-side";
-  return (
-    localStorage.getItem("aethos_user_id") ||
-    getCookie("aethos_user_id") ||
-    "00000000-0000-0000-0000-000000000000"
-  );
+  let storedId = localStorage.getItem("aethos_user_id") || getCookie("aethos_user_id");
+  if (!storedId) {
+    storedId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : "00000000-0000-0000-0000-000000000000";
+    localStorage.setItem("aethos_user_id", storedId);
+  }
+  return storedId;
 }
 
 /**
