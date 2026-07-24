@@ -33,6 +33,7 @@ ENV/
 uiux/
 docs/
 test_script/
+scratch/
 
 # OS & IDE
 desktop.ini
