@@ -67,11 +67,30 @@ def call_extraction(prompt: str) -> dict:
             data = resp.json()
             raw_text = data["choices"][0]["message"]["content"]
             cleaned = _clean_json_response(raw_text)
-            return json.loads(cleaned)
     except Exception as openrouter_err:
+        pass
+
+    # 3. Try Gemini Flash (Fallback 2)
+    try:
+        if cfg.gemini_api_key:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={cfg.gemini_api_key}"
+            payload = {
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "responseMimeType": "application/json",
+                    "temperature": 0.1,
+                },
+            }
+            with httpx.Client(timeout=15.0) as client:
+                resp = client.post(url, json=payload)
+                resp.raise_for_status()
+                data = resp.json()
+                raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
+                cleaned = _clean_json_response(raw_text)
+                return json.loads(cleaned)
+    except Exception as gemini_err:
         raise RuntimeError(
-            "Memory extraction failed — both primary provider (Groq) and fallback provider (OpenRouter) were unavailable. "
-            "Please check API keys and connectivity."
+            f"Memory extraction failed — Groq, OpenRouter, and Gemini error: {str(gemini_err)}"
         )
 
 
