@@ -17,8 +17,11 @@ def conditional_retry_search(query: str, project: str = "global") -> list[dict[s
 
     # Retry path: rewrite query for broader semantic coverage
     rewrite_prompt = (
-        f"Rewrite this search query into a clear, expanded keyword concept for memory search: '{query}'. "
-        "Return JSON: {\"rewritten_query\": \"...\"}"
+        f"You are a memory search assistant. The query below failed to find any matching memories via vector search.\n"
+        f"Rewrite it into a broader, semantically richer keyword phrase that captures the same intent but with more general vocabulary.\n"
+        f"Focus on nouns, concepts, and entities — not filler words.\n"
+        f"Original query: '{query}'\n"
+        "Return strict JSON only: {\"rewritten_query\": \"...\"}"
     )
     try:
         extracted = call_extraction(rewrite_prompt)
@@ -41,15 +44,23 @@ def retry_and_rerank_search(query: str, project: str = "global") -> list[dict[st
     if not candidates:
         return []
 
-    # LLM relevance filter pass
+    # LLM relevance filter + rerank pass
     formatted_candidates = "\n".join(
         [f"- ID: {c['id']} | Content: {c['content']}" for c in candidates]
     )
-    rerank_prompt = f"""Evaluate these candidate memories against the query: "{query}".
-CANDIDATES:
+    rerank_prompt = f"""You are a memory relevance judge for a personal AI context system.
+
+USER QUERY: "{query}"
+
+CANDIDATE MEMORIES (retrieved via vector similarity):
 {formatted_candidates}
 
-Return JSON with array of relevant candidate IDs:
+For each candidate, decide if it is genuinely useful for answering the query.
+A memory is relevant if it directly answers the query, provides necessary background context, or contains related identity/preference/decision facts the user would expect to be retrieved.
+A memory is NOT relevant if it only superficially matches a keyword but does not help answer the query.
+
+Return the IDs of all relevant memories in order of relevance (most relevant first).
+Return strict JSON only — no text, no fences:
 {{"relevant_ids": ["id1", "id2"]}}"""
 
     try:
