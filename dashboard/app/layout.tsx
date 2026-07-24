@@ -1,8 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import Sidebar from "./components/Sidebar";
-import TopBar from "./components/TopBar";
+import AppShell from "./components/AppShell";
 
 export const metadata: Metadata = {
   title: "Aethos Memory",
@@ -13,8 +12,6 @@ export const metadata: Metadata = {
     apple: "/logo.svg",
   },
 };
-
-const LOGIN_PATHS = ["/", "/login", "/onboarding"];
 
 export default function RootLayout({
   children,
@@ -29,9 +26,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-/**
- * AppShell decides at runtime (client-side) whether to render the sidebar
- * layout or a bare page. It imports two client components to do so.
- */
-import AppShell from "./components/AppShell";

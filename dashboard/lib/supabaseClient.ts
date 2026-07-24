@@ -60,11 +60,19 @@ function readCredential(lsKey: string, cookieKey: string, envVar?: string): stri
   return envVar ? process.env[envVar] || "" : "";
 }
 
-// ─── Supabase client ───────────────────────────────────────────────────────────
+// ─── Supabase singleton client ────────────────────────────────────────────────
+
+// Module-level cache: only one SupabaseClient is ever created per URL+key pair.
+let _cachedClient: SupabaseClient | null = null;
+let _cachedUrl = "";
+let _cachedKey = "";
 
 /**
  * Returns a Supabase client using credentials stored in localStorage / cookies.
  * Falls back to env vars (for server-side rendering and .env.local setups).
+ *
+ * Implements a singleton pattern so only ONE client instance exists per
+ * URL+key pair, preventing the "Multiple GoTrueClient instances" warning.
  *
  * No Supabase Auth is used — we connect directly with the service role key.
  * The user's "identity" is their AETHOS_USER_ID stored in localStorage/cookies.
@@ -76,10 +84,23 @@ export function getSupabase(): SupabaseClient {
     "aethos_supabase_key",
     "SUPABASE_SERVICE_ROLE_KEY"
   );
-  return createClient(
-    url || "https://placeholder.supabase.co",
-    key || "placeholder-key"
-  );
+
+  const resolvedUrl = url || "https://placeholder.supabase.co";
+  const resolvedKey = key || "placeholder-key";
+
+  // Return cached client if credentials haven't changed
+  if (_cachedClient && _cachedUrl === resolvedUrl && _cachedKey === resolvedKey) {
+    return _cachedClient;
+  }
+
+  // Create a fresh client and cache it
+  _cachedClient = createClient(resolvedUrl, resolvedKey, {
+    auth: { persistSession: false },
+  });
+  _cachedUrl = resolvedUrl;
+  _cachedKey = resolvedKey;
+
+  return _cachedClient;
 }
 
 /**

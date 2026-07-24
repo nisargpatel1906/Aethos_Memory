@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../lib/supabaseClient";
+import { getSupabase } from "../../lib/supabaseClient";
 
 interface ProjectSummary {
   tag: string;
@@ -20,6 +20,7 @@ export default function ProjectsPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [renamingTag, setRenamingTag] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -27,10 +28,15 @@ export default function ProjectsPage() {
 
   const fetchProjectSummaries = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const res = await fetch("/api/memories");
-      const json = await res.json();
-      const data = json.memories;
+      const db = getSupabase();
+      const { data, error: dbError } = await db
+        .from("memories")
+        .select("project, category, updated_at, created_at")
+        .order("created_at", { ascending: false });
+
+      if (dbError) throw new Error(dbError.message);
 
       if (data) {
         const summaryMap: Record<string, ProjectSummary> = {};
@@ -55,10 +61,12 @@ export default function ProjectsPage() {
 
         setProjects(Object.values(summaryMap));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to fetch project summaries:", err);
+      setError(err.message || "Failed to load projects. Check your Supabase connection in Settings.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -71,12 +79,12 @@ export default function ProjectsPage() {
       return;
     }
 
-    const { error } = await supabase
+    const { error: dbError } = await getSupabase()
       .from("memories")
       .update({ project: newName.trim() })
       .eq("project", oldTag);
 
-    if (!error) {
+    if (!dbError) {
       setRenamingTag(null);
       setNewName("");
       fetchProjectSummaries();
@@ -86,8 +94,8 @@ export default function ProjectsPage() {
   const handleDeleteTag = async (tag: string) => {
     if (!confirm(`Are you sure you want to delete all memories tagged '${tag}'?`)) return;
 
-    const { error } = await supabase.from("memories").delete().eq("project", tag);
-    if (!error) {
+    const { error: dbError } = await getSupabase().from("memories").delete().eq("project", tag);
+    if (!dbError) {
       fetchProjectSummaries();
     }
   };
@@ -164,6 +172,19 @@ export default function ProjectsPage() {
       {loading ? (
         <div style={{ textAlign: "center", padding: "4rem 0", color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
           Loading project clusters...
+        </div>
+      ) : error ? (
+        <div
+          className="bg-surface border-subtle"
+          style={{ padding: "2rem", borderRadius: "6px", textAlign: "center" }}
+        >
+          <div style={{ fontSize: "1.5rem", marginBottom: "0.75rem" }}>⚠️</div>
+          <p style={{ color: "#f87171", fontFamily: "var(--font-mono)", fontSize: "0.875rem", marginBottom: "1rem" }}>
+            {error}
+          </p>
+          <button onClick={fetchProjectSummaries} className="btn-ghost" style={{ fontSize: "0.75rem" }}>
+            Retry
+          </button>
         </div>
       ) : projects.length === 0 ? (
         <div className="bg-surface border-subtle" style={{ padding: "3rem", textAlign: "center", borderRadius: "6px" }}>

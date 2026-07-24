@@ -57,6 +57,15 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSaveApiKeys = () => {
+    // Persist each key to localStorage so they survive page refresh
+    if (formData.groqApiKey)     localStorage.setItem("aethos_groq_key",     formData.groqApiKey);
+    if (formData.geminiApiKey)   localStorage.setItem("aethos_gemini_key",   formData.geminiApiKey);
+    if (formData.openrouterApiKey) localStorage.setItem("aethos_openrouter_key", formData.openrouterApiKey);
+    setSavedMessage(true);
+    setTimeout(() => setSavedMessage(false), 2500);
+  };
+
   const handleSaveConnection = () => {
     saveCredentials(formData.supabaseUrl, formData.supabaseServiceKey, userId);
     setSavedMessage(true);
@@ -149,7 +158,8 @@ export default function SettingsPage() {
                 <h3 style={{ fontSize: "1rem", fontWeight: 600 }}>Supabase Connection</h3>
               </div>
               <span className="badge-category badge-preference">
-                <div className="pulse-dot" style={{ width: "6px", height: "6px" }} /> Connected • Ping {pingTime}ms
+                <div className="pulse-dot" style={{ width: "6px", height: "6px" }} />
+                {pingTime !== null ? `Connected • Ping ${pingTime}ms` : "Connected • Not tested"}
               </span>
             </div>
 
@@ -304,10 +314,7 @@ export default function SettingsPage() {
               </div>
 
               <button
-                onClick={() => {
-                  setSavedMessage(true);
-                  setTimeout(() => setSavedMessage(false), 2500);
-                }}
+                onClick={handleSaveApiKeys}
                 className="btn-primary"
                 style={{ width: "100%", justifyContent: "center" }}
               >
