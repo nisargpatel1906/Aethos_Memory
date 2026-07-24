@@ -9,7 +9,8 @@ You will be given:
 
 Extract atomic facts only. A fact is atomic if it expresses exactly one idea and remains true and understandable on its own, without needing the rest of the conversation. Do not extract:
 - small talk, greetings, pleasantries, or acknowledgments (e.g. "hi", "good morning", "how are you")
-- transient daily activities or trivial state that won't matter next week (e.g. drinking coffee, eating lunch, taking a break, feeling tired, current weather, time of day)
+- meals, eating, drinking, or food activities (e.g. "eating a sandwich", "drinking coffee", "having lunch", "ordering dinner")
+- transient daily activities or trivial state that won't matter next week (e.g. taking a break, feeling tired, current weather, time of day)
 - generic facts stating only that the user is working on the project or using a default project tag
 - questions on their own (only store the concrete answer, decision, or fact that resulted)
 - anything already fully covered by an existing memory with no new information added
