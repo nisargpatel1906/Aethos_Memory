@@ -29,15 +29,9 @@ function FeedContent() {
   const [editContent, setEditContent] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  // Fetch Memories with auth enforcement
+  // Fetch Memories
   const fetchMemories = async () => {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-
     const { data, error } = await supabase
       .from("memories")
       .select("id, project, content, category, source_tool, created_at, updated_at")
@@ -107,9 +101,7 @@ function FeedContent() {
 
       // 2. Query Supabase RPC match_memories
       const { data: user } = await supabase.auth.getUser();
-      const userId = user?.user?.id;
-
-      if (!userId) return;
+      const userId = user?.user?.id || "00000000-0000-0000-0000-000000000000";
 
       if (selectedProject !== "ALL") {
         // Search within a specific project

@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
@@ -33,9 +35,13 @@ export default function LoginPage() {
     }
   };
 
+  const handleDevSignIn = () => {
+    router.push("/feed");
+  };
+
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
-      <div className="bg-surface border-subtle" style={{ width: "100%", maxWidth: "420px", padding: "2rem", borderRadius: "8px" }}>
+      <div className="bg-surface border-subtle" style={{ width: "100%", maxWidth: "440px", padding: "2rem", borderRadius: "8px" }}>
         
         {/* Brand Header */}
         <div style={{ marginBottom: "1.5rem", textAlign: "center" }}>
@@ -61,7 +67,6 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="input-field"
-              required
             />
           </div>
 
@@ -69,6 +74,27 @@ export default function LoginPage() {
             {loading ? "Sending Magic Link..." : "Send Magic Link"}
           </button>
         </form>
+
+        {/* Instant Dev Mode Access */}
+        <div style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--border-color)", textAlign: "center" }}>
+          <button
+            onClick={handleDevSignIn}
+            style={{
+              backgroundColor: "#15203b",
+              border: "1px solid #10b981",
+              color: "#10b981",
+              fontWeight: 600,
+              width: "100%",
+              padding: "0.625rem",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.8125rem",
+            }}
+          >
+            ⚡ Open Dashboard Feed (Instant Dev Access)
+          </button>
+        </div>
 
         {/* Feedback Message */}
         {message && (
@@ -88,7 +114,7 @@ export default function LoginPage() {
         )}
 
         {/* Technical Footer */}
-        <div style={{ marginTop: "2rem", borderTop: "1px solid var(--border-color)", paddingTop: "1rem", fontSize: "0.75rem", color: "var(--text-secondary)", fontFamily: "var(--font-mono)", textAlign: "center" }}>
+        <div style={{ marginTop: "1.5rem", fontSize: "0.75rem", color: "var(--text-secondary)", fontFamily: "var(--font-mono)", textAlign: "center" }}>
           BYOE Model — Supabase Auth & Magic Link
         </div>
       </div>

@@ -70,34 +70,28 @@ function AddMemoryForm() {
       // 2. Dedup check against existing memories if not already confirmed by user
       if (!duplicateConfirmed) {
         const { data: user } = await supabase.auth.getUser();
-        const userId = user?.user?.id;
+        const userId = user?.user?.id || "00000000-0000-0000-0000-000000000000";
 
-        if (userId) {
-          const { data: matches } = await supabase.rpc("match_memories", {
-            p_user_id: userId,
-            p_project: targetProject,
-            query_embedding: embedding,
-            match_threshold: 0.82,
-            match_count: 1,
-          });
+        const { data: matches } = await supabase.rpc("match_memories", {
+          p_user_id: userId,
+          p_project: targetProject,
+          query_embedding: embedding,
+          match_threshold: 0.82,
+          match_count: 1,
+        });
 
-          if (matches && matches.length > 0) {
-            setDuplicateWarning(
-              `Near-duplicate memory detected: "${matches[0].content}" (similarity match).`
-            );
-            setLoading(false);
-            return;
-          }
+        if (matches && matches.length > 0) {
+          setDuplicateWarning(
+            `Near-duplicate memory detected: "${matches[0].content}" (similarity match).`
+          );
+          setLoading(false);
+          return;
         }
       }
 
       // 3. Insert record directly into Supabase (skipping LLM extraction pass)
       const { data: user } = await supabase.auth.getUser();
-      const userId = user?.user?.id;
-
-      if (!userId) {
-        throw new Error("User session expired. Please sign in again.");
-      }
+      const userId = user?.user?.id || "00000000-0000-0000-0000-000000000000";
 
       const { error: insertError } = await supabase.from("memories").insert({
         user_id: userId,
