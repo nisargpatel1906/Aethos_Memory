@@ -3,11 +3,22 @@
 import React, { useState, useEffect } from "react";
 import { getUserId } from "../../lib/supabaseClient";
 
-type ToolId = "claude_desktop" | "cursor" | "opencode" | "claude_code";
+type ToolId =
+  | "claude_desktop"
+  | "cursor"
+  | "windsurf"
+  | "zed"
+  | "roo_code"
+  | "opencode"
+  | "claude_code"
+  | "goose"
+  | "continue_dev"
+  | "librechat";
 
 interface Tool {
   id: ToolId;
   name: string;
+  category: "IDE / Desktop" | "CLI / Terminal" | "Web / Workspace";
   logo: string;
   winPath: string;
   macPath: string;
@@ -19,6 +30,7 @@ const TOOLS: Tool[] = [
   {
     id: "claude_desktop",
     name: "Claude Desktop",
+    category: "IDE / Desktop",
     logo: "C",
     winPath: "%APPDATA%\\Claude\\claude_desktop_config.json",
     macPath: "~/Library/Application Support/Claude/claude_desktop_config.json",
@@ -27,14 +39,43 @@ const TOOLS: Tool[] = [
   {
     id: "cursor",
     name: "Cursor",
+    category: "IDE / Desktop",
     logo: "⌘",
     winPath: "%USERPROFILE%\\.cursor\\mcp.json",
     macPath: "~/.cursor/mcp.json",
     fileLabel: "mcp.json",
   },
   {
+    id: "windsurf",
+    name: "Windsurf IDE",
+    category: "IDE / Desktop",
+    logo: "W",
+    winPath: "%USERPROFILE%\\.codeium\\windsurf\\mcp_config.json",
+    macPath: "~/.codeium/windsurf/mcp_config.json",
+    fileLabel: "mcp_config.json",
+  },
+  {
+    id: "zed",
+    name: "Zed Editor",
+    category: "IDE / Desktop",
+    logo: "Z",
+    winPath: "%APPDATA%\\Zed\\settings.json",
+    macPath: "~/.config/zed/settings.json",
+    fileLabel: "settings.json",
+  },
+  {
+    id: "roo_code",
+    name: "Roo Code (VS Code)",
+    category: "IDE / Desktop",
+    logo: "R",
+    winPath: "%APPDATA%\\Code\\User\\globalStorage\\rooveterinaryinc.roo-cline\\settings\\cline_mcp_settings.json",
+    macPath: "~/Library/Application Support/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/cline_mcp_settings.json",
+    fileLabel: "cline_mcp_settings.json",
+  },
+  {
     id: "opencode",
     name: "OpenCode",
+    category: "CLI / Terminal",
     logo: "O",
     winPath: "%USERPROFILE%\\.config\\opencode\\opencode.jsonc",
     macPath: "~/.config/opencode/opencode.jsonc",
@@ -43,11 +84,39 @@ const TOOLS: Tool[] = [
   {
     id: "claude_code",
     name: "Claude Code",
+    category: "CLI / Terminal",
     logo: "CC",
     winPath: "Terminal",
     macPath: "Terminal",
     fileLabel: "CLI Command",
     isTerminal: true,
+  },
+  {
+    id: "goose",
+    name: "Goose CLI",
+    category: "CLI / Terminal",
+    logo: "G",
+    winPath: "%USERPROFILE%\\.config\\goose\\config.yaml",
+    macPath: "~/.config/goose/config.yaml",
+    fileLabel: "config.yaml",
+  },
+  {
+    id: "continue_dev",
+    name: "Continue.dev",
+    category: "IDE / Desktop",
+    logo: "▶",
+    winPath: "%USERPROFILE%\\.continue\\config.json",
+    macPath: "~/.continue/config.json",
+    fileLabel: "config.json",
+  },
+  {
+    id: "librechat",
+    name: "LibreChat",
+    category: "Web / Workspace",
+    logo: "LC",
+    winPath: "%USERPROFILE%\\LibreChat\\librechat.yaml",
+    macPath: "~/LibreChat/librechat.yaml",
+    fileLabel: "librechat.yaml",
   },
 ];
 
@@ -68,6 +137,36 @@ function buildEnvVars(creds: {
     AETHOS_USER_ID: creds.userId || "<YOUR_USER_ID>",
     AETHOS_PROJECT: "global",
   };
+}
+
+function generateZedSnippet(envVars: Record<string, string>) {
+  return JSON.stringify(
+    {
+      context_servers: {
+        "aethos-memory": {
+          command: "uvx",
+          args: ["aethos-memory"],
+          env: envVars,
+        },
+      },
+    },
+    null,
+    2
+  );
+}
+
+function generateLibreChatSnippet(envVars: Record<string, string>) {
+  const envYaml = Object.entries(envVars)
+    .map(([k, v]) => `        ${k}: "${v}"`)
+    .join("\n");
+  return `mcpServers:
+  aethos-memory:
+    type: stdio
+    command: uvx
+    args:
+      - aethos-memory
+    env:
+${envYaml}`;
 }
 
 function generateJsonSnippet(envVars: Record<string, string>) {
@@ -159,6 +258,8 @@ export default function SetupPage() {
   function getSnippet() {
     if (activeTool === "opencode") return generateOpenCodeSnippet(envVars);
     if (activeTool === "claude_code") return generateClaudeCodeCommand(envVars);
+    if (activeTool === "zed") return generateZedSnippet(envVars);
+    if (activeTool === "librechat") return generateLibreChatSnippet(envVars);
     return generateJsonSnippet(envVars);
   }
 
