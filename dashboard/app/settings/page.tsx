@@ -1,14 +1,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { getSupabase, getUserId } from "../../lib/supabaseClient";
+import { useRouter } from "next/navigation";
+import { getSupabase, getUserId, saveCredentials, clearCredentials } from "../../lib/supabaseClient";
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [userId, setUserId] = useState<string>("");
   const [clientType, setClientType] = useState<"claude_desktop" | "claude_code" | "cursor" | "gemini_cli">("claude_desktop");
   const [copied, setCopied] = useState(false);
   const [savedMessage, setSavedMessage] = useState(false);
   const [pingTime, setPingTime] = useState<number | null>(null);
+  const [disconnecting, setDisconnecting] = useState(false);
 
   const [formData, setFormData] = useState({
     supabaseUrl: "",
@@ -22,12 +25,16 @@ export default function SettingsPage() {
   const activeEmbeddingModel = "gemini-embedding-001 (768 dimensions)";
 
   useEffect(() => {
-    // Load all credentials from localStorage — no auth needed
+    // Read credentials: localStorage first, then cookies as fallback
+    const getCookie = (name: string) => {
+      const match = document.cookie.split("; ").find((r) => r.startsWith(`${name}=`));
+      return match ? decodeURIComponent(match.split("=")[1]) : "";
+    };
     setUserId(getUserId());
     setFormData((prev) => ({
       ...prev,
-      supabaseUrl: localStorage.getItem("aethos_supabase_url") || "",
-      supabaseServiceKey: localStorage.getItem("aethos_supabase_key") || "",
+      supabaseUrl: localStorage.getItem("aethos_supabase_url") || getCookie("aethos_supabase_url") || "",
+      supabaseServiceKey: localStorage.getItem("aethos_supabase_key") || getCookie("aethos_supabase_key") || "",
       groqApiKey: localStorage.getItem("aethos_groq_key") || "",
       geminiApiKey: localStorage.getItem("aethos_gemini_key") || "",
       aethosProject: localStorage.getItem("aethos_project") || "global",
@@ -48,6 +55,18 @@ export default function SettingsPage() {
     } else {
       alert(`Connection Error: ${error.message}`);
     }
+  };
+
+  const handleSaveConnection = () => {
+    saveCredentials(formData.supabaseUrl, formData.supabaseServiceKey, userId);
+    setSavedMessage(true);
+    setTimeout(() => setSavedMessage(false), 2500);
+  };
+
+  const handleDisconnect = () => {
+    setDisconnecting(true);
+    clearCredentials();
+    setTimeout(() => router.replace("/connect"), 600);
   };
 
   const generateMcpConfig = () => {
@@ -161,6 +180,37 @@ export default function SettingsPage() {
 
               <button onClick={handleTestConnection} className="btn-ghost" style={{ alignSelf: "flex-start", marginTop: "0.25rem" }}>
                 Test Connection
+              </button>
+              <button
+                onClick={handleSaveConnection}
+                className="btn-primary"
+                style={{ alignSelf: "flex-start", marginTop: "0.25rem" }}
+              >
+                Save Connection
+              </button>
+              {savedMessage && (
+                <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "#34d399" }}>
+                  ✓ Credentials saved to localStorage + cookie (365 days).
+                </div>
+              )}
+              <button
+                onClick={handleDisconnect}
+                disabled={disconnecting}
+                style={{
+                  alignSelf: "flex-start",
+                  marginTop: "0.5rem",
+                  background: "none",
+                  border: "1px solid rgba(239,68,68,0.4)",
+                  color: "#f87171",
+                  padding: "0.375rem 0.75rem",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "0.75rem",
+                  fontFamily: "var(--font-mono)",
+                  opacity: disconnecting ? 0.5 : 1,
+                }}
+              >
+                {disconnecting ? "Clearing…" : "Disconnect & Reset"}
               </button>
             </div>
           </div>

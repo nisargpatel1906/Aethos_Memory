@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AethosLogo from "../components/AethosLogo";
+import { saveCredentials } from "../../lib/supabaseClient";
 
 const SCHEMA_SQL = `
 create extension if not exists vector;
@@ -49,9 +50,14 @@ export default function ConnectPage() {
   const [sqlCopied, setSqlCopied] = useState(false);
 
   useEffect(() => {
-    const savedUrl = localStorage.getItem("aethos_supabase_url") || "";
-    const savedKey = localStorage.getItem("aethos_supabase_key") || "";
-    const savedUser = localStorage.getItem("aethos_user_id") || "";
+    // Read from localStorage first, fall back to cookies
+    const getCookie = (name: string) => {
+      const match = document.cookie.split("; ").find((r) => r.startsWith(`${name}=`));
+      return match ? decodeURIComponent(match.split("=")[1]) : "";
+    };
+    const savedUrl = localStorage.getItem("aethos_supabase_url") || getCookie("aethos_supabase_url");
+    const savedKey = localStorage.getItem("aethos_supabase_key") || getCookie("aethos_supabase_key");
+    const savedUser = localStorage.getItem("aethos_user_id") || getCookie("aethos_user_id");
     setUrl(savedUrl);
     setKey(savedKey);
     setUserId(savedUser);
@@ -77,13 +83,9 @@ export default function ConnectPage() {
         return;
       }
 
-      // 2. Save credentials to localStorage
-      localStorage.setItem("aethos_supabase_url", url);
-      localStorage.setItem("aethos_supabase_key", key);
-
-      // 3. Save or generate user ID
+      // 2. Save credentials to localStorage + persistent cookie (365 days)
       const finalUserId = userId.trim() || crypto.randomUUID();
-      localStorage.setItem("aethos_user_id", finalUserId);
+      saveCredentials(url, key, finalUserId);
 
       if (data.manualRequired) {
         setStatus("needs_sql");
