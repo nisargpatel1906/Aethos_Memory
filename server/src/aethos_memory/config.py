@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 class Config(BaseModel):
     supabase_url: str = Field(..., description="Supabase Project URL")
     supabase_service_role_key: str = Field(..., description="Supabase Service Role Key")
-    groq_api_key: str = Field(..., description="Groq API Key")
+    groq_api_key: str = Field(default="", description="Groq API Key (optional)")
     openrouter_api_key: str = Field(default="", description="OpenRouter API Key (optional fallback)")
     gemini_api_key: str = Field(..., description="Gemini API Key for embeddings")
     aethos_user_id: str = Field(..., description="Aethos User ID")
@@ -13,11 +13,10 @@ class Config(BaseModel):
 
     @classmethod
     def load_from_env(cls) -> "Config":
-        # Only truly required keys — OPENROUTER_API_KEY is optional fallback
+        # Required keys for database + vector embeddings
         required_vars = [
             "SUPABASE_URL",
             "SUPABASE_SERVICE_ROLE_KEY",
-            "GROQ_API_KEY",
             "GEMINI_API_KEY",
             "AETHOS_USER_ID",
         ]
@@ -33,8 +32,8 @@ class Config(BaseModel):
         return cls(
             supabase_url=os.environ["SUPABASE_URL"],
             supabase_service_role_key=os.environ["SUPABASE_SERVICE_ROLE_KEY"],
-            groq_api_key=os.environ["GROQ_API_KEY"],
-            openrouter_api_key=os.getenv("OPENROUTER_API_KEY", ""),  # optional
+            groq_api_key=os.getenv("GROQ_API_KEY", ""),
+            openrouter_api_key=os.getenv("OPENROUTER_API_KEY", ""),
             gemini_api_key=os.environ["GEMINI_API_KEY"],
             aethos_user_id=os.environ["AETHOS_USER_ID"],
             aethos_project=os.getenv("AETHOS_PROJECT", "global"),

@@ -9,7 +9,7 @@ ACTIVE_RETRIEVAL_STRATEGY = retrieval.STRATEGIES["retry_and_rerank_search"]
 
 
 @mcp.tool()
-def remember(content: str, project: str = "global") -> str:
+def remember(content: str = "", project: str = "global") -> str:
     """Store a fact, decision, or preference that should be available in future
     sessions and to other AI tools, not just this conversation. Call this whenever
     the user states a preference, makes a decision about how something should be
@@ -17,6 +17,11 @@ def remember(content: str, project: str = "global") -> str:
     conversation. Do not call this for details that only matter for the current
     task and won't be useful again."""
     try:
+        if not content or not content.strip():
+            return "Memory storage skipped — no content provided."
+
+        project = project or "global"
+
         # 1. Embed raw content for similarity search / dedup context
         raw_embedding = providers.call_embedding(content)
         existing = db.similarity_search(raw_embedding, project=project, threshold=0.65, limit=5)
@@ -83,15 +88,19 @@ def remember(content: str, project: str = "global") -> str:
 
 
 @mcp.tool()
-def recall(query: str, project: str = "global") -> str:
+def recall(query: str = "", project: str = "global") -> str:
     """Search stored memory for facts relevant to the current conversation. Call
     this before answering anything that references past decisions, preferences,
     or project history, and at the start of a session to load relevant context
     before doing other work."""
     try:
+        project = project or "global"
+        if not query or not query.strip():
+            return list_memories(project=project)
+
         matches = ACTIVE_RETRIEVAL_STRATEGY(query, project)
         if not matches:
-            return "No stored memories match that query."
+            return f"No stored memories match '{query}' in project '{project}'."
 
         lines = [f"Found {len(matches)} relevant memories:"]
         for idx, m in enumerate(matches, 1):
@@ -138,11 +147,12 @@ def forget(memory_id: str = None, description: str = None) -> str:
 
 
 @mcp.tool()
-def list_memories(project: str) -> str:
+def list_memories(project: str = "global") -> str:
     """Return every stored memory for a given project, unfiltered. Use this for
     a full context load at the start of a session rather than recall's targeted
     search."""
     try:
+        project = project or "global"
         memories = db.list_by_project(project)
         if not memories:
             return f"No memories stored for project '{project}'."
@@ -154,6 +164,25 @@ def list_memories(project: str) -> str:
 
     except Exception as err:
         return f"Memory listing failed — {str(err)}."
+
+
+# Alias registrations for cross-client compatibility
+@mcp.tool()
+def save_memory(content: str = "", project: str = "global") -> str:
+    """Alias for remember. Store a fact, decision, or preference."""
+    return remember(content=content, project=project)
+
+
+@mcp.tool()
+def search_memories(query: str = "", project: str = "global") -> str:
+    """Alias for recall. Search stored memory for relevant facts."""
+    return recall(query=query, project=project)
+
+
+@mcp.tool()
+def delete_memory(memory_id: str = None, description: str = None) -> str:
+    """Alias for forget. Delete a previously stored memory."""
+    return forget(memory_id=memory_id, description=description)
 
 
 def main():
