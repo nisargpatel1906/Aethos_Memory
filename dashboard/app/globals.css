@@ -88,11 +88,18 @@ a {
   border: 1px solid var(--border-color);
 }
 
+/* GPU Hardware Acceleration for smooth 60fps UX */
+.glow-hover, .btn-primary, .btn-ghost, .pulse-dot {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
 .glow-hover {
-  transition: all 0.2s ease;
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .glow-hover:hover {
-  box-shadow: 0 0 12px var(--accent-glow);
+  transform: translateY(-1px) translateZ(0);
+  box-shadow: 0 4px 16px var(--accent-glow);
   border-color: var(--accent-color);
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getSupabase, getUserId } from "../../lib/supabaseClient";
@@ -19,14 +19,11 @@ interface Memory {
 function FeedContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialProjectParam = searchParams.get("project");
-  const initialQueryParam = searchParams.get("q");
 
   const [memories, setMemories] = useState<Memory[]>([]);
-  const [filteredMemories, setFilteredMemories] = useState<Memory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState(initialQueryParam || "");
-  const [selectedProject, setSelectedProject] = useState<string>(initialProjectParam || "ALL");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
+  const [selectedProject, setSelectedProject] = useState<string>(searchParams.get("project") || "ALL");
   const [selectedSourceTool, setSelectedSourceTool] = useState<string>("ALL");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -35,6 +32,15 @@ function FeedContent() {
   const [quickAddContent, setQuickAddContent] = useState("");
   const [quickAdding, setQuickAdding] = useState(false);
 
+  // Sync searchParams reactively when URL changes
+  useEffect(() => {
+    const q = searchParams.get("q");
+    const proj = searchParams.get("project");
+    if (q !== null) setSearchQuery(q);
+    if (proj !== null) setSelectedProject(proj);
+  }, [searchParams]);
+
+  // Fetch Memories directly via Supabase client (uses localStorage credentials)
   const fetchMemories = async () => {
     setLoading(true);
     try {
@@ -45,7 +51,6 @@ function FeedContent() {
         .order("created_at", { ascending: false });
       if (!error && data) {
         setMemories(data as Memory[]);
-        setFilteredMemories(data as Memory[]);
       }
     } catch (e) {
       console.error("Failed to fetch memories:", e);
@@ -87,7 +92,8 @@ function FeedContent() {
     fetchMemories();
   }, []);
 
-  useEffect(() => {
+  // Compute filtered memories instantly using useMemo (zero extra re-renders)
+  const filteredMemories = useMemo(() => {
     let result = memories;
 
     if (selectedProject !== "ALL") {
@@ -112,7 +118,7 @@ function FeedContent() {
       );
     }
 
-    setFilteredMemories(result);
+    return result;
   }, [selectedProject, selectedSourceTool, selectedCategory, searchQuery, memories]);
 
   const handleEditSave = async (id: string) => {
