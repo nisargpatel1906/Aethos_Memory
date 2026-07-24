@@ -507,11 +507,11 @@ export default function SetupPage() {
         </svg>
         <span>
           <strong style={{ color: "var(--text-primary)" }}>Prerequisites:</strong>{" "}
-          Install <code style={{ fontFamily: "var(--font-mono)", color: "#10b981" }}>uv</code> first:{" "}
-          <code style={{ fontFamily: "var(--font-mono)", color: "#94a3b8" }}>pip install uv</code> or{" "}
-          <code style={{ fontFamily: "var(--font-mono)", color: "#94a3b8" }}>brew install uv</code>.{" "}
-          The <code style={{ fontFamily: "var(--font-mono)", color: "#10b981" }}>uvx</code> command auto-downloads{" "}
-          <code style={{ fontFamily: "var(--font-mono)", color: "#94a3b8" }}>aethos-memory</code> from PyPI on first run — no manual install needed.
+          Install <code style={{ color: "#34d399", backgroundColor: "rgba(16,185,129,0.15)", padding: "2px 6px", borderRadius: "4px" }}>uv</code> first:{" "}
+          <code style={{ color: "#38bdf8", backgroundColor: "rgba(56,189,248,0.15)", padding: "2px 6px", borderRadius: "4px" }}>pip install uv</code> or{" "}
+          <code style={{ color: "#38bdf8", backgroundColor: "rgba(56,189,248,0.15)", padding: "2px 6px", borderRadius: "4px" }}>brew install uv</code>.{" "}
+          The <code style={{ color: "#34d399", backgroundColor: "rgba(16,185,129,0.15)", padding: "2px 6px", borderRadius: "4px" }}>uvx</code> command auto-downloads{" "}
+          <code style={{ color: "#c084fc", backgroundColor: "rgba(192,132,252,0.15)", padding: "2px 6px", borderRadius: "4px" }}>aethos-memory</code> from PyPI on first run — no manual install needed.
         </span>
       </div>
     </div>
