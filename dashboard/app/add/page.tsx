@@ -1,80 +1,70 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { supabase } from "../../lib/supabaseClient";
+import { useSearchParams, useRouter } from "next/navigation";
+import { getSupabase, getUserId } from "../../lib/supabaseClient";
 
 function AddMemoryForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialProjectParam = searchParams.get("project");
+  const initialProjectParam = searchParams.get("project") || "global";
 
   const [content, setContent] = useState("");
   const [category, setCategory] = useState<"preference" | "decision" | "project_detail" | "other">("preference");
-  const [projectMode, setProjectMode] = useState<"existing" | "new">(initialProjectParam ? "existing" : "existing");
-  const [selectedProject, setSelectedProject] = useState(initialProjectParam || "global");
-  const [customProject, setCustomProject] = useState("");
-  const [existingProjects, setExistingProjects] = useState<string[]>([initialProjectParam || "global"]);
-
+  const [targetProject, setTargetProject] = useState(initialProjectParam);
+  const [newProjectInput, setNewProjectInput] = useState("");
+  const [showNewProjectInput, setShowNewProjectInput] = useState(false);
+  const [existingProjects, setExistingProjects] = useState<string[]>(["global"]);
   const [loading, setLoading] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [duplicateConfirmed, setDuplicateConfirmed] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-      // Fetch unique existing projects for selector
-      supabase
-        .from("memories")
-        .select("project")
-        .then(({ data }) => {
-          if (data) {
-            const unique = Array.from(new Set(data.map((d) => d.project)));
-            if (initialProjectParam && !unique.includes(initialProjectParam)) {
-              unique.push(initialProjectParam);
-            }
-            if (unique.length > 0) setExistingProjects(unique);
+    getSupabase()
+      .from("memories")
+      .select("project")
+      .then(({ data }) => {
+        if (data) {
+          const unique = Array.from(new Set(data.map((d) => d.project)));
+          if (initialProjectParam && !unique.includes(initialProjectParam)) {
+            unique.push(initialProjectParam);
           }
-        });
-    });
-  }, [initialProjectParam, router]);
+          if (unique.length > 0) setExistingProjects(unique);
+        }
+      });
+  }, [initialProjectParam]);
 
   const handleAddMemory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim()) return;
 
-    const targetProject = projectMode === "new" ? customProject.trim() || "global" : selectedProject;
-
     setLoading(true);
     setErrorMsg(null);
     setDuplicateWarning(null);
 
+    const projectToSave = showNewProjectInput && newProjectInput.trim() ? newProjectInput.trim() : targetProject;
+
     try {
-      // 1. Generate vector embedding via /api/reembed serverless route
-      const reembedRes = await fetch("/api/reembed", {
+      // 1. Call server API reembed to generate embedding
+      const res = await fetch("/api/reembed", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: content }),
       });
 
-      if (!reembedRes.ok) {
-        throw new Error("Failed to generate vector embedding for memory");
+      if (!res.ok) {
+        throw new Error("Failed to generate vector embedding via Gemini.");
       }
 
-      const { embedding } = await reembedRes.json();
+      const { embedding } = await res.json();
+      const userId = getUserId();
 
       // 2. Dedup check against existing memories if not already confirmed by user
       if (!duplicateConfirmed) {
-        const { data: user } = await supabase.auth.getUser();
-        const userId = user?.user?.id || "00000000-0000-0000-0000-000000000000";
-
-        const { data: matches } = await supabase.rpc("match_memories", {
+        const { data: matches } = await getSupabase().rpc("match_memories", {
           p_user_id: userId,
-          p_project: targetProject,
+          p_project: projectToSave,
           query_embedding: embedding,
           match_threshold: 0.82,
           match_count: 1,
@@ -89,141 +79,186 @@ function AddMemoryForm() {
         }
       }
 
-      // 3. Insert record directly into Supabase (skipping LLM extraction pass)
-      const { data: user } = await supabase.auth.getUser();
-      const userId = user?.user?.id || "00000000-0000-0000-0000-000000000000";
-
-      const { error: insertError } = await supabase.from("memories").insert({
+      // 3. Insert record into Supabase memories
+      const { error: insertError } = await getSupabase().from("memories").insert({
         user_id: userId,
-        project: targetProject,
+        project: projectToSave,
         content: content.trim(),
         embedding: embedding,
         category: category,
-        source_tool: "Dashboard Manual",
+        source_tool: "Web Dashboard",
       });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        throw new Error(insertError.message);
+      }
 
+      // 4. Redirect to /feed on success
       router.push("/feed");
     } catch (err: any) {
-      setErrorMsg(err.message || "Failed to add memory record");
-    } finally {
+      setErrorMsg(err.message || "An unexpected error occurred.");
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "680px", margin: "0 auto" }}>
-      {/* Header */}
-      <div style={{ marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <button
-          onClick={() => router.push("/feed")}
-          style={{ background: "none", border: "1px solid var(--border-color)", color: "var(--text-secondary)", padding: "0.375rem 0.75rem", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem", fontFamily: "var(--font-mono)" }}
-        >
-          ← Cancel
-        </button>
-        <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
-          Manual Memory Entry
-        </span>
-      </div>
-
-      {/* Form Container */}
+    <div style={{ maxWidth: "640px", margin: "1rem auto" }}>
       <div className="bg-surface border-subtle" style={{ padding: "2rem", borderRadius: "8px" }}>
-        <h1 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.5rem" }}>Add Memory Record</h1>
-        <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginBottom: "1.5rem" }}>
-          Manually store an atomic fact, preference, or decision. Skips LLM extraction pass with automatic dedup check.
-        </p>
-
-        <form onSubmit={handleAddMemory} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-          {/* Content */}
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
           <div>
-            <label style={{ display: "block", fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", marginBottom: "0.375rem" }}>
-              ATOMIC FACT CONTENT
-            </label>
+            <h2 style={{ fontSize: "1.25rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <span style={{ color: "#10b981" }}>+</span> Add New Memory
+            </h2>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.8125rem", marginTop: "0.25rem" }}>
+              Manually insert a fact, rule, or preference into your AI memory vault. Available across all sessions instantly.
+            </p>
+          </div>
+          <button onClick={() => router.back()} className="btn-ghost" style={{ padding: "0.25rem 0.5rem" }}>
+            ✕
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleAddMemory} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          {/* Fact Content Textarea */}
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.375rem" }}>
+              <label style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>
+                MEMORY / FACT
+              </label>
+              <span style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>
+                Markdown supported
+              </span>
+            </div>
             <textarea
-              className="input-field"
-              style={{ minHeight: "100px", resize: "vertical" }}
-              placeholder="e.g. User prefers strict TypeScript types over any or implicit type definitions."
+              placeholder="e.g. Always use Tailwind v4 for frontend projects and prefer pnpm over npm for faster installs."
               value={content}
               onChange={(e) => setContent(e.target.value)}
+              className="input-field"
+              rows={4}
               required
             />
           </div>
 
-          {/* Category */}
-          <div>
-            <label style={{ display: "block", fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", marginBottom: "0.375rem" }}>
-              CATEGORY
-            </label>
-            <select className="input-field" value={category} onChange={(e: any) => setCategory(e.target.value)}>
-              <option value="preference">Preference</option>
-              <option value="decision">Decision</option>
-              <option value="project_detail">Project Detail</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-
-          {/* Project Tag */}
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.375rem" }}>
-              <label style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>
+          {/* Project Tag & Category Grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            {/* Project Tag */}
+            <div>
+              <label style={{ display: "block", fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", marginBottom: "0.375rem" }}>
                 PROJECT TAG
               </label>
-              <button
-                type="button"
-                onClick={() => setProjectMode(projectMode === "existing" ? "new" : "existing")}
-                style={{ background: "none", border: "none", color: "#10b981", fontSize: "0.75rem", cursor: "pointer", fontFamily: "var(--font-mono)" }}
-              >
-                {projectMode === "existing" ? "+ New Project Tag" : "Select Existing Tag"}
-              </button>
+              {!showNewProjectInput ? (
+                <select
+                  value={targetProject}
+                  onChange={(e) => {
+                    if (e.target.value === "NEW") {
+                      setShowNewProjectInput(true);
+                    } else {
+                      setTargetProject(e.target.value);
+                    }
+                  }}
+                  className="input-field"
+                >
+                  {existingProjects.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                  <option value="NEW">+ Create New Project Tag</option>
+                </select>
+              ) : (
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <input
+                    type="text"
+                    placeholder="New Tag Name"
+                    value={newProjectInput}
+                    onChange={(e) => setNewProjectInput(e.target.value)}
+                    className="input-field"
+                  />
+                  <button type="button" onClick={() => setShowNewProjectInput(false)} className="btn-ghost" style={{ padding: "0.375rem 0.5rem", fontSize: "0.75rem" }}>
+                    Cancel
+                  </button>
+                </div>
+              )}
             </div>
 
-            {projectMode === "existing" ? (
-              <select className="input-field" value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)}>
-                {existingProjects.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
+            {/* Category Buttons */}
+            <div>
+              <label style={{ display: "block", fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", marginBottom: "0.375rem" }}>
+                CATEGORY
+              </label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.375rem" }}>
+                {[
+                  { label: "Preference", value: "preference" },
+                  { label: "Decision", value: "decision" },
+                  { label: "Project Detail", value: "project_detail" },
+                  { label: "Other", value: "other" },
+                ].map((cat) => (
+                  <button
+                    key={cat.value}
+                    type="button"
+                    onClick={() => setCategory(cat.value as any)}
+                    style={{
+                      backgroundColor: category === cat.value ? "rgba(16, 185, 129, 0.15)" : "var(--bg-color)",
+                      border: category === cat.value ? "1px solid #10b981" : "1px solid var(--border-color)",
+                      color: category === cat.value ? "#4edea3" : "var(--text-secondary)",
+                      padding: "0.5rem",
+                      borderRadius: "3px",
+                      fontSize: "0.75rem",
+                      fontFamily: "var(--font-mono)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {cat.label}
+                  </button>
                 ))}
-              </select>
-            ) : (
-              <input
-                className="input-field"
-                placeholder="e.g. wealth-advisor-ai"
-                value={customProject}
-                onChange={(e) => setCustomProject(e.target.value)}
-                required
-              />
-            )}
+              </div>
+            </div>
           </div>
 
-          {/* Error Message */}
-          {errorMsg && (
-            <div style={{ padding: "0.75rem", borderRadius: "4px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid #ef4444", color: "#f87171", fontSize: "0.875rem" }}>
-              {errorMsg}
+          {/* Instant Sync Notice Box */}
+          <div
+            style={{
+              backgroundColor: "rgba(16, 185, 129, 0.05)",
+              border: "1px solid rgba(16, 185, 129, 0.2)",
+              padding: "0.875rem",
+              borderRadius: "4px",
+              fontSize: "0.8125rem",
+              color: "#34d399",
+              display: "flex",
+              gap: "0.625rem",
+              alignItems: "flex-start",
+            }}
+          >
+            <span style={{ fontSize: "1rem" }}>⚡</span>
+            <div>
+              <strong>Instant Vector Sync:</strong> Once saved, an embedding is generated in the background and made immediately available to your connected AI MCP clients.
             </div>
-          )}
+          </div>
 
-          {/* Duplicate Warning Dialog */}
+          {/* Duplicate Warning Prompt */}
           {duplicateWarning && (
-            <div style={{ padding: "1rem", borderRadius: "4px", backgroundColor: "rgba(234, 179, 8, 0.1)", border: "1px solid #eab308", color: "#fef08a", fontSize: "0.875rem" }}>
-              <p style={{ marginBottom: "0.75rem" }}>⚠️ {duplicateWarning}</p>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div style={{ backgroundColor: "rgba(234, 179, 8, 0.1)", border: "1px solid #eab308", padding: "0.875rem", borderRadius: "4px", color: "#fde047", fontSize: "0.8125rem" }}>
+              <div style={{ fontWeight: 600, marginBottom: "0.375rem" }}>⚠️ Duplicate Memory Warning</div>
+              <div>{duplicateWarning}</div>
+              <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem" }}>
                 <button
                   type="button"
-                  className="btn-primary"
-                  style={{ fontSize: "0.75rem", padding: "0.25rem 0.75rem" }}
                   onClick={() => {
                     setDuplicateConfirmed(true);
                     setDuplicateWarning(null);
                   }}
+                  className="btn-primary"
+                  style={{ padding: "0.25rem 0.75rem", fontSize: "0.75rem" }}
                 >
-                  Insert Anyway
+                  Save Anyway
                 </button>
                 <button
                   type="button"
                   onClick={() => setDuplicateWarning(null)}
-                  style={{ background: "none", border: "1px solid var(--border-color)", color: "var(--text-primary)", padding: "0.25rem 0.75rem", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem" }}
+                  className="btn-ghost"
+                  style={{ padding: "0.25rem 0.75rem", fontSize: "0.75rem" }}
                 >
                   Cancel
                 </button>
@@ -231,10 +266,22 @@ function AddMemoryForm() {
             </div>
           )}
 
-          {/* Submit */}
-          <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: "0.5rem" }}>
-            {loading ? "Embedding & Checking Dedup..." : "Save Memory Record"}
-          </button>
+          {/* Error Banner */}
+          {errorMsg && (
+            <div style={{ backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid #ef4444", padding: "0.75rem", borderRadius: "4px", color: "#f87171", fontSize: "0.8125rem" }}>
+              {errorMsg}
+            </div>
+          )}
+
+          {/* Footer Buttons */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.5rem", paddingTop: "1rem", borderTop: "1px solid var(--border-color)" }}>
+            <button type="button" onClick={() => router.back()} className="btn-ghost">
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary" disabled={loading} style={{ opacity: loading ? 0.7 : 1 }}>
+              {loading ? "Generating Embedding..." : "Save Memory ➔"}
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -243,7 +290,7 @@ function AddMemoryForm() {
 
 export default function AddMemoryPage() {
   return (
-    <Suspense fallback={<div style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)" }}>Loading form...</div>}>
+    <Suspense fallback={<div style={{ color: "var(--text-secondary)", fontFamily: "var(--font-mono)", padding: "2rem" }}>Loading form...</div>}>
       <AddMemoryForm />
     </Suspense>
   );

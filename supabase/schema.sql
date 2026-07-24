@@ -1,40 +1,46 @@
 -- ====================================================================
--- Aethos Memory — Supabase Database Migration
--- ====================================================================
--- NOTE: This is a one-time migration file meant to be executed directly
--- in the Supabase SQL Editor by the user. The MCP server process does
--- NOT auto-apply database migrations.
+-- Aethos Memory — Supabase Database Schema
+-- Run this ONCE in the Supabase SQL Editor (Dashboard → SQL Editor → New query)
+-- Or click "Setup Database" in the Aethos dashboard onboarding page.
 -- ====================================================================
 
+-- 1. Enable pgvector extension
 create extension if not exists vector;
 
-create table memories (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  project text not null default 'global',
-  content text not null,
-  embedding vector(768) not null,
-  category text not null check (category in ('preference','decision','project_detail','other')),
+-- 2. Create memories table
+--    user_id is text (not a FK to auth.users) so the MCP service role
+--    can insert memories for any user_id without needing a matching auth row.
+create table if not exists memories (
+  id          uuid        primary key default gen_random_uuid(),
+  user_id     text        not null,
+  project     text        not null default 'global',
+  content     text        not null,
+  embedding   vector(768),          -- nullable so inserts don't fail if Gemini is slow
+  category    text        not null default 'other'
+              check (category in ('preference','decision','project_detail','other')),
   source_tool text,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
 );
 
+-- 3. Row-level security — service role key bypasses this automatically
 alter table memories enable row level security;
 
-create policy "Users manage their own memories"
+create policy "Service role has full access"
   on memories for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using (true)
+  with check (true);
 
-create index on memories (user_id, project);
+-- 4. Index for fast per-user + per-project lookups
+create index if not exists memories_user_project_idx on memories (user_id, project);
 
+-- 5. Semantic search function
 create or replace function match_memories(
-  p_user_id uuid,
-  p_project text,
+  p_user_id       text,
+  p_project       text,
   query_embedding vector(768),
   match_threshold float default 0.75,
-  match_count int default 5
+  match_count     int   default 5
 )
 returns table (id uuid, content text, category text, created_at timestamptz)
 language sql stable
@@ -43,6 +49,7 @@ as $$
   from memories m
   where m.user_id = p_user_id
     and m.project = p_project
+    and m.embedding is not null
     and 1 - (m.embedding <=> query_embedding) > match_threshold
   order by m.embedding <=> query_embedding
   limit match_count;

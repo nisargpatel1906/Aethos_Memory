@@ -1,5 +1,5 @@
-import LoginPage from "./login/page";
+import RootRedirect from "./components/RootRedirect";
 
 export default function Home() {
-  return <LoginPage />;
+  return <RootRedirect />;
 }
