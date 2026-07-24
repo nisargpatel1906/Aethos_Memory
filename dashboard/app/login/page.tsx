@@ -106,12 +106,37 @@ export default function LoginPage() {
         {/* 3 Value Props */}
         <div style={{ display: "flex", flexDirection: "column", gap: "0.875rem", marginBottom: "2.5rem" }}>
           {[
-            { icon: "🔄", title: "Cross-tool sync", desc: "Claude, Cursor, OpenCode — one memory bank." },
-            { icon: "🧠", title: "Persistent context", desc: "Your AI never asks the same question twice." },
-            { icon: "⚡", title: "Zero effort capture", desc: "Memories are extracted automatically, silently." },
+            {
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                </svg>
+              ),
+              title: "Cross-tool sync",
+              desc: "Claude, Cursor, OpenCode — one memory bank.",
+            },
+            {
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2a10 10 0 0 0-10 10c0 5.523 4.477 10 10 10s10-4.477 10-10A10 10 0 0 0 12 2z"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+              ),
+              title: "Persistent context",
+              desc: "Your AI never asks the same question twice.",
+            },
+            {
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                </svg>
+              ),
+              title: "Zero effort capture",
+              desc: "Memories are extracted automatically, silently.",
+            },
           ].map((item) => (
             <div key={item.title} style={{ display: "flex", alignItems: "flex-start", gap: "0.75rem" }}>
-              <span style={{ fontSize: "1.25rem", flexShrink: 0 }}>{item.icon}</span>
+              <span style={{ display: "flex", alignItems: "center", marginTop: "2px", flexShrink: 0 }}>{item.icon}</span>
               <div>
                 <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-primary)" }}>{item.title}</div>
                 <div style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>{item.desc}</div>
@@ -231,25 +256,37 @@ export default function LoginPage() {
               <button
                 onClick={() => router.push("/feed")}
                 style={{
-                  marginTop: "1.25rem",
                   width: "100%",
-                  background: "none",
-                  border: "1px dashed var(--border-color)",
-                  color: "var(--text-secondary)",
-                  padding: "0.625rem",
+                  marginTop: "0.75rem",
+                  padding: "0.5rem",
+                  backgroundColor: "rgba(100,116,139,0.12)",
+                  border: "1px solid rgba(100,116,139,0.3)",
+                  color: "#94a3b8",
                   borderRadius: "4px",
                   cursor: "pointer",
                   fontFamily: "var(--font-mono)",
                   fontSize: "0.75rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.375rem",
                 }}
               >
-                ⚡ Skip login — Dev preview
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                </svg>
+                Skip login — Dev preview
               </button>
             </>
           ) : (
             /* Sent state */
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📬</div>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: "1rem" }}>
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="1.5">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </div>
               <div style={{ padding: "1rem", backgroundColor: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", color: "#34d399", fontSize: "0.875rem", marginBottom: "1rem" }}>
                 Magic link sent! Check your inbox and click the link to access your dashboard.
               </div>

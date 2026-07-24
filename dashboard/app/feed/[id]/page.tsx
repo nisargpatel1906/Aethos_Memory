@@ -116,10 +116,16 @@ export default function MemoryDetailPage() {
           </button>
         </div>
 
-        {/* Section 1: Fact Content */}
+        {/* Section 1: Memory Fact Content */}
         <div style={{ marginBottom: "1.5rem" }}>
-          <label style={{ display: "block", fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", marginBottom: "0.25rem" }}>
-            📝 FACT CONTENT
+          <label style={{ display: "flex", alignItems: "center", gap: "0.375rem", fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", marginBottom: "0.25rem" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            FACT CONTENT
           </label>
           <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
             What your AI tools remember about you
@@ -134,8 +140,12 @@ export default function MemoryDetailPage() {
 
         {/* Section 2: Metadata Attributes */}
         <div style={{ marginBottom: "1.5rem", paddingTop: "1rem", borderTop: "1px solid var(--border-color)" }}>
-          <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", marginBottom: "1rem" }}>
-            ⚙️ METADATA ATTRIBUTES
+          <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", marginBottom: "1rem" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            METADATA ATTRIBUTES
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
@@ -217,8 +227,12 @@ export default function MemoryDetailPage() {
           </div>
 
           {/* Timestamps */}
-          <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", marginTop: "0.75rem" }}>
-            🕒 Created: {new Date(memory.created_at).toLocaleString()} | Updated: {new Date(memory.updated_at).toLocaleString()}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", marginTop: "0.75rem" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Created: {new Date(memory.created_at).toLocaleString()} | Updated: {new Date(memory.updated_at).toLocaleString()}
           </div>
         </div>
 
@@ -233,7 +247,11 @@ export default function MemoryDetailPage() {
           }}
         >
           <div style={{ display: "flex", alignItems: "flex-start", gap: "0.75rem" }}>
-            <span style={{ color: "#ef4444", fontSize: "1.125rem" }}>⚠️</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" style={{ flexShrink: 0, marginTop: "2px" }}>
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
             <div style={{ flex: 1 }}>
               <div style={{ color: "#f87171", fontWeight: 600, fontSize: "0.875rem", marginBottom: "0.25rem" }}>
                 Delete Memory?
@@ -293,8 +311,13 @@ export default function MemoryDetailPage() {
           <button onClick={() => router.push("/feed")} className="btn-ghost">
             Close Panel
           </button>
-          <button onClick={handleSave} className="btn-primary" disabled={saving} style={{ opacity: saving ? 0.7 : 1 }}>
-            {saving ? "Saving..." : "💾 Save Changes"}
+          <button onClick={handleSave} className="btn-primary" disabled={saving} style={{ opacity: saving ? 0.7 : 1, display: "flex", alignItems: "center", gap: "0.375rem" }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>

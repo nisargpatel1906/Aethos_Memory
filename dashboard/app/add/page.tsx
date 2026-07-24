@@ -231,7 +231,9 @@ function AddMemoryForm() {
               alignItems: "flex-start",
             }}
           >
-            <span style={{ fontSize: "1rem" }}>⚡</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: "2px" }}>
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
             <div>
               <strong>Instant Vector Sync:</strong> Once saved, an embedding is generated in the background and made immediately available to your connected AI MCP clients.
             </div>
@@ -240,7 +242,14 @@ function AddMemoryForm() {
           {/* Duplicate Warning Prompt */}
           {duplicateWarning && (
             <div style={{ backgroundColor: "rgba(234, 179, 8, 0.1)", border: "1px solid #eab308", padding: "0.875rem", borderRadius: "4px", color: "#fde047", fontSize: "0.8125rem" }}>
-              <div style={{ fontWeight: 600, marginBottom: "0.375rem" }}>⚠️ Duplicate Memory Warning</div>
+              <div style={{ fontWeight: 600, marginBottom: "0.375rem", display: "flex", alignItems: "center", gap: "0.375rem" }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fde047" strokeWidth="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                Duplicate Memory Warning
+              </div>
               <div>{duplicateWarning}</div>
               <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem" }}>
                 <button
@@ -278,8 +287,14 @@ function AddMemoryForm() {
             <button type="button" onClick={() => router.back()} className="btn-ghost">
               Cancel
             </button>
-            <button type="submit" className="btn-primary" disabled={loading} style={{ opacity: loading ? 0.7 : 1 }}>
-              {loading ? "Generating Embedding..." : "Save Memory ➔"}
+            <button type="submit" className="btn-primary" disabled={loading} style={{ opacity: loading ? 0.7 : 1, display: "flex", alignItems: "center", gap: "0.375rem" }}>
+              {loading ? "Generating Embedding..." : "Save Memory"}
+              {!loading && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12 5 19 12 12 19"/>
+                </svg>
+              )}
             </button>
           </div>
         </form>

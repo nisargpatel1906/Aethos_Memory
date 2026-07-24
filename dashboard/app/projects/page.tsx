@@ -178,7 +178,13 @@ export default function ProjectsPage() {
           className="bg-surface border-subtle"
           style={{ padding: "2rem", borderRadius: "6px", textAlign: "center" }}
         >
-          <div style={{ fontSize: "1.5rem", marginBottom: "0.75rem" }}>⚠️</div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "0.75rem" }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
           <p style={{ color: "#f87171", fontFamily: "var(--font-mono)", fontSize: "0.875rem", marginBottom: "1rem" }}>
             {error}
           </p>
@@ -202,7 +208,9 @@ export default function ProjectsPage() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <span style={{ fontSize: "1.25rem" }}>📁</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                    </svg>
                     <h3 style={{ fontSize: "1.125rem", fontWeight: 700, color: "var(--text-primary)" }}>{proj.tag}</h3>
                   </div>
                   <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", marginTop: "0.25rem" }}>
@@ -242,9 +250,13 @@ export default function ProjectsPage() {
                   <button
                     onClick={() => router.push(`/feed?project=${encodeURIComponent(proj.tag)}`)}
                     className="btn-ghost"
-                    style={{ fontSize: "0.75rem", padding: "0.375rem 0.75rem", fontFamily: "var(--font-mono)" }}
+                    style={{ fontSize: "0.75rem", padding: "0.375rem 0.75rem", fontFamily: "var(--font-mono)", display: "flex", alignItems: "center", gap: "0.375rem" }}
                   >
-                    Filter Feed ➔
+                    Filter Feed
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                      <polyline points="12 5 19 12 12 19"/>
+                    </svg>
                   </button>
                   <div style={{ display: "flex", gap: "0.5rem" }}>
                     <button
@@ -259,6 +271,7 @@ export default function ProjectsPage() {
                     </button>
                     <button
                       onClick={() => handleDeleteTag(proj.tag)}
+                      title="Delete Project Tag"
                       style={{
                         backgroundColor: "rgba(239, 68, 68, 0.1)",
                         border: "1px solid rgba(239, 68, 68, 0.3)",
@@ -267,9 +280,14 @@ export default function ProjectsPage() {
                         borderRadius: "4px",
                         cursor: "pointer",
                         fontSize: "0.75rem",
+                        display: "flex",
+                        alignItems: "center",
                       }}
                     >
-                      🗑️
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      </svg>
                     </button>
                   </div>
                 </div>
