@@ -28,6 +28,12 @@ export default function ProjectsPage() {
 
   const fetchProjectSummaries = async () => {
     setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
     const { data, error } = await supabase
       .from("memories")
       .select("project, category, updated_at, created_at")

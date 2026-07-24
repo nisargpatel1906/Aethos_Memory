@@ -22,20 +22,26 @@ function AddMemoryForm() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch unique existing projects for selector
-    supabase
-      .from("memories")
-      .select("project")
-      .then(({ data }) => {
-        if (data) {
-          const unique = Array.from(new Set(data.map((d) => d.project)));
-          if (initialProjectParam && !unique.includes(initialProjectParam)) {
-            unique.push(initialProjectParam);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+      // Fetch unique existing projects for selector
+      supabase
+        .from("memories")
+        .select("project")
+        .then(({ data }) => {
+          if (data) {
+            const unique = Array.from(new Set(data.map((d) => d.project)));
+            if (initialProjectParam && !unique.includes(initialProjectParam)) {
+              unique.push(initialProjectParam);
+            }
+            if (unique.length > 0) setExistingProjects(unique);
           }
-          if (unique.length > 0) setExistingProjects(unique);
-        }
-      });
-  }, [initialProjectParam]);
+        });
+    });
+  }, [initialProjectParam, router]);
 
   const handleAddMemory = async (e: React.FormEvent) => {
     e.preventDefault();

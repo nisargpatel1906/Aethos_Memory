@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
 
 interface Memory {
@@ -15,6 +15,7 @@ interface Memory {
 }
 
 function FeedContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialProjectParam = searchParams.get("project");
 
@@ -28,9 +29,15 @@ function FeedContent() {
   const [editContent, setEditContent] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  // Fetch Memories
+  // Fetch Memories with auth enforcement
   const fetchMemories = async () => {
     setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
     const { data, error } = await supabase
       .from("memories")
       .select("id, project, content, category, source_tool, created_at, updated_at")

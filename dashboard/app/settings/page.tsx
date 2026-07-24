@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [userId, setUserId] = useState<string>("user-uuid-placeholder");
   const [clientType, setClientType] = useState<"claude_desktop" | "cursor" | "claude_code">("claude_desktop");
   const [copied, setCopied] = useState(false);
@@ -22,14 +24,13 @@ export default function SettingsPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data?.user?.id) {
-        setUserId(data.user.id);
+      if (!data?.user) {
+        router.push("/login");
+        return;
       }
+      setUserId(data.user.id);
     });
-    // Note: credentials are NOT persisted to localStorage — they are display-only
-    // for re-generating the MCP config snippet in this session. Your actual keys
-    // live in your MCP client config (environment variables), not here.
-  }, []);
+  }, [router]);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
