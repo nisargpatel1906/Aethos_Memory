@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
 
 <img src="Aethos Memory.svg" alt="Aethos Memory" width="220" />
 
