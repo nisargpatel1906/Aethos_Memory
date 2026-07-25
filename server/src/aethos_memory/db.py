@@ -14,6 +14,20 @@ def get_supabase_client() -> Client:
     return _supabase_client
 
 
+import math
+import json
+
+def _cosine_similarity(v1: list[float], v2: list[float]) -> float:
+    if not v1 or not v2 or len(v1) != len(v2):
+        return 0.0
+    dot = sum(a * b for a, b in zip(v1, v2))
+    norm1 = math.sqrt(sum(a * a for a in v1))
+    norm2 = math.sqrt(sum(b * b for b in v2))
+    if norm1 == 0 or norm2 == 0:
+        return 0.0
+    return dot / (norm1 * norm2)
+
+
 def similarity_search(
     embedding: list[float],
     project: str,
@@ -22,23 +36,55 @@ def similarity_search(
 ) -> list[dict[str, Any]]:
     """Perform vector similarity search via Supabase Postgres RPC match_memories.
 
-    Scoped to AETHOS_USER_ID and the target project.
+    Scoped to AETHOS_USER_ID and target project, with automatic cross-project vector search fallback when 0 matches found.
     """
     client = get_supabase_client()
     cfg = get_config()
 
-    res = client.rpc(
-        "match_memories",
-        {
-            "p_user_id": cfg.aethos_user_id,
-            "p_project": project,
-            "query_embedding": embedding,
-            "match_threshold": threshold,
-            "match_count": limit,
-        },
-    ).execute()
+    matches = []
+    # 1. Search specified project via RPC if project is specified and != "ALL"
+    if project != "ALL":
+        try:
+            res = client.rpc(
+                "match_memories",
+                {
+                    "p_user_id": cfg.aethos_user_id,
+                    "p_project": project,
+                    "query_embedding": embedding,
+                    "match_threshold": threshold,
+                    "match_count": limit,
+                },
+            ).execute()
+            matches = res.data or []
+        except Exception:
+            pass
 
-    return res.data or []
+    # 2. Cross-project fallback: search ALL stored memories for this user
+    if not matches:
+        try:
+            rows = (
+                client.table("memories")
+                .select("id, content, category, project, created_at, embedding")
+                .eq("user_id", cfg.aethos_user_id)
+                .execute()
+                .data or []
+            )
+            scored = []
+            min_thresh = max(0.35, threshold - 0.15)
+            for r in rows:
+                emb = r.get("embedding")
+                if isinstance(emb, str):
+                    emb = json.loads(emb)
+                if emb:
+                    sim = _cosine_similarity(embedding, emb)
+                    if sim >= min_thresh:
+                        scored.append((sim, r))
+            scored.sort(key=lambda x: x[0], reverse=True)
+            matches = [item[1] for item in scored[:limit]]
+        except Exception:
+            pass
+
+    return matches
 
 
 ALLOWED_CATEGORIES = {"preference", "decision", "project_detail", "other"}

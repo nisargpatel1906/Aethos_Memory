@@ -42,13 +42,17 @@ create or replace function match_memories(
   match_threshold float default 0.75,
   match_count     int   default 5
 )
-returns table (id uuid, content text, category text, created_at timestamptz)
+returns table (id uuid, content text, category text, project text, created_at timestamptz)
 language sql stable
 as $$
-  select m.id, m.content, m.category, m.created_at
+  select m.id, m.content, m.category, m.project, m.created_at
   from memories m
   where m.user_id = p_user_id
-    and m.project = p_project
+    and (
+      p_project = 'ALL'
+      or m.project = p_project
+      or m.project = 'global'
+    )
     and m.embedding is not null
     and 1 - (m.embedding <=> query_embedding) > match_threshold
   order by m.embedding <=> query_embedding

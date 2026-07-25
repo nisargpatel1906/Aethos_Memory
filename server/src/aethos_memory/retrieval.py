@@ -5,9 +5,19 @@ from aethos_memory.providers import call_embedding, call_extraction
 
 
 async def plain_search(query: str, project: str = "global") -> list[dict[str, Any]]:
-    """Strategy 1: Single pass vector similarity search."""
+    """Strategy 1: Multi-pass vector similarity search combining target project and ALL user memories."""
     embedding = await call_embedding(query)
-    return similarity_search(embedding, project=project, threshold=0.5, limit=8)
+    results = similarity_search(embedding, project=project, threshold=0.45, limit=8)
+
+    if project != "ALL":
+        results_all = similarity_search(embedding, project="ALL", threshold=0.45, limit=8)
+        seen = {r["id"] for r in results}
+        for r in results_all:
+            if r["id"] not in seen:
+                results.append(r)
+                seen.add(r["id"])
+
+    return results
 
 
 async def conditional_retry_search(query: str, project: str = "global") -> list[dict[str, Any]]:
@@ -31,13 +41,13 @@ async def conditional_retry_search(query: str, project: str = "global") -> list[
         rewritten = query
 
     new_embedding = await call_embedding(rewritten)
-    # Search broadened project context at a lower threshold
-    broader = similarity_search(new_embedding, project="global", threshold=0.4, limit=8)
+    # Search broadened project context across ALL projects at lower threshold
+    broader = similarity_search(new_embedding, project="ALL", threshold=0.4, limit=8)
     if broader:
         return broader
-    # Last resort: search original query at very low threshold globally
+    # Last resort: search original query at very low threshold globally across ALL projects
     last_embedding = await call_embedding(query)
-    return similarity_search(last_embedding, project="global", threshold=0.35, limit=5)
+    return similarity_search(last_embedding, project="ALL", threshold=0.35, limit=5)
 
 
 async def retry_and_rerank_search(query: str, project: str = "global") -> list[dict[str, Any]]:
