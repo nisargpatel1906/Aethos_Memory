@@ -285,7 +285,10 @@ Add this to `%APPDATA%\Claude\claude_desktop_config.json`:
   "mcpServers": {
     "aethos-memory": {
       "command": "C:\\Users\\YourName\\Documents\\Aethos_Memory\\server\\.venv\\Scripts\\python.exe",
-      "args": ["C:\\Users\\YourName\\Documents\\Aethos_Memory\\server\\run_mcp.py"]
+      "args": ["C:\\Users\\YourName\\Documents\\Aethos_Memory\\server\\run_mcp.py"],
+      "env": {
+        "AETHOS_SOURCE_TOOL": "Claude Desktop"
+      }
     }
   }
 }
@@ -303,7 +306,10 @@ Add this to `%USERPROFILE%\.config\opencode\opencode.jsonc`:
       "command": [
         "C:\\Users\\YourName\\Documents\\Aethos_Memory\\server\\.venv\\Scripts\\python.exe",
         "C:\\Users\\YourName\\Documents\\Aethos_Memory\\server\\run_mcp.py"
-      ]
+      ],
+      "environment": {
+        "AETHOS_SOURCE_TOOL": "OpenCode"
+      }
     }
   }
 }
@@ -318,7 +324,10 @@ In Cursor settings, find the MCP section and add:
   "mcpServers": {
     "aethos-memory": {
       "command": "C:\\Users\\YourName\\Documents\\Aethos_Memory\\server\\.venv\\Scripts\\python.exe",
-      "args": ["C:\\Users\\YourName\\Documents\\Aethos_Memory\\server\\run_mcp.py"]
+      "args": ["C:\\Users\\YourName\\Documents\\Aethos_Memory\\server\\run_mcp.py"],
+      "env": {
+        "AETHOS_SOURCE_TOOL": "Cursor"
+      }
     }
   }
 }
