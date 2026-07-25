@@ -28,9 +28,12 @@ function FeedContent() {
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [quickAddContent, setQuickAddContent] = useState("");
   const [quickAdding, setQuickAdding] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   // Sync searchParams reactively when URL changes
   useEffect(() => {
@@ -131,21 +134,60 @@ function FeedContent() {
   }, [selectedProject, selectedSourceTool, selectedCategory, searchQuery, memories]);
 
   const handleEditSave = async (id: string) => {
-    if (!editContent.trim()) return;
-    const { error } = await getSupabase()
-      .from("memories")
-      .update({ content: editContent.trim(), updated_at: new Date().toISOString() })
-      .eq("id", id);
-    if (!error) { setEditingId(null); fetchMemories(); }
+    if (!editContent.trim() || editSaving) return;
+    setEditSaving(true);
+    try {
+      const res = await fetch(`/api/memories/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: editContent.trim() }),
+      });
+      if (res.ok) {
+        setEditingId(null);
+        fetchMemories();
+      }
+    } catch {
+      // silently fail
+    }
+    setEditSaving(false);
   };
 
   const handleDelete = async (id: string) => {
     const { error } = await getSupabase().from("memories").delete().eq("id", id);
     if (!error) {
       setDeleteConfirmId(null);
+      setSelectedIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
       fetchMemories();
     }
   };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0 || bulkDeleting) return;
+    setBulkDeleting(true);
+    try {
+      await fetch("/api/memories/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+      setSelectedIds(new Set());
+      fetchMemories();
+    } catch {
+      // silently fail
+    }
+    setBulkDeleting(false);
+  };
+
+  const toggleSelectId = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => setSelectedIds(new Set(filteredMemories.map((m) => m.id)));
+  const clearSelection = () => setSelectedIds(new Set());
 
   const getCategoryBadge = (cat: string) => {
     switch (cat) {
@@ -380,7 +422,73 @@ function FeedContent() {
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.875rem" }}>
+          {/* Bulk Select Action Bar */}
+          {filteredMemories.length > 0 && (
+            <div
+              className="bg-surface border-subtle"
+              style={{
+                padding: "0.5rem 1rem",
+                borderRadius: "6px",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                fontSize: "0.8rem",
+                fontFamily: "var(--font-mono)",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={selectedIds.size === filteredMemories.length && filteredMemories.length > 0}
+                onChange={(e) => e.target.checked ? selectAll() : clearSelection()}
+                style={{ cursor: "pointer", accentColor: "#10b981" }}
+                id="select-all-memories"
+              />
+              <label htmlFor="select-all-memories" style={{ color: "var(--text-secondary)", cursor: "pointer" }}>
+                {selectedIds.size === 0 ? "Select all" : `${selectedIds.size} selected`}
+              </label>
+              {selectedIds.size > 0 && (
+                <>
+                  <button
+                    onClick={handleBulkDelete}
+                    disabled={bulkDeleting}
+                    style={{
+                      marginLeft: "auto",
+                      background: "rgba(239,68,68,0.12)",
+                      border: "1px solid rgba(239,68,68,0.4)",
+                      color: "#f87171",
+                      padding: "0.3rem 0.75rem",
+                      borderRadius: "4px",
+                      cursor: bulkDeleting ? "not-allowed" : "pointer",
+                      fontSize: "0.75rem",
+                      fontFamily: "var(--font-mono)",
+                      opacity: bulkDeleting ? 0.6 : 1,
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {bulkDeleting ? "Deleting…" : `Delete ${selectedIds.size} selected`}
+                  </button>
+                  <button
+                    onClick={clearSelection}
+                    style={{
+                      background: "none",
+                      border: "1px solid var(--border-color)",
+                      color: "var(--text-secondary)",
+                      padding: "0.3rem 0.75rem",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      fontSize: "0.75rem",
+                      fontFamily: "var(--font-mono)",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
           {/* Inline Quick-Add Bar */}
+
           <div
             className="bg-surface border-subtle"
             style={{ padding: "0.625rem 1rem", borderRadius: "6px", display: "flex", alignItems: "center", gap: "0.75rem" }}
@@ -410,9 +518,20 @@ function FeedContent() {
                 display: "flex",
                 flexDirection: "column",
                 gap: "0.875rem",
+                outline: selectedIds.has(item.id) ? "1px solid rgba(16,185,129,0.4)" : "none",
               }}
             >
               {/* Card Header & Content */}
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "0.75rem" }}>
+                {/* Select checkbox */}
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(item.id)}
+                  onChange={() => toggleSelectId(item.id)}
+                  style={{ marginTop: "3px", cursor: "pointer", accentColor: "#10b981", flexShrink: 0 }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <div style={{ flex: 1 }}>
               {editingId === item.id ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                   <textarea
@@ -425,8 +544,8 @@ function FeedContent() {
                     <button onClick={() => setEditingId(null)} className="btn-ghost" style={{ padding: "0.375rem 0.75rem", fontSize: "0.75rem" }}>
                       Cancel
                     </button>
-                    <button onClick={() => handleEditSave(item.id)} className="btn-primary" style={{ padding: "0.375rem 0.75rem", fontSize: "0.75rem" }}>
-                      Save Changes
+                    <button onClick={() => handleEditSave(item.id)} disabled={editSaving} className="btn-primary" style={{ padding: "0.375rem 0.75rem", fontSize: "0.75rem", opacity: editSaving ? 0.6 : 1 }}>
+                      {editSaving ? "Saving…" : "Save Changes"}
                     </button>
                   </div>
                 </div>
