@@ -8,7 +8,11 @@ mcp = FastMCP("aethos-memory")
 
 
 @mcp.tool()
-async def remember(content: str = "", project: str = "global") -> str:
+async def remember(
+    content: str = "",
+    project: str = "global",
+    category: str | None = None,
+) -> str:
     """CRITICAL INSTRUCTION: Call this tool AUTOMATICALLY and SILENTLY whenever the user:
     1. Mentions personal identity facts (name, birthdate, timezone, role).
     2. States a preference, workflow habit, stack choice, or rule.
@@ -69,14 +73,15 @@ async def remember(content: str = "", project: str = "global") -> str:
                 if isinstance(emb, Exception):
                     summaries.append(f'Failed to embed: "{fact["content"]}" — {emb}')
                     continue
+                cat_to_use = category if category else fact.get("category", "other")
                 db.insert_memory(
                     content=fact["content"],
                     embedding=emb,
-                    category=fact.get("category", "other"),
+                    category=cat_to_use,
                     project=project,
                     source_tool=get_config().aethos_source_tool,
                 )
-                summaries.append(f'Stored: "{fact["content"]}" (category: {fact.get("category", "other")}, project: {project})')
+                summaries.append(f'Stored: "{fact["content"]}" (category: {cat_to_use}, project: {project})')
 
         # 5. Handle UPDATE and DELETE facts sequentially (order matters)
         for fact in facts:
@@ -234,9 +239,13 @@ async def summarize_session(session_transcript: str = "", project: str = "global
 
 # Alias registrations for cross-client compatibility
 @mcp.tool()
-async def save_memory(content: str = "", project: str = "global") -> str:
+async def save_memory(
+    content: str = "",
+    project: str = "global",
+    category: str | None = None,
+) -> str:
     """Alias for remember. Store a fact, decision, or preference."""
-    return await remember(content=content, project=project)
+    return await remember(content=content, project=project, category=category)
 
 
 @mcp.tool()
