@@ -4,7 +4,22 @@ from fastmcp import FastMCP
 from aethos_memory import db, providers, prompts, retrieval
 from aethos_memory.config import get_config
 
-mcp = FastMCP("aethos-memory")
+mcp = FastMCP(
+    "aethos-memory",
+    instructions=prompts.INSTRUCTION_SNIPPET,
+)
+
+
+@mcp.prompt()
+def aethos_memory_instructions() -> str:
+    """System prompt instructions for Aethos Memory auto-saving context."""
+    return prompts.INSTRUCTION_SNIPPET
+
+
+@mcp.resource("instructions://aethos-memory")
+def get_aethos_memory_instructions() -> str:
+    """System instructions resource for AI clients."""
+    return prompts.INSTRUCTION_SNIPPET
 
 
 @mcp.tool()

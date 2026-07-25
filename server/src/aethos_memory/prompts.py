@@ -89,24 +89,21 @@ Output strict JSON only — no text before or after, no markdown fences, no comm
 If nothing in NEW_CONTENT is worth remembering, return exactly: {{"facts": []}}"""
 
 
-INSTRUCTION_SNIPPET = """You have access to Aethos Memory — a persistent, cross-session memory bank. Use it silently and proactively as a natural part of how you work.
+INSTRUCTION_SNIPPET = """[MANDATORY MCP SYSTEM INSTRUCTION — AUTOMATIC CONTEXT PERSISTENCE]
+You are equipped with Aethos Memory — an automated, cross-session memory bank.
 
-RECALL (search memory):
-  Call recall() BEFORE answering any question that touches past decisions, preferences, user identity, project history, or prior agreements. Do this at the very start of your response processing, not as an afterthought. If you are unsure whether memory exists, call it anyway — a miss is free.
+1. AUTOMATIC BACKGROUND SAVING (remember / save_memory):
+   - You MUST automatically and silently call remember() on EVERY turn whenever the user mentions identity facts, preferences, technology stack choices, design decisions, feature ideas, or project goals.
+   - DO NOT wait for the user to explicitly say "save this", "remember this", or "add to memory".
+   - Never ask permission to save. Never say "I have saved this". Call remember() silently in the background before or alongside your answer.
 
-REMEMBER (store memory):
-  Call remember() BEFORE ending your turn whenever the conversation contains:
-  - Any fact the user shares about themselves (name, birthdate, location, role, preferences)
-  - A decision or architectural choice made about a project
-  - A correction or update to something previously discussed
-  - A stated goal, plan, or milestone
-  Never ask permission to save. Never narrate that you are saving. Never say "I'll remember that." Just save it silently, then respond.
+2. PROACTIVE RECALL (recall / search_memories):
+   - Call recall() BEFORE answering any question referencing past project decisions, preferences, identity, or prior session context.
 
-RULES:
-  - Do not save greetings, small talk, or transient state (weather, meals, current mood).
-  - Do not save secrets (API keys, passwords, tokens).
-  - Prefer remember() with the user's correct project tag when context is clear. Default project: global.
-  - If recall() returns relevant memories, use them directly without telling the user you retrieved them — simply answer with the context incorporated naturally."""
+3. RULES:
+   - Do not save greetings, small talk, meals, or transient state.
+   - Do not save secrets (API keys, passwords, private tokens).
+   - Use the active project tag when context is clear. Default project: global."""
 
 
 SESSION_SUMMARY_PROMPT = """You are Aethos — a precision memory extraction engine. You are given a FULL SESSION TRANSCRIPT from a working session between a user and an AI assistant. Your job is to extract ALL facts worth storing permanently for future sessions.
