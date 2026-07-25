@@ -188,17 +188,23 @@ async def list_memories(project: str = "global", limit: int = 50, page: int = 1)
 
 
 @mcp.tool()
-async def summarize_session(session_transcript: str = "", project: str = "global") -> str:
+async def summarize_session(
+    session_transcript: str = "",
+    transcript: str = "",
+    text: str = "",
+    project: str = "global",
+) -> str:
     """Extract and store all important facts from a complete session transcript.
     Call this at the end of a long working session to auto-remember all key decisions,
     preferences, and architectural choices made during the session. Pass the full
-    conversation text as session_transcript."""
+    conversation text as session_transcript or transcript."""
     try:
-        if not session_transcript or not session_transcript.strip():
+        raw_text = session_transcript or transcript or text
+        if not raw_text or not raw_text.strip():
             return "No session content provided to summarize."
 
         bulk_prompt = prompts.SESSION_SUMMARY_PROMPT.format(
-            session_transcript=session_transcript[:12000],  # guard against context overflow
+            session_transcript=raw_text[:12000],  # guard against context overflow
             project=project,
         )
         res = await providers.call_extraction(bulk_prompt)
