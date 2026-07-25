@@ -278,7 +278,8 @@ Go to [http://localhost:3000/setup](http://localhost:3000/setup) in the dashboar
 
 > ⚡ **How Auto-Saving Works for All Users:**  
 > 1. **Built-in MCP Directive**: The Aethos server automatically passes system directives to MCP clients on connection.  
-> 2. **Setup Wizard**: Visit `http://localhost:3000/setup` to copy/download the 1-click Auto-Save Rule file (`CLAUDE.md`, `.cursorrules`, `.windsurfrules`, `opencode.jsonc`, etc.) tailored to your specific AI tool.
+> 2. **Zero-Touch AI Prompt**: Copy a single prompt from **[AI_SETUP_PROMPTS.md](AI_SETUP_PROMPTS.md)** directly into your AI assistant (Claude Code, Cursor, OpenCode, Windsurf, Antigravity, etc.) and it will handle 100% of the setup automatically.  
+> 3. **Setup Wizard**: Visit `http://localhost:3000/setup` to copy/download the 1-click Auto-Save Rule file (`CLAUDE.md`, `.cursorrules`, `.windsurfrules`, `opencode.jsonc`, etc.) tailored to your specific AI tool.
 
 <br/>
 
