@@ -16,6 +16,74 @@ interface Memory {
   updated_at: string;
 }
 
+function CategoryBadge({ cat }: { cat: string }) {
+  switch (cat) {
+    case "preference":
+      return <span className="badge-category badge-preference">Preference</span>;
+    case "decision":
+      return <span className="badge-category badge-decision">Decision</span>;
+    case "project_detail":
+      return <span className="badge-category badge-detail">Project Detail</span>;
+    default:
+      return <span className="badge-category badge-other">Other</span>;
+  }
+}
+
+function ToolBadge({ tool }: { tool: string | null }) {
+  const name = (tool || "").toLowerCase().replace(/[\s_-]/g, "");
+
+  const toolMap: Record<string, { label: string; bg: string; border: string; color: string }> = {
+    claude:           { label: "Claude",        bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.4)",  color: "#e8a44a" },
+    claudedesktop:    { label: "Claude Desktop", bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.4)",  color: "#e8a44a" },
+    claudecode:       { label: "Claude Code",   bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.4)",  color: "#e8a44a" },
+    opencode:         { label: "OpenCode",      bg: "rgba(139,92,246,0.12)",  border: "rgba(139,92,246,0.4)",  color: "#a78bfa" },
+    codex:            { label: "Codex",         bg: "rgba(20,184,166,0.12)",  border: "rgba(20,184,166,0.4)",  color: "#2dd4bf" },
+    antigravity:      { label: "Antigravity",   bg: "rgba(16,185,129,0.12)",  border: "rgba(16,185,129,0.4)",  color: "#34d399" },
+    cursor:           { label: "Cursor",        bg: "rgba(59,130,246,0.12)",  border: "rgba(59,130,246,0.4)",  color: "#60a5fa" },
+    geminicli:        { label: "Gemini CLI",    bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.4)",  color: "#fbbf24" },
+    gemini:           { label: "Gemini",        bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.4)",  color: "#fbbf24" },
+    webdashboard:     { label: "Web Dashboard", bg: "rgba(244,114,182,0.12)", border: "rgba(244,114,182,0.4)", color: "#f472b6" },
+    webdashboardintegrationtest: { label: "Web Dashboard", bg: "rgba(244,114,182,0.12)", border: "rgba(244,114,182,0.4)", color: "#f472b6" },
+    mcpclient:        { label: "MCP Client",    bg: "rgba(148,163,184,0.12)", border: "rgba(148,163,184,0.4)", color: "#94a3b8" },
+  };
+
+  const match = toolMap[name] ?? { label: tool || "Unknown", bg: "rgba(148,163,184,0.1)", border: "rgba(148,163,184,0.3)", color: "#94a3b8" };
+
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        backgroundColor: match.bg,
+        border: `1px solid ${match.border}`,
+        color: match.color,
+        fontFamily: "var(--font-mono)",
+        fontSize: "0.7rem",
+        fontWeight: 600,
+        padding: "0.15rem 0.5rem",
+        borderRadius: "3px",
+        letterSpacing: "0.02em",
+        textTransform: "uppercase",
+      }}
+    >
+      {match.label}
+    </span>
+  );
+}
+
+function formatRelativeTime(isoString: string) {
+  const now = new Date();
+  const date = new Date(isoString);
+  const diffSecs = Math.floor((now.getTime() - date.getTime()) / 1000);
+  if (diffSecs < 60) return `${diffSecs}s ago`;
+  const diffMins = Math.floor(diffSecs / 60);
+  if (diffMins < 60) return `${diffMins} mins ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+}
+
 function FeedContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -109,24 +177,24 @@ function FeedContent() {
     let result = memories;
 
     if (selectedProject !== "ALL") {
-      result = result.filter((m) => m.project === selectedProject);
+      result = result.filter((rec) => rec.project === selectedProject);
     }
 
     if (selectedSourceTool !== "ALL") {
-      result = result.filter((m) => (m.source_tool || "unknown") === selectedSourceTool);
+      result = result.filter((rec) => (rec.source_tool || "unknown") === selectedSourceTool);
     }
 
     if (selectedCategory !== "ALL") {
-      result = result.filter((m) => m.category === selectedCategory);
+      result = result.filter((rec) => rec.category === selectedCategory);
     }
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
-        (m) =>
-          m.content.toLowerCase().includes(q) ||
-          m.project.toLowerCase().includes(q) ||
-          m.category.toLowerCase().includes(q)
+        (rec) =>
+          rec.content.toLowerCase().includes(q) ||
+          rec.project.toLowerCase().includes(q) ||
+          rec.category.toLowerCase().includes(q)
       );
     }
 
@@ -156,7 +224,11 @@ function FeedContent() {
     const { error } = await getSupabase().from("memories").delete().eq("id", id);
     if (!error) {
       setDeleteConfirmId(null);
-      setSelectedIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
       fetchMemories();
     }
   };
@@ -186,79 +258,23 @@ function FeedContent() {
     });
   };
 
-  const selectAll = () => setSelectedIds(new Set(filteredMemories.map((m) => m.id)));
+  const selectAll = () => setSelectedIds(new Set(filteredMemories.map((rec) => rec.id)));
   const clearSelection = () => setSelectedIds(new Set());
 
-  const getCategoryBadge = (cat: string) => {
-    switch (cat) {
-      case "preference":
-        return <span className="badge-category badge-preference">Preference</span>;
-      case "decision":
-        return <span className="badge-category badge-decision">Decision</span>;
-      case "project_detail":
-        return <span className="badge-category badge-detail">Project Detail</span>;
-      default:
-        return <span className="badge-category badge-other">Other</span>;
+  const uniqueProjects: string[] = [];
+  memories.forEach((item) => {
+    if (item.project && !uniqueProjects.includes(item.project)) {
+      uniqueProjects.push(item.project);
     }
-  };
+  });
 
-  const getToolBadge = (tool: string | null) => {
-    const name = (tool || "").toLowerCase().replace(/[\s_-]/g, "");
-
-    const toolMap: Record<string, { label: string; bg: string; border: string; color: string }> = {
-      claude:           { label: "Claude",        bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.4)",  color: "#e8a44a" },
-      claudedesktop:    { label: "Claude Desktop", bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.4)",  color: "#e8a44a" },
-      claudecode:       { label: "Claude Code",   bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.4)",  color: "#e8a44a" },
-      opencode:         { label: "OpenCode",      bg: "rgba(139,92,246,0.12)",  border: "rgba(139,92,246,0.4)",  color: "#a78bfa" },
-      codex:            { label: "Codex",         bg: "rgba(20,184,166,0.12)",  border: "rgba(20,184,166,0.4)",  color: "#2dd4bf" },
-      antigravity:      { label: "Antigravity",   bg: "rgba(16,185,129,0.12)",  border: "rgba(16,185,129,0.4)",  color: "#34d399" },
-      cursor:           { label: "Cursor",        bg: "rgba(59,130,246,0.12)",  border: "rgba(59,130,246,0.4)",  color: "#60a5fa" },
-      geminicli:        { label: "Gemini CLI",    bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.4)",  color: "#fbbf24" },
-      gemini:           { label: "Gemini",        bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.4)",  color: "#fbbf24" },
-      webdashboard:     { label: "Web Dashboard", bg: "rgba(244,114,182,0.12)", border: "rgba(244,114,182,0.4)", color: "#f472b6" },
-      webdashboardintegrationtest: { label: "Web Dashboard", bg: "rgba(244,114,182,0.12)", border: "rgba(244,114,182,0.4)", color: "#f472b6" },
-      mcpclient:        { label: "MCP Client",    bg: "rgba(148,163,184,0.12)", border: "rgba(148,163,184,0.4)", color: "#94a3b8" },
-    };
-
-    const match = toolMap[name] ?? { label: tool || "Unknown", bg: "rgba(148,163,184,0.1)", border: "rgba(148,163,184,0.3)", color: "#94a3b8" };
-
-    return (
-      <span
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          backgroundColor: match.bg,
-          border: `1px solid ${match.border}`,
-          color: match.color,
-          fontFamily: "var(--font-mono)",
-          fontSize: "0.7rem",
-          fontWeight: 600,
-          padding: "0.15rem 0.5rem",
-          borderRadius: "3px",
-          letterSpacing: "0.02em",
-          textTransform: "uppercase",
-        }}
-      >
-        {match.label}
-      </span>
-    );
-  };
-
-  const formatRelativeTime = (isoString: string) => {
-    const now = new Date();
-    const date = new Date(isoString);
-    const diffSecs = Math.floor((now.getTime() - date.getTime()) / 1000);
-    if (diffSecs < 60) return `${diffSecs}s ago`;
-    const diffMins = Math.floor(diffSecs / 60);
-    if (diffMins < 60) return `${diffMins} mins ago`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
-  };
-
-  const uniqueProjects = Array.from(new Set(memories.map((m) => m.project)));
-  const uniqueTools = Array.from(new Set(memories.map((m) => m.source_tool || "unknown")));
+  const uniqueTools: string[] = [];
+  memories.forEach((item) => {
+    const toolName = item.source_tool || "unknown";
+    if (!uniqueTools.includes(toolName)) {
+      uniqueTools.push(toolName);
+    }
+  });
 
   return (
     <div style={{ maxWidth: "1000px" }}>
@@ -281,14 +297,14 @@ function FeedContent() {
         {/* Project Dropdown */}
         <select
           value={selectedProject}
-          onChange={(e) => setSelectedProject(e.target.value)}
+          onChange={(evt) => setSelectedProject(evt.target.value)}
           className="input-field"
           style={{ width: "auto", minWidth: "160px" }}
         >
           <option value="ALL">All Projects</option>
-          {uniqueProjects.map((p) => (
-            <option key={p} value={p}>
-              {p}
+          {uniqueProjects.map((projItem) => (
+            <option key={projItem} value={projItem}>
+              {projItem}
             </option>
           ))}
         </select>
@@ -296,14 +312,14 @@ function FeedContent() {
         {/* Tools Dropdown */}
         <select
           value={selectedSourceTool}
-          onChange={(e) => setSelectedSourceTool(e.target.value)}
+          onChange={(evt) => setSelectedSourceTool(evt.target.value)}
           className="input-field"
           style={{ width: "auto", minWidth: "160px" }}
         >
           <option value="ALL">All Tools</option>
-          {uniqueTools.map((t) => (
-            <option key={t} value={t}>
-              {t}
+          {uniqueTools.map((toolItem) => (
+            <option key={toolItem} value={toolItem}>
+              {toolItem}
             </option>
           ))}
         </select>
@@ -318,14 +334,14 @@ function FeedContent() {
             { label: "Decision", value: "decision" },
             { label: "Project Detail", value: "project_detail" },
             { label: "Other", value: "other" },
-          ].map((tab) => (
+          ].map((catItem) => (
             <button
-              key={tab.value}
-              onClick={() => setSelectedCategory(tab.value)}
+              key={catItem.value}
+              onClick={() => setSelectedCategory(catItem.value)}
               style={{
-                backgroundColor: selectedCategory === tab.value ? "rgba(16, 185, 129, 0.15)" : "transparent",
-                border: selectedCategory === tab.value ? "1px solid #10b981" : "1px solid var(--border-color)",
-                color: selectedCategory === tab.value ? "#4edea3" : "var(--text-secondary)",
+                backgroundColor: selectedCategory === catItem.value ? "rgba(16, 185, 129, 0.15)" : "transparent",
+                border: selectedCategory === catItem.value ? "1px solid #10b981" : "1px solid var(--border-color)",
+                color: selectedCategory === catItem.value ? "#4edea3" : "var(--text-secondary)",
                 padding: "0.375rem 0.75rem",
                 borderRadius: "3px",
                 fontFamily: "var(--font-mono)",
@@ -334,7 +350,7 @@ function FeedContent() {
                 transition: "all 0.15s ease",
               }}
             >
-              {tab.label}
+              {catItem.label}
             </button>
           ))}
         </div>
@@ -387,14 +403,14 @@ function FeedContent() {
               { done: false, step: "2", label: "Copy your MCP config snippet", link: "/setup" },
               { done: false, step: "3", label: "Paste into your AI tool and restart it" },
               { done: false, step: "4", label: "Use your AI normally — memories appear here" },
-            ].map((item) => (
-              <div key={item.step} style={{ display: "flex", alignItems: "center", gap: "0.875rem", padding: "0.75rem 1rem", backgroundColor: "var(--bg-color)", borderRadius: "5px", border: `1px solid ${item.done ? "rgba(16,185,129,0.3)" : "var(--border-color)"}` }}>
-                <div style={{ width: "24px", height: "24px", borderRadius: "50%", backgroundColor: item.done ? "#10b981" : "var(--surface-hover, #1e2d4d)", color: item.done ? "#0b1326" : "var(--text-secondary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 700, flexShrink: 0 }}>
-                  {item.done ? "✓" : item.step}
+            ].map((checkItem) => (
+              <div key={checkItem.step} style={{ display: "flex", alignItems: "center", gap: "0.875rem", padding: "0.75rem 1rem", backgroundColor: "var(--bg-color)", borderRadius: "5px", border: `1px solid ${checkItem.done ? "rgba(16,185,129,0.3)" : "var(--border-color)"}` }}>
+                <div style={{ width: "24px", height: "24px", borderRadius: "50%", backgroundColor: checkItem.done ? "#10b981" : "var(--surface-hover, #1e2d4d)", color: checkItem.done ? "#0b1326" : "var(--text-secondary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 700, flexShrink: 0 }}>
+                  {checkItem.done ? "✓" : checkItem.step}
                 </div>
-                <span style={{ fontSize: "0.875rem", color: item.done ? "var(--text-secondary)" : "var(--text-primary)", flex: 1 }}>{item.label}</span>
-                {item.link && (
-                  <Link href={item.link} style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "#10b981", textDecoration: "none", fontWeight: 600 }}>Open →</Link>
+                <span style={{ fontSize: "0.875rem", color: checkItem.done ? "var(--text-secondary)" : "var(--text-primary)", flex: 1 }}>{checkItem.label}</span>
+                {checkItem.link && (
+                  <Link href={checkItem.link} style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "#10b981", textDecoration: "none", fontWeight: 600 }}>Open →</Link>
                 )}
               </div>
             ))}
@@ -439,7 +455,7 @@ function FeedContent() {
               <input
                 type="checkbox"
                 checked={selectedIds.size === filteredMemories.length && filteredMemories.length > 0}
-                onChange={(e) => e.target.checked ? selectAll() : clearSelection()}
+                onChange={(evt) => evt.target.checked ? selectAll() : clearSelection()}
                 style={{ cursor: "pointer", accentColor: "#10b981" }}
                 id="select-all-memories"
               />
@@ -488,7 +504,6 @@ function FeedContent() {
           )}
 
           {/* Inline Quick-Add Bar */}
-
           <div
             className="bg-surface border-subtle"
             style={{ padding: "0.625rem 1rem", borderRadius: "6px", display: "flex", alignItems: "center", gap: "0.75rem" }}
@@ -498,7 +513,7 @@ function FeedContent() {
               type="text"
               placeholder="Quick add a memory… (press Enter to save)"
               value={quickAddContent}
-              onChange={(e) => setQuickAddContent(e.target.value)}
+              onChange={(evt) => setQuickAddContent(evt.target.value)}
               onKeyDown={handleQuickAdd}
               disabled={quickAdding}
               style={{ flex: 1, background: "none", border: "none", outline: "none", color: "var(--text-primary)", fontFamily: "var(--font-inter)", fontSize: "0.875rem", opacity: quickAdding ? 0.5 : 1 }}
@@ -529,72 +544,74 @@ function FeedContent() {
                   checked={selectedIds.has(item.id)}
                   onChange={() => toggleSelectId(item.id)}
                   style={{ marginTop: "3px", cursor: "pointer", accentColor: "#10b981", flexShrink: 0 }}
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(evt) => evt.stopPropagation()}
                 />
                 <div style={{ flex: 1 }}>
-              {editingId === item.id ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  <textarea
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    className="input-field"
-                    rows={3}
-                  />
-                  <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                    <button onClick={() => setEditingId(null)} className="btn-ghost" style={{ padding: "0.375rem 0.75rem", fontSize: "0.75rem" }}>
-                      Cancel
-                    </button>
-                    <button onClick={() => handleEditSave(item.id)} disabled={editSaving} className="btn-primary" style={{ padding: "0.375rem 0.75rem", fontSize: "0.75rem", opacity: editSaving ? 0.6 : 1 }}>
-                      {editSaving ? "Saving…" : "Save Changes"}
-                    </button>
-                  </div>
+                  {editingId === item.id ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                      <textarea
+                        value={editContent}
+                        onChange={(evt) => setEditContent(evt.target.value)}
+                        className="input-field"
+                        rows={3}
+                      />
+                      <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                        <button onClick={() => setEditingId(null)} className="btn-ghost" style={{ padding: "0.375rem 0.75rem", fontSize: "0.75rem" }}>
+                          Cancel
+                        </button>
+                        <button onClick={() => handleEditSave(item.id)} disabled={editSaving} className="btn-primary" style={{ padding: "0.375rem 0.75rem", fontSize: "0.75rem", opacity: editSaving ? 0.6 : 1 }}>
+                          {editSaving ? "Saving…" : "Save Changes"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
+                      <p
+                        onClick={() => router.push(`/feed/${item.id}`)}
+                        style={{ fontSize: "0.9375rem", lineHeight: "1.5", color: "var(--text-primary)", cursor: "pointer", flex: 1 }}
+                        title="Click to view full memory details"
+                      >
+                        {item.content}
+                      </p>
+                      <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
+                        <button
+                          onClick={() => router.push(`/feed/${item.id}`)}
+                          title="View Details"
+                          style={{ background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", display: "flex", alignItems: "center" }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingId(item.id);
+                            setEditContent(item.content);
+                          }}
+                          title="Edit Memory"
+                          style={{ background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", display: "flex", alignItems: "center" }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmId(item.id)}
+                          title="Delete Memory"
+                          style={{ background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", display: "flex", alignItems: "center" }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
-                  <p
-                    onClick={() => router.push(`/feed/${item.id}`)}
-                    style={{ fontSize: "0.9375rem", lineHeight: "1.5", color: "var(--text-primary)", cursor: "pointer", flex: 1 }}
-                    title="Click to view full memory details"
-                  >
-                    {item.content}
-                  </p>
-                  <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
-                    <button
-                      onClick={() => router.push(`/feed/${item.id}`)}
-                      title="View Details"
-                      style={{ background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", display: "flex", alignItems: "center" }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingId(item.id);
-                        setEditContent(item.content);
-                      }}
-                      title="Edit Memory"
-                      style={{ background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", display: "flex", alignItems: "center" }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => setDeleteConfirmId(item.id)}
-                      title="Delete Memory"
-                      style={{ background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", display: "flex", alignItems: "center" }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              )}
+              </div>
 
               {/* Delete Confirmation Box */}
               {deleteConfirmId === item.id && (
@@ -628,9 +645,9 @@ function FeedContent() {
                     Project: <strong style={{ color: "var(--text-primary)" }}>{item.project}</strong>
                   </span>
 
-                  {getToolBadge(item.source_tool)}
+                  <ToolBadge tool={item.source_tool} />
 
-                  {getCategoryBadge(item.category)}
+                  <CategoryBadge cat={item.category} />
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
