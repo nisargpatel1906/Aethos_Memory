@@ -35,6 +35,9 @@ docs/
 test_script/
 scratch/
 promo/
+preview/
+demo_site/
+
 
 # OS & IDE
 desktop.ini

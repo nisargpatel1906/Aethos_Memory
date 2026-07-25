@@ -17,34 +17,50 @@ interface Memory {
 }
 
 function CategoryBadge({ cat }: { cat: string }) {
-  switch (cat) {
-    case "preference":
-      return <span className="badge-category badge-preference">Preference</span>;
-    case "decision":
-      return <span className="badge-category badge-decision">Decision</span>;
-    case "project_detail":
-      return <span className="badge-category badge-detail">Project Detail</span>;
-    default:
-      return <span className="badge-category badge-other">Other</span>;
-  }
+  const map: Record<string, { label: string; bg: string; color: string; border: string }> = {
+    preference:     { label: "Preference",     bg: "rgba(16,185,129,0.1)",  color: "#34d399", border: "rgba(16,185,129,0.3)" },
+    decision:       { label: "Decision",       bg: "rgba(245,158,11,0.1)",  color: "#fbbf24", border: "rgba(245,158,11,0.3)" },
+    project_detail: { label: "Project Detail", bg: "rgba(99,102,241,0.1)",  color: "#818cf8", border: "rgba(99,102,241,0.3)" },
+    other:          { label: "Other",          bg: "rgba(148,163,184,0.1)", color: "#94a3b8", border: "rgba(148,163,184,0.3)" },
+  };
+  const item = map[cat] ?? map.other;
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        backgroundColor: item.bg,
+        border: `1px solid ${item.border}`,
+        color: item.color,
+        fontFamily: "var(--font-mono)",
+        fontSize: "0.6875rem",
+        fontWeight: 600,
+        padding: "0.2rem 0.55rem",
+        borderRadius: "12px",
+        letterSpacing: "0.01em",
+      }}
+    >
+      {item.label}
+    </span>
+  );
 }
 
 function ToolBadge({ tool }: { tool: string | null }) {
   const name = (tool || "").toLowerCase().replace(/[\s_-]/g, "");
 
   const toolMap: Record<string, { label: string; bg: string; border: string; color: string }> = {
-    claude:           { label: "Claude",        bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.4)",  color: "#e8a44a" },
-    claudedesktop:    { label: "Claude Desktop", bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.4)",  color: "#e8a44a" },
-    claudecode:       { label: "Claude Code",   bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.4)",  color: "#e8a44a" },
-    opencode:         { label: "OpenCode",      bg: "rgba(139,92,246,0.12)",  border: "rgba(139,92,246,0.4)",  color: "#a78bfa" },
-    codex:            { label: "Codex",         bg: "rgba(20,184,166,0.12)",  border: "rgba(20,184,166,0.4)",  color: "#2dd4bf" },
-    antigravity:      { label: "Antigravity",   bg: "rgba(16,185,129,0.12)",  border: "rgba(16,185,129,0.4)",  color: "#34d399" },
-    cursor:           { label: "Cursor",        bg: "rgba(59,130,246,0.12)",  border: "rgba(59,130,246,0.4)",  color: "#60a5fa" },
-    geminicli:        { label: "Gemini CLI",    bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.4)",  color: "#fbbf24" },
-    gemini:           { label: "Gemini",        bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.4)",  color: "#fbbf24" },
-    webdashboard:     { label: "Web Dashboard", bg: "rgba(244,114,182,0.12)", border: "rgba(244,114,182,0.4)", color: "#f472b6" },
-    webdashboardintegrationtest: { label: "Web Dashboard", bg: "rgba(244,114,182,0.12)", border: "rgba(244,114,182,0.4)", color: "#f472b6" },
-    mcpclient:        { label: "MCP Client",    bg: "rgba(148,163,184,0.12)", border: "rgba(148,163,184,0.4)", color: "#94a3b8" },
+    claude:           { label: "Claude",        bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.3)",  color: "#f59e0b" },
+    claudedesktop:    { label: "Claude Desktop", bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.3)",  color: "#f59e0b" },
+    claudecode:       { label: "Claude Code",   bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.3)",  color: "#f59e0b" },
+    opencode:         { label: "OpenCode",      bg: "rgba(139,92,246,0.12)",  border: "rgba(139,92,246,0.3)",  color: "#a78bfa" },
+    codex:            { label: "Codex",         bg: "rgba(20,184,166,0.12)",  border: "rgba(20,184,166,0.3)",  color: "#2dd4bf" },
+    antigravity:      { label: "Antigravity IDE", bg: "rgba(16,185,129,0.12)",  border: "rgba(16,185,129,0.3)",  color: "#34d399" },
+    cursor:           { label: "Cursor",        bg: "rgba(59,130,246,0.12)",  border: "rgba(59,130,246,0.3)",  color: "#60a5fa" },
+    geminicli:        { label: "Gemini CLI",    bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.3)",  color: "#fbbf24" },
+    gemini:           { label: "Gemini",        bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.3)",  color: "#fbbf24" },
+    webdashboard:     { label: "Web Dashboard", bg: "rgba(244,114,182,0.12)", border: "rgba(244,114,182,0.3)", color: "#f472b6" },
+    webdashboardintegrationtest: { label: "Web Dashboard", bg: "rgba(244,114,182,0.12)", border: "rgba(244,114,182,0.3)", color: "#f472b6" },
+    mcpclient:        { label: "MCP Client",    bg: "rgba(148,163,184,0.12)", border: "rgba(148,163,184,0.3)", color: "#94a3b8" },
   };
 
   const match = toolMap[name] ?? { label: tool || "Unknown", bg: "rgba(148,163,184,0.1)", border: "rgba(148,163,184,0.3)", color: "#94a3b8" };
@@ -54,19 +70,19 @@ function ToolBadge({ tool }: { tool: string | null }) {
       style={{
         display: "inline-flex",
         alignItems: "center",
+        gap: "0.3rem",
         backgroundColor: match.bg,
         border: `1px solid ${match.border}`,
         color: match.color,
         fontFamily: "var(--font-mono)",
-        fontSize: "0.7rem",
+        fontSize: "0.6875rem",
         fontWeight: 600,
-        padding: "0.15rem 0.5rem",
-        borderRadius: "3px",
-        letterSpacing: "0.02em",
-        textTransform: "uppercase",
+        padding: "0.2rem 0.55rem",
+        borderRadius: "12px",
+        letterSpacing: "0.01em",
       }}
     >
-      {match.label}
+      <span style={{ fontSize: "0.65rem", opacity: 0.8 }}>⚡</span> {match.label}
     </span>
   );
 }
@@ -113,7 +129,6 @@ function FeedContent() {
 
   // Fetch Memories directly via Supabase client with instant local cache
   const fetchMemories = async () => {
-    // 1. Instant load from local cache if available (0ms load time)
     const cached = localStorage.getItem("aethos_cached_memories");
     if (cached) {
       try {
@@ -172,7 +187,7 @@ function FeedContent() {
     fetchMemories();
   }, []);
 
-  // Compute filtered memories instantly using useMemo (zero extra re-renders)
+  // Compute filtered memories instantly using useMemo
   const filteredMemories = useMemo(() => {
     let result = memories;
 
@@ -281,17 +296,20 @@ function FeedContent() {
       {/* Setup banner for new users */}
       <SetupBanner memoryCount={memories.length} />
 
-      {/* Filter Control Header Bar */}
+      {/* Modern Floating Filter Control Bar */}
       <div
-        className="bg-surface border-subtle"
         style={{
+          backgroundColor: "rgba(17, 24, 39, 0.6)",
+          border: "1px solid var(--border-color)",
+          backdropFilter: "blur(12px)",
           padding: "0.875rem 1.25rem",
-          borderRadius: "6px",
+          borderRadius: "12px",
           display: "flex",
           alignItems: "center",
           gap: "1rem",
           flexWrap: "wrap",
           marginBottom: "1.25rem",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.25)",
         }}
       >
         {/* Project Dropdown */}
@@ -299,12 +317,20 @@ function FeedContent() {
           value={selectedProject}
           onChange={(evt) => setSelectedProject(evt.target.value)}
           className="input-field"
-          style={{ width: "auto", minWidth: "160px" }}
+          style={{
+            width: "auto",
+            minWidth: "150px",
+            backgroundColor: "rgba(11, 19, 38, 0.8)",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: "8px",
+            fontSize: "0.8125rem",
+            padding: "0.45rem 0.75rem",
+          }}
         >
-          <option value="ALL">All Projects</option>
+          <option value="ALL">📁 All Projects ({uniqueProjects.length})</option>
           {uniqueProjects.map((projItem) => (
             <option key={projItem} value={projItem}>
-              {projItem}
+              📁 {projItem}
             </option>
           ))}
         </select>
@@ -314,20 +340,28 @@ function FeedContent() {
           value={selectedSourceTool}
           onChange={(evt) => setSelectedSourceTool(evt.target.value)}
           className="input-field"
-          style={{ width: "auto", minWidth: "160px" }}
+          style={{
+            width: "auto",
+            minWidth: "150px",
+            backgroundColor: "rgba(11, 19, 38, 0.8)",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: "8px",
+            fontSize: "0.8125rem",
+            padding: "0.45rem 0.75rem",
+          }}
         >
-          <option value="ALL">All Tools</option>
+          <option value="ALL">⚡ All Tools ({uniqueTools.length})</option>
           {uniqueTools.map((toolItem) => (
             <option key={toolItem} value={toolItem}>
-              {toolItem}
+              ⚡ {toolItem}
             </option>
           ))}
         </select>
 
-        <div style={{ width: "1px", height: "24px", backgroundColor: "var(--border-color)" }} />
+        <div style={{ width: "1px", height: "20px", backgroundColor: "var(--border-subtle)" }} />
 
         {/* Category Pills */}
-        <div style={{ display: "flex", gap: "0.375rem" }}>
+        <div style={{ display: "flex", gap: "0.375rem", flexWrap: "wrap" }}>
           {[
             { label: "All", value: "ALL" },
             { label: "Preference", value: "preference" },
@@ -340,12 +374,13 @@ function FeedContent() {
               onClick={() => setSelectedCategory(catItem.value)}
               style={{
                 backgroundColor: selectedCategory === catItem.value ? "rgba(16, 185, 129, 0.15)" : "transparent",
-                border: selectedCategory === catItem.value ? "1px solid #10b981" : "1px solid var(--border-color)",
-                color: selectedCategory === catItem.value ? "#4edea3" : "var(--text-secondary)",
-                padding: "0.375rem 0.75rem",
-                borderRadius: "3px",
+                border: selectedCategory === catItem.value ? "1px solid #10b981" : "1px solid transparent",
+                color: selectedCategory === catItem.value ? "#34d399" : "var(--text-secondary)",
+                padding: "0.3rem 0.65rem",
+                borderRadius: "20px",
                 fontFamily: "var(--font-mono)",
                 fontSize: "0.75rem",
+                fontWeight: selectedCategory === catItem.value ? 600 : 400,
                 cursor: "pointer",
                 transition: "all 0.15s ease",
               }}
@@ -354,27 +389,12 @@ function FeedContent() {
             </button>
           ))}
         </div>
-      </div>
 
-      {/* Live Activity Status Banner */}
-      <div
-        className="border-subtle"
-        style={{
-          backgroundColor: "rgba(16, 185, 129, 0.04)",
-          border: "1px solid rgba(16, 185, 129, 0.2)",
-          padding: "0.75rem 1rem",
-          borderRadius: "6px",
-          display: "flex",
-          alignItems: "center",
-          gap: "0.75rem",
-          marginBottom: "1.5rem",
-          fontSize: "0.8125rem",
-          fontFamily: "var(--font-mono)",
-          color: "#34d399",
-        }}
-      >
-        <div className="pulse-dot" />
-        <span>Live Sync Active — {memories.length} memories stored in Supabase pgvector context bank</span>
+        {/* Inline Live Sync Pill */}
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "#34d399" }}>
+          <div className="pulse-dot" style={{ width: "7px", height: "7px" }} />
+          <span>{memories.length} Memories</span>
+        </div>
       </div>
 
       {/* Memory Feed Cards Stack */}
@@ -384,39 +404,17 @@ function FeedContent() {
         </div>
       ) : filteredMemories.length === 0 && memories.length === 0 ? (
         /* Rich empty state for brand-new users */
-        <div className="bg-surface border-subtle" style={{ padding: "2rem", borderRadius: "8px" }}>
-          <div style={{ textAlign: "center", marginBottom: "1.75rem" }}>
-            <div style={{ display: "flex", justifyContent: "center", color: "#10b981", marginBottom: "0.75rem" }}>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2a9 9 0 0 1 9 9c0 3.6-2.1 6.7-5.2 8.1-.4.2-.8.6-.8 1v.9c0 .6-.4 1-1 1h-4c-.6 0-1-.4-1-1v-.9c0-.4-.4-.8-.8-1C5.1 17.7 3 14.6 3 11a9 9 0 0 1 9-9z"/>
-                <path d="M9 22h6"/>
-              </svg>
-            </div>
-            <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.375rem" }}>Your memory bank is empty</h2>
-            <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>Memories appear here automatically once your AI tool is connected.</p>
+        <div className="bg-surface border-subtle" style={{ padding: "2.5rem", borderRadius: "12px", textAlign: "center" }}>
+          <div style={{ display: "flex", justifyContent: "center", color: "#10b981", marginBottom: "0.75rem" }}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a9 9 0 0 1 9 9c0 3.6-2.1 6.7-5.2 8.1-.4.2-.8.6-.8 1v.9c0 .6-.4 1-1 1h-4c-.6 0-1-.4-1-1v-.9c0-.4-.4-.8-.8-1C5.1 17.7 3 14.6 3 11a9 9 0 0 1 9-9z"/>
+              <path d="M9 22h6"/>
+            </svg>
           </div>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.375rem" }}>Your memory bank is empty</h2>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginBottom: "1.5rem" }}>Memories appear here automatically once your AI tool is connected.</p>
 
-          {/* Setup checklist */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem", maxWidth: "480px", margin: "0 auto 1.75rem" }}>
-            {[
-              { done: true,  step: "1", label: "Dashboard connected" },
-              { done: false, step: "2", label: "Copy your MCP config snippet", link: "/setup" },
-              { done: false, step: "3", label: "Paste into your AI tool and restart it" },
-              { done: false, step: "4", label: "Use your AI normally — memories appear here" },
-            ].map((checkItem) => (
-              <div key={checkItem.step} style={{ display: "flex", alignItems: "center", gap: "0.875rem", padding: "0.75rem 1rem", backgroundColor: "var(--bg-color)", borderRadius: "5px", border: `1px solid ${checkItem.done ? "rgba(16,185,129,0.3)" : "var(--border-color)"}` }}>
-                <div style={{ width: "24px", height: "24px", borderRadius: "50%", backgroundColor: checkItem.done ? "#10b981" : "var(--surface-hover, #1e2d4d)", color: checkItem.done ? "#0b1326" : "var(--text-secondary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 700, flexShrink: 0 }}>
-                  {checkItem.done ? "✓" : checkItem.step}
-                </div>
-                <span style={{ fontSize: "0.875rem", color: checkItem.done ? "var(--text-secondary)" : "var(--text-primary)", flex: 1 }}>{checkItem.label}</span>
-                {checkItem.link && (
-                  <Link href={checkItem.link} style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "#10b981", textDecoration: "none", fontWeight: 600 }}>Open →</Link>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div style={{ textAlign: "center", display: "flex", gap: "0.75rem", justifyContent: "center" }}>
+          <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
             <Link href="/setup" style={{ display: "inline-block" }}>
               <button className="btn-primary">Copy MCP Config →</button>
             </Link>
@@ -426,13 +424,7 @@ function FeedContent() {
           </div>
         </div>
       ) : filteredMemories.length === 0 ? (
-        <div className="bg-surface border-subtle" style={{ padding: "2.5rem", textAlign: "center", borderRadius: "6px", color: "var(--text-secondary)" }}>
-          <div style={{ display: "flex", justifyContent: "center", color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-          </div>
+        <div className="bg-surface border-subtle" style={{ padding: "2.5rem", textAlign: "center", borderRadius: "10px", color: "var(--text-secondary)" }}>
           <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.875rem" }}>No memories match the current filters.</p>
           <button onClick={() => { setSelectedProject("ALL"); setSelectedCategory("ALL"); setSelectedSourceTool("ALL"); }} style={{ marginTop: "0.75rem", background: "none", border: "1px solid var(--border-color)", color: "var(--text-secondary)", padding: "0.375rem 0.75rem", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem", fontFamily: "var(--font-mono)" }}>Clear filters</button>
         </div>
@@ -441,15 +433,16 @@ function FeedContent() {
           {/* Bulk Select Action Bar */}
           {filteredMemories.length > 0 && (
             <div
-              className="bg-surface border-subtle"
               style={{
                 padding: "0.5rem 1rem",
-                borderRadius: "6px",
+                borderRadius: "8px",
                 display: "flex",
                 alignItems: "center",
                 gap: "0.75rem",
                 fontSize: "0.8rem",
                 fontFamily: "var(--font-mono)",
+                backgroundColor: "rgba(17, 24, 39, 0.4)",
+                border: "1px solid var(--border-subtle)",
               }}
             >
               <input
@@ -478,7 +471,6 @@ function FeedContent() {
                       fontSize: "0.75rem",
                       fontFamily: "var(--font-mono)",
                       opacity: bulkDeleting ? 0.6 : 1,
-                      transition: "all 0.15s ease",
                     }}
                   >
                     {bulkDeleting ? "Deleting…" : `Delete ${selectedIds.size} selected`}
@@ -505,8 +497,15 @@ function FeedContent() {
 
           {/* Inline Quick-Add Bar */}
           <div
-            className="bg-surface border-subtle"
-            style={{ padding: "0.625rem 1rem", borderRadius: "6px", display: "flex", alignItems: "center", gap: "0.75rem" }}
+            style={{
+              padding: "0.625rem 1rem",
+              borderRadius: "10px",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              backgroundColor: "rgba(17, 24, 39, 0.5)",
+              border: "1px solid var(--border-color)",
+            }}
           >
             <span style={{ color: "#10b981", fontSize: "1rem", flexShrink: 0 }}>+</span>
             <input
@@ -523,27 +522,31 @@ function FeedContent() {
             )}
           </div>
 
+          {/* Sleek Minimalist Memory Cards */}
           {filteredMemories.map((item) => (
             <div
               key={item.id}
-              className="bg-surface border-subtle glow-hover"
               style={{
-                padding: "1.125rem 1.25rem",
-                borderRadius: "6px",
+                backgroundColor: "rgba(17, 24, 39, 0.7)",
+                border: "1px solid var(--border-color)",
+                borderRadius: "10px",
+                padding: "1.125rem 1.35rem",
                 display: "flex",
                 flexDirection: "column",
                 gap: "0.875rem",
+                boxShadow: "0 2px 10px rgba(0, 0, 0, 0.15)",
+                transition: "all 0.2s ease",
                 outline: selectedIds.has(item.id) ? "1px solid rgba(16,185,129,0.4)" : "none",
               }}
             >
-              {/* Card Header & Content */}
-              <div style={{ display: "flex", alignItems: "flex-start", gap: "0.75rem" }}>
+              {/* Card Main Section */}
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "0.875rem" }}>
                 {/* Select checkbox */}
                 <input
                   type="checkbox"
                   checked={selectedIds.has(item.id)}
                   onChange={() => toggleSelectId(item.id)}
-                  style={{ marginTop: "3px", cursor: "pointer", accentColor: "#10b981", flexShrink: 0 }}
+                  style={{ marginTop: "4px", cursor: "pointer", accentColor: "#10b981", flexShrink: 0 }}
                   onClick={(evt) => evt.stopPropagation()}
                 />
                 <div style={{ flex: 1 }}>
@@ -568,7 +571,7 @@ function FeedContent() {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
                       <p
                         onClick={() => router.push(`/feed/${item.id}`)}
-                        style={{ fontSize: "0.9375rem", lineHeight: "1.5", color: "var(--text-primary)", cursor: "pointer", flex: 1 }}
+                        style={{ fontSize: "0.9375rem", lineHeight: "1.6", color: "#f8fafc", cursor: "pointer", flex: 1, fontWeight: 500 }}
                         title="Click to view full memory details"
                       >
                         {item.content}
@@ -593,7 +596,7 @@ function FeedContent() {
                           style={{ background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", display: "flex", alignItems: "center" }}
                         >
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                           </svg>
                         </button>
@@ -620,7 +623,7 @@ function FeedContent() {
                     backgroundColor: "rgba(239, 68, 68, 0.08)",
                     border: "1px solid #ef4444",
                     padding: "0.75rem",
-                    borderRadius: "4px",
+                    borderRadius: "6px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
@@ -638,11 +641,11 @@ function FeedContent() {
                 </div>
               )}
 
-              {/* Card Footer Badges */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem", fontSize: "0.75rem", fontFamily: "var(--font-mono)" }}>
+              {/* Sleek Footer Badges */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem", fontSize: "0.75rem", fontFamily: "var(--font-mono)", borderTop: "1px solid var(--border-subtle)", paddingTop: "0.625rem", marginTop: "0.25rem" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-                  <span style={{ backgroundColor: "var(--bg-color)", border: "1px solid var(--border-color)", padding: "0.25rem 0.5rem", borderRadius: "2px", color: "var(--text-secondary)" }}>
-                    Project: <strong style={{ color: "var(--text-primary)" }}>{item.project}</strong>
+                  <span style={{ backgroundColor: "rgba(255, 255, 255, 0.04)", border: "1px solid var(--border-subtle)", padding: "0.2rem 0.55rem", borderRadius: "12px", color: "var(--text-secondary)" }}>
+                    📁 <strong style={{ color: "var(--text-primary)" }}>{item.project}</strong>
                   </span>
 
                   <ToolBadge tool={item.source_tool} />
@@ -658,11 +661,7 @@ function FeedContent() {
                     href={`/feed/${item.id}`}
                     style={{ color: "#10b981", textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "0.25rem" }}
                   >
-                    View Details
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="5" y1="12" x2="19" y2="12"/>
-                      <polyline points="12 5 19 12 12 19"/>
-                    </svg>
+                    Details →
                   </Link>
                 </div>
               </div>
