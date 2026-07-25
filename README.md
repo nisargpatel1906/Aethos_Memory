@@ -9,13 +9,6 @@
 
 ### Universal, Cross-Tool Persistent Memory for AI Assistants
 
-<img src="Aethos-Memory-Master-Workflow.svg" width="100%" alt="Aethos Memory System Architecture and Animated Workflow"/>
-
-<br/>
-
-> Store preferences, decisions, and project facts **once**.
-> Access them everywhere — across **Claude Code, Cursor, Windsurf, Antigravity, OpenCode, Goose** and more — with **zero vendor lock-in**.
-
 <br/>
 
 [![GitHub Stars](https://img.shields.io/github/stars/nisargpatel1906/Aethos_Memory?style=flat-square&color=39CD96)](https://github.com/nisargpatel1906/Aethos_Memory)
@@ -29,9 +22,14 @@
 <br/>
 <br/>
 
-### 🎬 Watch the Official Launch & Overview Video
+### <svg width="22" height="22" viewBox="0 0 24 24" fill="#FF0000" style="vertical-align: middle; margin-right: 6px;"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> Watch the Official Launch Video
 
 [![Aethos Memory Official Demo](https://img.youtube.com/vi/rjjStwPlTk0/maxresdefault.jpg)](https://youtu.be/rjjStwPlTk0)
+
+<br/>
+<br/>
+
+<img src="Aethos-Memory-Master-Workflow.svg" width="100%" alt="Aethos Memory System Architecture and Animated Workflow"/>
 
 <br/>
 
