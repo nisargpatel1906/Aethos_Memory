@@ -137,6 +137,17 @@ const TOOLS: Tool[] = [
 
   // --- IDEs & Desktop Editors ---
   {
+    id: "antigravity",
+    name: "Antigravity IDE",
+    category: "ides",
+    categoryName: "IDEs & Desktop",
+    logo: "AG",
+    winPath: "%USERPROFILE%\\.gemini\\config\\mcp_config.json",
+    macPath: "~/.gemini/config/mcp_config.json",
+    fileLabel: "mcp_config.json",
+    format: "json",
+  },
+  {
     id: "claude_desktop",
     name: "Claude Desktop",
     category: "ides",
