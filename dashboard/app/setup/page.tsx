@@ -390,6 +390,42 @@ function generateOpenCodeSnippet(envVars: Record<string, string>) {
   );
 }
 
+function generateRuleFileSnippet(toolId: string) {
+  if (toolId === "claude_code" || toolId === "claude_desktop") {
+    return {
+      filename: "CLAUDE.md",
+      label: "Claude Auto-Save Rules (CLAUDE.md)",
+      content: `## Aethos Memory Rules (Auto-Saving Context)\n- You are equipped with Aethos Memory (aethos-memory_remember).\n- You MUST automatically and silently call remember() on EVERY turn whenever the user mentions identity facts, preferences, stack choices, decisions, or project goals.\n- Do NOT wait for explicit user prompt commands to save.`
+    };
+  }
+  if (toolId === "cursor") {
+    return {
+      filename: ".cursorrules",
+      label: "Cursor Auto-Save Rules (.cursorrules)",
+      content: `## Aethos Memory Rules (Auto-Saving Context)\n- You are equipped with Aethos Memory (aethos-memory_remember).\n- You MUST automatically and silently call remember() on EVERY turn whenever the user mentions identity facts, preferences, stack choices, decisions, or project goals.\n- Do NOT wait for explicit user prompt commands to save.`
+    };
+  }
+  if (toolId === "windsurf") {
+    return {
+      filename: ".windsurfrules",
+      label: "Windsurf Auto-Save Rules (.windsurfrules)",
+      content: `## Aethos Memory Rules (Auto-Saving Context)\n- You are equipped with Aethos Memory (aethos-memory_remember).\n- You MUST automatically and silently call remember() on EVERY turn whenever the user mentions identity facts, preferences, stack choices, decisions, or project goals.\n- Do NOT wait for explicit user prompt commands to save.`
+    };
+  }
+  if (toolId === "cline" || toolId === "roo_code") {
+    return {
+      filename: toolId === "cline" ? ".clinerules" : ".roorules",
+      label: `${toolId === "cline" ? "Cline" : "Roo Code"} Auto-Save Rules`,
+      content: `## Aethos Memory Rules (Auto-Saving Context)\n- You are equipped with Aethos Memory (aethos-memory_remember).\n- You MUST automatically and silently call remember() on EVERY turn whenever the user mentions identity facts, preferences, stack choices, decisions, or project goals.\n- Do NOT wait for explicit user prompt commands to save.`
+    };
+  }
+  return {
+    filename: ".instructions.md",
+    label: "Auto-Save System Instructions (.instructions.md)",
+    content: `## Aethos Memory Rules (Auto-Saving Context)\n- You are equipped with Aethos Memory (aethos-memory_remember).\n- You MUST automatically and silently call remember() on EVERY turn whenever the user mentions identity facts, preferences, stack choices, decisions, or project goals.\n- Do NOT wait for explicit user prompt commands to save.`
+  };
+}
+
 function generateYamlSnippet(envVars: Record<string, string>) {
   const envYaml = Object.entries(envVars)
     .map(([k, v]) => `        ${k}: "${v}"`)
@@ -816,6 +852,56 @@ export default function SetupPage() {
               <span>{tool.id === "roo_code" ? "⚠️ Notice:" : "ℹ️ Note:"}</span> {tool.note}
             </div>
           )}
+
+          {/* Auto-Save Rules File Snippet Box */}
+          {(() => {
+            const rule = generateRuleFileSnippet(tool.id);
+            return (
+              <div style={{ padding: "0.875rem 1.5rem", borderBottom: "1px solid var(--border-color)", backgroundColor: "rgba(16,185,129,0.03)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                  <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "#10b981", fontWeight: 600, display: "flex", alignItems: "center", gap: "0.375rem" }}>
+                    <span>⚡</span> {rule.label}
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(rule.content);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2500);
+                    }}
+                    style={{
+                      padding: "0.35rem 0.65rem",
+                      borderRadius: "4px",
+                      border: "1px solid rgba(16,185,129,0.3)",
+                      backgroundColor: "rgba(16,185,129,0.1)",
+                      color: "#10b981",
+                      fontSize: "0.7rem",
+                      fontFamily: "var(--font-mono)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Copy Rule File ({rule.filename})
+                  </button>
+                </div>
+                <pre
+                  style={{
+                    backgroundColor: "var(--bg-primary)",
+                    padding: "0.625rem 0.875rem",
+                    borderRadius: "6px",
+                    fontSize: "0.725rem",
+                    fontFamily: "var(--font-mono)",
+                    color: "var(--text-secondary)",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    border: "1px solid var(--border-subtle)",
+                    margin: 0,
+                  }}
+                >
+                  <code>{rule.content}</code>
+                </pre>
+              </div>
+            );
+          })()}
 
           {/* Steps */}
           <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid var(--border-color)" }}>
