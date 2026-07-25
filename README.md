@@ -24,6 +24,14 @@
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square)](https://nextjs.org)
 [![FastMCP](https://img.shields.io/badge/FastMCP-3.4%2B-39CD96?style=flat-square)](https://gofastmcp.com)
 [![Supabase](https://img.shields.io/badge/Supabase-pgvector-3ECF8E?style=flat-square)](https://supabase.com)
+[![YouTube Video](https://img.shields.io/badge/YouTube-Watch%20Demo-red?style=flat-square&logo=youtube)](https://youtu.be/rjjStwPlTk0)
+
+<br/>
+<br/>
+
+### 🎬 Watch the Official Launch & Overview Video
+
+[![Aethos Memory Official Demo](https://img.youtube.com/vi/rjjStwPlTk0/maxresdefault.jpg)](https://youtu.be/rjjStwPlTk0)
 
 <br/>
 
