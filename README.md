@@ -274,7 +274,13 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Step 8 — Connect Aethos to Your AI Tool (Windows)
 
-Go to [http://localhost:3000/setup](http://localhost:3000/setup) in the dashboard. Select your AI tool and OS. The page will generate the exact JSON config you need to paste.
+Go to [http://localhost:3000/setup](http://localhost:3000/setup) in the dashboard. Select your AI tool and OS. The interactive setup wizard will generate both the MCP configuration and the 1-click Auto-Save Rule File for your tool.
+
+> ⚡ **How Auto-Saving Works for All Users:**  
+> 1. **Built-in MCP Directive**: The Aethos server automatically passes system directives to MCP clients on connection.  
+> 2. **Setup Wizard**: Visit `http://localhost:3000/setup` to copy/download the 1-click Auto-Save Rule file (`CLAUDE.md`, `.cursorrules`, `.windsurfrules`, `opencode.jsonc`, etc.) tailored to your specific AI tool.
+
+<br/>
 
 **Claude Code (Windows):**
 

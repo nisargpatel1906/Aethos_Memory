@@ -903,6 +903,13 @@ export default function SetupPage() {
             );
           })()}
 
+          {/* Step 1 Header */}
+          <div style={{ padding: "0.875rem 1.5rem 0.5rem 1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ fontSize: "0.8125rem", fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <span style={{ backgroundColor: "#10b981", color: "#000", width: "20px", height: "20px", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 800 }}>1</span>
+              Step 1 — Add MCP Server Configuration
+            </div>
+          </div>
           {/* Steps */}
           <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid var(--border-color)" }}>
             <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap" }}>
