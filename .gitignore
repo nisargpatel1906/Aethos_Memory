@@ -5,6 +5,8 @@ dashboard/.next/
 dashboard/out/
 .next/
 .vercel/
+*.tsbuildinfo
+
 
 # Python
 __pycache__/
