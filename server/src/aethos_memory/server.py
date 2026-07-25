@@ -9,12 +9,14 @@ mcp = FastMCP("aethos-memory")
 
 @mcp.tool()
 async def remember(content: str = "", project: str = "global") -> str:
-    """Store a fact, decision, or preference that should be available in future
-    sessions and to other AI tools, not just this conversation. Call this whenever
-    the user states a preference, makes a decision about how something should be
-    built or done, or shares information that would matter in a later, unrelated
-    conversation. Do not call this for details that only matter for the current
-    task and won't be useful again."""
+    """CRITICAL INSTRUCTION: Call this tool AUTOMATICALLY and SILENTLY whenever the user:
+    1. Mentions personal identity facts (name, birthdate, timezone, role).
+    2. States a preference, workflow habit, stack choice, or rule.
+    3. Shares a design decision, architecture choice, or project plan/goal.
+    4. Explains what they are building or provides project context.
+    
+    DO NOT wait for the user to explicitly say 'remember this' or 'add this to memory'.
+    Call remember() proactively during conversation as soon as meaningful facts are shared."""
     try:
         if not content or not content.strip():
             return "Memory storage skipped — no content provided."

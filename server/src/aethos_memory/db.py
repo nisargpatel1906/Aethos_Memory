@@ -41,6 +41,29 @@ def similarity_search(
     return res.data or []
 
 
+ALLOWED_CATEGORIES = {"preference", "decision", "project_detail", "identity", "goal", "other"}
+
+
+def normalize_category(category: str | None) -> str:
+    """Ensure category matches allowed DB categories to prevent constraint violations."""
+    if not category:
+        return "other"
+    cat = str(category).strip().lower().replace(" ", "_")
+    if cat in ALLOWED_CATEGORIES:
+        return cat
+    if "pref" in cat:
+        return "preference"
+    if "decis" in cat or "arch" in cat:
+        return "decision"
+    if "proj" in cat or "detail" in cat:
+        return "project_detail"
+    if "ident" in cat or "user" in cat:
+        return "identity"
+    if "goal" in cat or "plan" in cat:
+        return "goal"
+    return "other"
+
+
 def insert_memory(
     content: str,
     embedding: list[float],
@@ -57,7 +80,7 @@ def insert_memory(
         "project": project,
         "content": content,
         "embedding": embedding,
-        "category": category,
+        "category": normalize_category(category),
         "source_tool": source_tool,
     }
 

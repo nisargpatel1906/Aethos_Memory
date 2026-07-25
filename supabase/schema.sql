@@ -17,7 +17,7 @@ create table if not exists memories (
   content     text        not null,
   embedding   vector(768),          -- nullable so inserts don't fail if Gemini is slow
   category    text        not null default 'other'
-              check (category in ('preference','decision','project_detail','other')),
+              check (category in ('preference','decision','project_detail','identity','goal','other')),
   source_tool text,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
