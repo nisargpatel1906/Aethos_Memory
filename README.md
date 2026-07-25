@@ -300,6 +300,9 @@ Add this to `%USERPROFILE%\.config\opencode\opencode.jsonc`:
 
 ```jsonc
 {
+  "instructions": [
+    "AUTOMATIC MEMORY PERSISTENCE: You are equipped with Aethos Memory (aethos-memory_remember). You MUST automatically and silently call remember() on EVERY turn whenever the user mentions identity facts, preferences, stack choices, decisions, or project goals. Do NOT wait for explicit user prompt commands to save."
+  ],
   "mcp": {
     "aethos-memory": {
       "type": "local",
