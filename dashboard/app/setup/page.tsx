@@ -315,14 +315,17 @@ const TOOLS: Tool[] = [
   },
 ];
 
-function buildEnvVars(creds: {
-  url: string;
-  key: string;
-  groq: string;
-  openrouter: string;
-  gemini: string;
-  userId: string;
-}) {
+function buildEnvVars(
+  creds: {
+    url: string;
+    key: string;
+    groq: string;
+    openrouter: string;
+    gemini: string;
+    userId: string;
+  },
+  toolName?: string
+) {
   return {
     SUPABASE_URL: creds.url || "<YOUR_SUPABASE_URL>",
     SUPABASE_SERVICE_ROLE_KEY: creds.key || "<YOUR_SUPABASE_SERVICE_ROLE_KEY>",
@@ -331,6 +334,7 @@ function buildEnvVars(creds: {
     GEMINI_API_KEY: creds.gemini || "<YOUR_GEMINI_API_KEY>",
     AETHOS_USER_ID: creds.userId || "<YOUR_USER_ID>",
     AETHOS_PROJECT: "global",
+    AETHOS_SOURCE_TOOL: toolName || "MCP Client",
   };
 }
 
@@ -459,8 +463,8 @@ export default function SetupPage() {
     else setOs("mac");
   }, []);
 
-  const envVars = buildEnvVars(creds);
   const tool = TOOLS.find((t) => t.id === activeTool)!;
+  const envVars = buildEnvVars(creds, tool?.name);
 
   function getSnippet() {
     if (tool.format === "cli") return generateClaudeCodeCommand(envVars);

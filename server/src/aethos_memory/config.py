@@ -38,8 +38,31 @@ class Config(BaseModel):
             gemini_api_key=os.environ["GEMINI_API_KEY"],
             aethos_user_id=os.environ["AETHOS_USER_ID"],
             aethos_project=os.getenv("AETHOS_PROJECT", "global"),
-            aethos_source_tool=os.getenv("AETHOS_SOURCE_TOOL", "MCP Client"),
+            aethos_source_tool=_detect_source_tool(),
         )
+
+
+def _detect_source_tool() -> str:
+    """Smart auto-detector for the AI tool launching this MCP server."""
+    explicit = os.getenv("AETHOS_SOURCE_TOOL")
+    if explicit and explicit.strip() and explicit.strip() != "MCP Client":
+        return explicit.strip()
+
+    env_keys = {k.upper() for k in os.environ.keys()}
+    env_str = " ".join(f"{k}={v}" for k, v in os.environ.items()).upper()
+
+    if any(k in env_keys for k in ["OPENCODE", "OPENCODE_VERSION", "OPENCODE_CONFIG"]) or "OPENCODE" in env_str:
+        return "OpenCode"
+    if any(k in env_keys for k in ["CLAUDE_CODE", "CLAUDE_CODE_VERSION", "CLAUDE_PROJECT"]) or "CLAUDE_CODE" in env_str:
+        return "Claude Code"
+    if any(k in env_keys for k in ["CURSOR_VERSION", "CURSOR_BUILD_VERSION"]) or "CURSOR" in env_str:
+        return "Cursor"
+    if any(k in env_keys for k in ["WINDSURF_VERSION", "WINDSURF"]) or "WINDSURF" in env_str:
+        return "Windsurf"
+    if any(k in env_keys for k in ["ANTIGRAVITY"]) or "ANTIGRAVITY" in env_str:
+        return "Antigravity"
+
+    return explicit.strip() if (explicit and explicit.strip()) else "MCP Client"
 
 
 # Global lazy or eager config accessor
