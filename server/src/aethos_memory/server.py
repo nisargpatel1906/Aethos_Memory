@@ -1,15 +1,14 @@
+import asyncio
 import json
 from fastmcp import FastMCP
 from aethos_memory import db, providers, prompts, retrieval
+from aethos_memory.config import get_config
 
 mcp = FastMCP("aethos-memory")
 
-# Active retrieval strategy (selected empirically via eval/run_eval.py benchmark: 83.3% Hit@1, 0.875 MRR)
-ACTIVE_RETRIEVAL_STRATEGY = retrieval.STRATEGIES["retry_and_rerank_search"]
-
 
 @mcp.tool()
-def remember(content: str = "", project: str = "global") -> str:
+async def remember(content: str = "", project: str = "global") -> str:
     """Store a fact, decision, or preference that should be available in future
     sessions and to other AI tools, not just this conversation. Call this whenever
     the user states a preference, makes a decision about how something should be
@@ -23,8 +22,8 @@ def remember(content: str = "", project: str = "global") -> str:
         project = project or "global"
 
         # 1. Embed raw content for similarity search / dedup context
-        raw_embedding = providers.call_embedding(content)
-        existing = db.similarity_search(raw_embedding, project=project, threshold=0.65, limit=5)
+        raw_embedding = await providers.call_embedding(content)
+        existing = db.similarity_search(raw_embedding, project=project, threshold=0.78, limit=5)
 
         formatted_existing = (
             json.dumps(
@@ -34,49 +33,63 @@ def remember(content: str = "", project: str = "global") -> str:
             else "[]"
         )
 
-        # 2. Format extraction prompt
+        # 2. Format extraction prompt — strengthen dedup hint when near-duplicates exist
+        extra_hint = ""
+        if existing:
+            extra_hint = (
+                "\nNOTE: The following highly similar memories already exist. "
+                "Only ADD if this is genuinely new or distinct information not covered by them.\n"
+                + formatted_existing
+            )
+
         extraction_prompt = prompts.EXTRACTION_PROMPT.format(
             new_content=content,
             existing_memories=formatted_existing,
             project=project,
-        )
+        ) + extra_hint
 
-        # 3. Call extraction provider
-        res = providers.call_extraction(extraction_prompt)
+        # 3. Call extraction provider (async)
+        res = await providers.call_extraction(extraction_prompt)
         facts = res.get("facts", [])
 
         if not facts:
             return "Nothing worth remembering in that — no new fact stored."
 
         summaries = []
+        # 4. Embed all ADD facts concurrently
+        add_facts = [(i, f) for i, f in enumerate(facts) if f.get("action", "ADD").upper() == "ADD" and f.get("content")]
+        if add_facts:
+            embeddings = await asyncio.gather(
+                *[providers.call_embedding(f["content"]) for _, f in add_facts],
+                return_exceptions=True,
+            )
+            for (i, fact), emb in zip(add_facts, embeddings):
+                if isinstance(emb, Exception):
+                    summaries.append(f'Failed to embed: "{fact["content"]}" — {emb}')
+                    continue
+                db.insert_memory(
+                    content=fact["content"],
+                    embedding=emb,
+                    category=fact.get("category", "other"),
+                    project=project,
+                    source_tool=get_config().aethos_source_tool,
+                )
+                summaries.append(f'Stored: "{fact["content"]}" (category: {fact.get("category", "other")}, project: {project})')
+
+        # 5. Handle UPDATE and DELETE facts sequentially (order matters)
         for fact in facts:
-            fact_content = fact.get("content")
-            category = fact.get("category", "other")
             action = fact.get("action", "ADD").upper()
             existing_id = fact.get("existing_id")
+            fact_content = fact.get("content")
 
-            if action == "ADD" and fact_content:
-                fact_emb = providers.call_embedding(fact_content)
-                db.insert_memory(
-                    content=fact_content,
-                    embedding=fact_emb,
-                    category=category,
-                    project=project,
-                    source_tool="MCP Client",
-                )
-                summaries.append(f'Stored: "{fact_content}" (category: {category}, project: {project})')
-
-            elif action == "UPDATE" and existing_id and fact_content:
-                fact_emb = providers.call_embedding(fact_content)
+            if action == "UPDATE" and existing_id and fact_content:
+                fact_emb = await providers.call_embedding(fact_content)
                 db.update_memory(memory_id=existing_id, content=fact_content, embedding=fact_emb)
-                summaries.append(f'Updated: "{fact_content}" (category: {category}, project: {project})')
+                summaries.append(f'Updated: "{fact_content}" (category: {fact.get("category", "other")}, project: {project})')
 
             elif action == "DELETE" and existing_id:
-                deleted = db.delete_memory(memory_id=existing_id)
+                db.delete_memory(memory_id=existing_id)
                 summaries.append(f'Deleted outdated memory id: {existing_id}')
-
-            elif action == "SKIP":
-                continue
 
         if not summaries:
             return "Nothing worth remembering in that — no new fact stored."
@@ -88,7 +101,7 @@ def remember(content: str = "", project: str = "global") -> str:
 
 
 @mcp.tool()
-def recall(query: str = "", project: str = "global") -> str:
+async def recall(query: str = "", project: str = "global") -> str:
     """Search stored memory for facts relevant to the current conversation. Call
     this before answering anything that references past decisions, preferences,
     or project history, and at the start of a session to load relevant context
@@ -96,9 +109,9 @@ def recall(query: str = "", project: str = "global") -> str:
     try:
         project = project or "global"
         if not query or not query.strip():
-            return list_memories(project=project)
+            return await list_memories(project=project)
 
-        matches = ACTIVE_RETRIEVAL_STRATEGY(query, project)
+        matches = await retrieval.active_strategy(query, project)
         if not matches:
             return f"No stored memories match '{query}' in project '{project}'."
 
@@ -112,7 +125,7 @@ def recall(query: str = "", project: str = "global") -> str:
 
 
 @mcp.tool()
-def forget(memory_id: str = None, description: str = None) -> str:
+async def forget(memory_id: str = None, description: str = None, project: str = "global") -> str:
     """Delete a previously stored memory, by its id if known, otherwise by a
     description of what it was. Call this when the user corrects or retracts
     something that was previously remembered."""
@@ -124,13 +137,11 @@ def forget(memory_id: str = None, description: str = None) -> str:
         target_content = description
 
         if not target_id and description:
-            from aethos_memory.config import get_config as _get_config
-            _cfg = _get_config()
-            search_project = _cfg.aethos_project or "global"
-            emb = providers.call_embedding(description)
+            search_project = project or get_config().aethos_project or "global"
+            emb = await providers.call_embedding(description)
             matches = db.similarity_search(emb, project=search_project, threshold=0.7, limit=1)
             if not matches:
-                # Broaden to global if not found in the configured project
+                # Broaden to global if not found in the specified project
                 matches = db.similarity_search(emb, project="global", threshold=0.7, limit=1)
             if matches:
                 target_id = matches[0]["id"]
@@ -147,18 +158,21 @@ def forget(memory_id: str = None, description: str = None) -> str:
 
 
 @mcp.tool()
-def list_memories(project: str = "global") -> str:
-    """Return every stored memory for a given project, unfiltered. Use this for
-    a full context load at the start of a session rather than recall's targeted
-    search."""
+async def list_memories(project: str = "global", limit: int = 50, page: int = 1) -> str:
+    """Return stored memories for a given project. Use limit and page for pagination.
+    Use this for a full context load at the start of a session rather than recall's
+    targeted search."""
     try:
         project = project or "global"
-        memories = db.list_by_project(project)
+        limit = max(1, min(limit, 200))  # clamp between 1 and 200
+        offset = (max(1, page) - 1) * limit
+
+        memories = db.list_by_project(project, limit=limit, offset=offset)
         if not memories:
             return f"No memories stored for project '{project}'."
 
-        lines = [f"Stored memories for project '{project}' ({len(memories)} total):"]
-        for idx, m in enumerate(memories, 1):
+        lines = [f"Stored memories for project '{project}' (page {page}, showing {len(memories)}):"]
+        for idx, m in enumerate(memories, offset + 1):
             lines.append(f"{idx}. [{m['id']}] {m['content']} ({m['category']}, source: {m.get('source_tool', 'unknown')})")
         return "\n".join(lines)
 
@@ -166,23 +180,73 @@ def list_memories(project: str = "global") -> str:
         return f"Memory listing failed — {str(err)}."
 
 
+@mcp.tool()
+async def summarize_session(session_transcript: str = "", project: str = "global") -> str:
+    """Extract and store all important facts from a complete session transcript.
+    Call this at the end of a long working session to auto-remember all key decisions,
+    preferences, and architectural choices made during the session. Pass the full
+    conversation text as session_transcript."""
+    try:
+        if not session_transcript or not session_transcript.strip():
+            return "No session content provided to summarize."
+
+        bulk_prompt = prompts.SESSION_SUMMARY_PROMPT.format(
+            session_transcript=session_transcript[:12000],  # guard against context overflow
+            project=project,
+        )
+        res = await providers.call_extraction(bulk_prompt)
+        facts = res.get("facts", [])
+
+        if not facts:
+            return "No memorable facts found in the session transcript."
+
+        add_facts = [f for f in facts if f.get("action", "ADD").upper() == "ADD" and f.get("content")]
+        if not add_facts:
+            return "No new facts to add from the session transcript."
+
+        # Embed all facts concurrently
+        embeddings = await asyncio.gather(
+            *[providers.call_embedding(f["content"]) for f in add_facts],
+            return_exceptions=True,
+        )
+
+        summaries = []
+        cfg = get_config()
+        for fact, emb in zip(add_facts, embeddings):
+            if isinstance(emb, Exception):
+                continue
+            db.insert_memory(
+                content=fact["content"],
+                embedding=emb,
+                category=fact.get("category", "other"),
+                project=project,
+                source_tool=cfg.aethos_source_tool,
+            )
+            summaries.append(f'Stored: "{fact["content"]}"')
+
+        return f"Session summarized. {len(summaries)} facts stored:\n" + "\n".join(summaries)
+
+    except Exception as err:
+        return f"Session summarization failed — {str(err)}."
+
+
 # Alias registrations for cross-client compatibility
 @mcp.tool()
-def save_memory(content: str = "", project: str = "global") -> str:
+async def save_memory(content: str = "", project: str = "global") -> str:
     """Alias for remember. Store a fact, decision, or preference."""
-    return remember(content=content, project=project)
+    return await remember(content=content, project=project)
 
 
 @mcp.tool()
-def search_memories(query: str = "", project: str = "global") -> str:
+async def search_memories(query: str = "", project: str = "global") -> str:
     """Alias for recall. Search stored memory for relevant facts."""
-    return recall(query=query, project=project)
+    return await recall(query=query, project=project)
 
 
 @mcp.tool()
-def delete_memory(memory_id: str = None, description: str = None) -> str:
+async def delete_memory(memory_id: str = None, description: str = None, project: str = "global") -> str:
     """Alias for forget. Delete a previously stored memory."""
-    return forget(memory_id=memory_id, description=description)
+    return await forget(memory_id=memory_id, description=description, project=project)
 
 
 def main():

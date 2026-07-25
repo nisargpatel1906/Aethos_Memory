@@ -1,17 +1,18 @@
+import asyncio
 from typing import Any, Callable
 from aethos_memory.db import similarity_search
 from aethos_memory.providers import call_embedding, call_extraction
 
 
-def plain_search(query: str, project: str = "global") -> list[dict[str, Any]]:
+async def plain_search(query: str, project: str = "global") -> list[dict[str, Any]]:
     """Strategy 1: Single pass vector similarity search."""
-    embedding = call_embedding(query)
+    embedding = await call_embedding(query)
     return similarity_search(embedding, project=project, threshold=0.5, limit=8)
 
 
-def conditional_retry_search(query: str, project: str = "global") -> list[dict[str, Any]]:
+async def conditional_retry_search(query: str, project: str = "global") -> list[dict[str, Any]]:
     """Strategy 2: Plain search first; on a miss, rewrite query and search broader ("global")."""
-    results = plain_search(query, project=project)
+    results = await plain_search(query, project=project)
     if results:
         return results
 
@@ -24,23 +25,27 @@ def conditional_retry_search(query: str, project: str = "global") -> list[dict[s
         "Return strict JSON only: {\"rewritten_query\": \"...\"}"
     )
     try:
-        extracted = call_extraction(rewrite_prompt)
+        extracted = await call_extraction(rewrite_prompt)
         rewritten = extracted.get("rewritten_query", query)
     except Exception:
         rewritten = query
 
-    new_embedding = call_embedding(rewritten)
+    new_embedding = await call_embedding(rewritten)
     # Search broadened project context at a lower threshold
     broader = similarity_search(new_embedding, project="global", threshold=0.4, limit=8)
     if broader:
         return broader
     # Last resort: search original query at very low threshold globally
-    return similarity_search(call_embedding(query), project="global", threshold=0.35, limit=5)
+    last_embedding = await call_embedding(query)
+    return similarity_search(last_embedding, project="global", threshold=0.35, limit=5)
 
 
-def retry_and_rerank_search(query: str, project: str = "global") -> list[dict[str, Any]]:
-    """Strategy 3: Conditional retry search plus LLM relevance reranking/filtering pass."""
-    candidates = conditional_retry_search(query, project=project)
+async def retry_and_rerank_search(query: str, project: str = "global") -> list[dict[str, Any]]:
+    """Strategy 3 (active): Conditional retry search plus LLM relevance reranking/filtering pass.
+
+    Empirically selected via eval/run_eval.py benchmark: 83.3% Hit@1, 0.875 MRR.
+    """
+    candidates = await conditional_retry_search(query, project=project)
     if not candidates:
         return []
 
@@ -64,7 +69,7 @@ Return strict JSON only — no text, no fences:
 {{"relevant_ids": ["id1", "id2"]}}"""
 
     try:
-        res = call_extraction(rerank_prompt)
+        res = await call_extraction(rerank_prompt)
         relevant_ids = set(res.get("relevant_ids", []))
         if relevant_ids:
             return [c for c in candidates if c["id"] in relevant_ids]
@@ -74,7 +79,12 @@ Return strict JSON only — no text, no fences:
     return candidates
 
 
-STRATEGIES: dict[str, Callable[[str, str], list[dict[str, Any]]]] = {
+# Active strategy — selected empirically via benchmarks
+async def active_strategy(query: str, project: str = "global") -> list[dict[str, Any]]:
+    return await retry_and_rerank_search(query, project)
+
+
+STRATEGIES: dict[str, Callable] = {
     "plain_search": plain_search,
     "conditional_retry_search": conditional_retry_search,
     "retry_and_rerank_search": retry_and_rerank_search,

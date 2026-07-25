@@ -114,8 +114,8 @@ def delete_memory(memory_id: str) -> dict[str, Any]:
     return res.data[0]
 
 
-def list_by_project(project: str) -> list[dict[str, Any]]:
-    """Return all stored memories for a project, unfiltered, ordered by created_at descending."""
+def list_by_project(project: str, limit: int = 50, offset: int = 0) -> list[dict[str, Any]]:
+    """Return stored memories for a project, ordered by created_at descending, with pagination."""
     client = get_supabase_client()
     cfg = get_config()
 
@@ -125,6 +125,7 @@ def list_by_project(project: str) -> list[dict[str, Any]]:
         .eq("user_id", cfg.aethos_user_id)
         .eq("project", project)
         .order("created_at", desc=True)
+        .range(offset, offset + limit - 1)
         .execute()
     )
     return res.data or []

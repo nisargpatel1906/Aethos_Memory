@@ -1,5 +1,7 @@
 import json
 import re
+import asyncio
+import time
 import httpx
 from aethos_memory.config import get_config
 
@@ -7,14 +9,13 @@ from aethos_memory.config import get_config
 def _clean_json_response(text: str) -> str:
     """Defensively strip markdown code fences and whitespace from raw LLM output."""
     text = text.strip()
-    # Remove markdown code block fences if present (```json ... ``` or ``` ...)
     match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
     if match:
         return match.group(1).strip()
     return text
 
 
-def call_extraction(prompt: str) -> dict:
+async def call_extraction(prompt: str) -> dict:
     """Extract atomic facts from text using Groq with fallback to OpenRouter and Gemini.
 
     Returns parsed JSON dict.
@@ -36,8 +37,8 @@ def call_extraction(prompt: str) -> dict:
                 "temperature": 0.1,
                 "response_format": {"type": "json_object"},
             }
-            with httpx.Client(timeout=15.0) as client:
-                resp = client.post(url, headers=headers, json=payload)
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.post(url, headers=headers, json=payload)
                 if resp.status_code == 200:
                     data = resp.json()
                     raw_text = data["choices"][0]["message"]["content"]
@@ -53,7 +54,7 @@ def call_extraction(prompt: str) -> dict:
             headers = {
                 "Authorization": f"Bearer {cfg.openrouter_api_key}",
                 "Content-Type": "application/json",
-                "HTTP-Referer": "https://github.com/aethos-memory",
+                "HTTP-Referer": "https://github.com/nisargpatel1906/Aethos_Memory",
                 "X-Title": "Aethos Memory",
             }
             payload = {
@@ -62,8 +63,8 @@ def call_extraction(prompt: str) -> dict:
                 "temperature": 0.1,
                 "response_format": {"type": "json_object"},
             }
-            with httpx.Client(timeout=15.0) as client:
-                resp = client.post(url, headers=headers, json=payload)
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.post(url, headers=headers, json=payload)
                 if resp.status_code == 200:
                     data = resp.json()
                     raw_text = data["choices"][0]["message"]["content"]
@@ -84,11 +85,10 @@ def call_extraction(prompt: str) -> dict:
         }
         for attempt in range(3):
             try:
-                with httpx.Client(timeout=15.0) as client:
-                    resp = client.post(url, json=payload)
+                async with httpx.AsyncClient(timeout=15.0) as client:
+                    resp = await client.post(url, json=payload)
                     if resp.status_code == 429:
-                        import time
-                        time.sleep(1.5 * (attempt + 1))
+                        await asyncio.sleep(1.5 * (attempt + 1))
                         continue
                     if resp.status_code == 200:
                         data = resp.json()
@@ -106,7 +106,7 @@ def call_extraction(prompt: str) -> dict:
     return {"facts": []}
 
 
-def call_embedding(text: str) -> list[float]:
+async def call_embedding(text: str) -> list[float]:
     """Generate 768-dimensional embedding vector using Gemini gemini-embedding-001.
 
     No fallback provider permitted to prevent vector space corruption.
@@ -121,8 +121,8 @@ def call_embedding(text: str) -> list[float]:
     }
 
     try:
-        with httpx.Client(timeout=15.0) as client:
-            resp = client.post(url, json=payload)
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(url, json=payload)
             resp.raise_for_status()
             data = resp.json()
             embedding = data.get("embedding", {}).get("values")

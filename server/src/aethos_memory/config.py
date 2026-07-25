@@ -10,6 +10,7 @@ class Config(BaseModel):
     gemini_api_key: str = Field(..., description="Gemini API Key for embeddings")
     aethos_user_id: str = Field(..., description="Aethos User ID")
     aethos_project: str = Field(default="global", description="Aethos Project Tag")
+    aethos_source_tool: str = Field(default="MCP Client", description="Label for the AI tool using this MCP server (e.g. Claude Code, Cursor)")
 
     @classmethod
     def load_from_env(cls) -> "Config":
@@ -37,6 +38,7 @@ class Config(BaseModel):
             gemini_api_key=os.environ["GEMINI_API_KEY"],
             aethos_user_id=os.environ["AETHOS_USER_ID"],
             aethos_project=os.getenv("AETHOS_PROJECT", "global"),
+            aethos_source_tool=os.getenv("AETHOS_SOURCE_TOOL", "MCP Client"),
         )
 
 
