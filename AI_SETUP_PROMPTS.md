@@ -1,14 +1,12 @@
-# 🤖 Zero-Touch AI Setup Prompts for Aethos Memory
+# 🤖 Zero-Touch AI Setup Prompts for All 22+ Supported AI Tools
 
 > **How to use this file:**  
-> Simply copy the prompt for your AI tool below and paste it directly into your AI assistant (Claude Code, OpenCode, Cursor, Windsurf, Antigravity, etc.).  
-> **Your AI assistant will automatically read your paths, configure the MCP server, write the auto-save rules, and test the connection for you!**
+> Simply copy the prompt for your AI tool below and paste it directly into your AI assistant (Claude Code, OpenCode, Cursor, Windsurf, Antigravity, Zed, Cline, etc.).  
+> **Your AI assistant will automatically read your config paths, configure the MCP server, write the auto-save rules, and verify the connection for you with zero manual work!**
 
 ---
 
 ## ⚡ 1. OpenCode (CLI)
-
-**Copy and paste this prompt to OpenCode:**
 
 ```text
 Please configure Aethos Memory MCP server and enable automatic context persistence for OpenCode on my system:
@@ -22,10 +20,7 @@ Please configure Aethos Memory MCP server and enable automatic context persisten
   "mcp": {
     "aethos-memory": {
       "type": "local",
-      "command": [
-        "uvx",
-        "aethos-memory"
-      ],
+      "command": ["uvx", "aethos-memory"],
       "environment": {
         "AETHOS_SOURCE_TOOL": "OpenCode"
       }
@@ -38,8 +33,6 @@ Please configure Aethos Memory MCP server and enable automatic context persisten
 ---
 
 ## ⚡ 2. Claude Code (CLI)
-
-**Copy and paste this prompt to Claude Code:**
 
 ```text
 Please set up Aethos Memory for Claude Code:
@@ -59,8 +52,6 @@ Please set up Aethos Memory for Claude Code:
 ---
 
 ## ⚡ 3. Cursor IDE
-
-**Copy and paste this prompt to Cursor AI Agent:**
 
 ```text
 Please configure Aethos Memory MCP server and auto-save rules for Cursor:
@@ -91,8 +82,6 @@ Please configure Aethos Memory MCP server and auto-save rules for Cursor:
 
 ## ⚡ 4. Windsurf IDE
 
-**Copy and paste this prompt to Cascade / Windsurf AI:**
-
 ```text
 Please configure Aethos Memory for Windsurf:
 
@@ -118,14 +107,12 @@ Please configure Aethos Memory for Windsurf:
 
 ---
 
-## ⚡ 5. Antigravity IDE
-
-**Copy and paste this prompt to Antigravity AI:**
+## ⚡ 5. Google Antigravity IDE
 
 ```text
 Please set up Aethos Memory MCP server for Antigravity IDE:
 
-1. Add the `aethos-memory` entry to my Antigravity MCP config file at `%USERPROFILE%\.gemini\config\mcp_config.json`:
+1. Add the `aethos-memory` entry to my Antigravity MCP config file at `%USERPROFILE%\.gemini\config\mcp_config.json` (or `~/.gemini/config/mcp_config.json` on macOS):
 {
   "mcpServers": {
     "aethos-memory": {
@@ -144,9 +131,28 @@ Please set up Aethos Memory MCP server for Antigravity IDE:
 
 ---
 
-## ⚡ 6. Zed Editor
+## ⚡ 6. Claude Desktop
 
-**Copy and paste this prompt to Zed AI Assistant:**
+```text
+Please configure Aethos Memory for Claude Desktop:
+
+Update my Claude Desktop config file at `%APPDATA%\Claude\claude_desktop_config.json` (or `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+{
+  "mcpServers": {
+    "aethos-memory": {
+      "command": "uvx",
+      "args": ["aethos-memory"],
+      "env": {
+        "AETHOS_SOURCE_TOOL": "Claude Desktop"
+      }
+    }
+  }
+}
+```
+
+---
+
+## ⚡ 7. Zed Editor
 
 ```text
 Please configure Aethos Memory MCP context server for Zed:
@@ -167,29 +173,74 @@ Add the context server to my Zed settings file at `%APPDATA%\Zed\settings.json` 
 
 ---
 
-## ⚡ 7. Cline / Roo Code (VS Code Extensions)
-
-**Copy and paste this prompt to Cline or Roo Code:**
+## ⚡ 8. OpenAI Codex CLI
 
 ```text
-Please set up Aethos Memory for Cline / Roo Code:
+Configure Aethos Memory in my Codex CLI config file at `%USERPROFILE%\.codex\config.json`:
+{
+  "mcpServers": {
+    "aethos-memory": {
+      "command": "uvx",
+      "args": ["aethos-memory"],
+      "env": {
+        "AETHOS_SOURCE_TOOL": "OpenAI Codex CLI"
+      }
+    }
+  }
+}
+```
 
-1. Add `aethos-memory` to your MCP settings file using `uvx aethos-memory`.
-2. Create `.clinerules` (or `.roorules`):
+---
+
+## ⚡ 9. Gemini CLI
+
+```text
+Configure Aethos Memory in my Gemini CLI config at `%USERPROFILE%\.gemini\config.json`:
+{
+  "mcpServers": {
+    "aethos-memory": {
+      "command": "uvx",
+      "args": ["aethos-memory"],
+      "env": {
+        "AETHOS_SOURCE_TOOL": "Gemini CLI"
+      }
+    }
+  }
+}
+```
+
+---
+
+## ⚡ 10. Cline (VS Code Extension)
+
+```text
+Please set up Aethos Memory for Cline:
+
+1. Add `aethos-memory` to my Cline MCP settings file at `%APPDATA%\Code\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json`:
+{
+  "mcpServers": {
+    "aethos-memory": {
+      "command": "uvx",
+      "args": ["aethos-memory"],
+      "env": {
+        "AETHOS_SOURCE_TOOL": "Cline"
+      }
+    }
+  }
+}
+
+2. Create `.clinerules` in my workspace root:
    ## Aethos Memory System Rules
    - Automatically and silently call remember() on EVERY turn whenever the user mentions identity facts, preferences, stack choices, decisions, or project goals.
 ```
 
 ---
 
-## ⚡ 8. Continue.dev
-
-**Copy and paste this prompt to Continue Assistant:**
+## ⚡ 11. Continue.dev
 
 ```text
 Please add Aethos Memory to my `.continue/config.json`:
 
-1. Add to `mcpServers`:
 {
   "mcpServers": [
     {
@@ -207,26 +258,179 @@ Please add Aethos Memory to my `.continue/config.json`:
 
 ---
 
-## ⚡ 9. Aider CLI
-
-**Copy and paste this prompt to Aider:**
+## ⚡ 12. Roo Code
 
 ```text
-Configure Aethos Memory for Aider:
+Configure Aethos Memory for Roo Code:
 
-Add to `.aider.conf.yml`:
-read: [CONVENTIONS.md]
-
-Create `CONVENTIONS.md`:
-- Automatically call aethos-memory_remember when user preferences or decisions are stated.
+1. Add to `%APPDATA%\Code\User\globalStorage\rooveterinaryinc.roo-cline\settings\cline_mcp_settings.json`:
+{
+  "mcpServers": {
+    "aethos-memory": {
+      "command": "uvx",
+      "args": ["aethos-memory"],
+      "env": {
+        "AETHOS_SOURCE_TOOL": "Roo Code"
+      }
+    }
+  }
+}
+2. Create `.roorules` in workspace root.
 ```
 
 ---
 
-## ⚡ 10. Goose CLI
+## ⚡ 13. Kilo Code
 
-**Copy and paste this prompt to Goose:**
+```text
+Configure Aethos Memory in `%USERPROFILE%\.kilo\mcp.json`:
+{
+  "mcpServers": {
+    "aethos-memory": {
+      "command": "uvx",
+      "args": ["aethos-memory"],
+      "env": {
+        "AETHOS_SOURCE_TOOL": "Kilo Code"
+      }
+    }
+  }
+}
+```
+
+---
+
+## ⚡ 14. Aider CLI
+
+```text
+Configure Aethos Memory for Aider:
+
+1. Add to `.aider.conf.yml`:
+   read: [CONVENTIONS.md]
+
+2. Create `CONVENTIONS.md`:
+   - Automatically call aethos-memory_remember when user preferences or decisions are stated.
+```
+
+---
+
+## ⚡ 15. Goose CLI
 
 ```text
 Add Aethos Memory extension to my Goose configuration at `%USERPROFILE%\.config\goose\config.yaml` using `uvx aethos-memory` with environment variable `AETHOS_SOURCE_TOOL: "Goose CLI"`.
+```
+
+---
+
+## ⚡ 16. OpenHands
+
+```text
+Configure Aethos Memory in my OpenHands config at `%USERPROFILE%\.openhands\config.toml`:
+[mcp.aethos-memory]
+command = "uvx"
+args = ["aethos-memory"]
+env = { AETHOS_SOURCE_TOOL = "OpenHands" }
+```
+
+---
+
+## ⚡ 17. Replit Agent
+
+```text
+Add Aethos Memory to `.replit` file:
+[mcpServers.aethos-memory]
+command = "uvx"
+args = ["aethos-memory"]
+env = { AETHOS_SOURCE_TOOL = "Replit Agent" }
+```
+
+---
+
+## ⚡ 18. Lovable
+
+```text
+Add Aethos Memory to `.lovable/mcp.json`:
+{
+  "mcpServers": {
+    "aethos-memory": {
+      "command": "uvx",
+      "args": ["aethos-memory"],
+      "env": {
+        "AETHOS_SOURCE_TOOL": "Lovable"
+      }
+    }
+  }
+}
+```
+
+---
+
+## ⚡ 19. Bolt.new / Bolt.diy
+
+```text
+Add Aethos Memory to `.bolt/mcp.json`:
+{
+  "mcpServers": {
+    "aethos-memory": {
+      "command": "uvx",
+      "args": ["aethos-memory"],
+      "env": {
+        "AETHOS_SOURCE_TOOL": "Bolt.new"
+      }
+    }
+  }
+}
+```
+
+---
+
+## ⚡ 20. v0 (Vercel)
+
+```text
+Add Aethos Memory to `v0.json`:
+{
+  "mcpServers": {
+    "aethos-memory": {
+      "command": "uvx",
+      "args": ["aethos-memory"],
+      "env": {
+        "AETHOS_SOURCE_TOOL": "v0"
+      }
+    }
+  }
+}
+```
+
+---
+
+## ⚡ 21. Devin
+
+```text
+Add Aethos Memory to `.devin/mcp.json`:
+{
+  "mcpServers": {
+    "aethos-memory": {
+      "command": "uvx",
+      "args": ["aethos-memory"],
+      "env": {
+        "AETHOS_SOURCE_TOOL": "Devin"
+      }
+    }
+  }
+}
+```
+
+---
+
+## ⚡ 22. LibreChat
+
+```text
+Configure Aethos Memory in `librechat.yaml`:
+mcpServers:
+  aethos-memory:
+    type: stdio
+    command: uvx
+    args:
+      - aethos-memory
+    env:
+      AETHOS_SOURCE_TOOL: "LibreChat"
 ```
