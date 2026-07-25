@@ -41,26 +41,24 @@ def similarity_search(
     return res.data or []
 
 
-ALLOWED_CATEGORIES = {"preference", "decision", "project_detail", "identity", "goal", "other"}
+ALLOWED_CATEGORIES = {"preference", "decision", "project_detail", "other"}
 
 
 def normalize_category(category: str | None) -> str:
-    """Ensure category matches allowed DB categories to prevent constraint violations."""
+    """Ensure category strictly matches allowed DB categories ('preference', 'decision', 'project_detail', 'other').
+    Guarantees 100% compatibility with Supabase DB check constraint.
+    """
     if not category:
         return "other"
     cat = str(category).strip().lower().replace(" ", "_")
     if cat in ALLOWED_CATEGORIES:
         return cat
-    if "pref" in cat:
+    if "pref" in cat or "ident" in cat or "user" in cat or "name" in cat:
         return "preference"
-    if "decis" in cat or "arch" in cat:
+    if "decis" in cat or "arch" in cat or "goal" in cat or "plan" in cat or "commit" in cat:
         return "decision"
-    if "proj" in cat or "detail" in cat:
+    if "proj" in cat or "detail" in cat or "stack" in cat or "tech" in cat:
         return "project_detail"
-    if "ident" in cat or "user" in cat:
-        return "identity"
-    if "goal" in cat or "plan" in cat:
-        return "goal"
     return "other"
 
 

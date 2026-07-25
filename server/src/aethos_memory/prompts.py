@@ -14,27 +14,19 @@ WHAT TO EXTRACT — PRIORITISED
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Extract facts in this priority order. Higher-priority categories matter more and should always be captured:
 
-PRIORITY 1 — Identity & Personal Facts (category: "identity")
-  Names, birthdates, nationality, occupation, timezone, preferred language, and any self-description the user offers.
-  Example: "User's name is Nisarg Patel." / "User was born on 1 September 2006."
+PRIORITY 1 — Identity & Personal Preferences (category: "preference")
+  Names, birthdates, nationality, occupation, timezone, preferred language, likes, dislikes, workflow habits, and communication style.
+  Example: "User's name is Nisarg Patel." / "User prefers TypeScript over JavaScript."
 
-PRIORITY 2 — Explicit Preferences (category: "preference")
-  Stated likes, dislikes, workflow habits, tool choices, and communication style preferences.
-  Example: "User prefers TypeScript over JavaScript." / "User wants concise replies without preamble."
+PRIORITY 2 — Decisions, Goals & Commitments (category: "decision")
+  Architectural choices, design decisions, agreed-upon approaches, resolved trade-offs, stated aims, and target milestones.
+  Example: "Project uses Supabase with pgvector for embeddings." / "User plans to build a Higgsfield AI clone."
 
-PRIORITY 3 — Decisions & Commitments (category: "decision")
-  Architectural choices, design decisions, agreed-upon approaches, and resolved trade-offs.
-  Example: "Project uses Supabase with pgvector for embeddings, not Pinecone."
-
-PRIORITY 4 — Project-Specific Context (category: "project_detail")
+PRIORITY 3 — Project-Specific Context (category: "project_detail")
   Technical facts about specific projects: stack, ports, file paths, known bugs, constraints, third-party integrations.
   Example: "The Aethos dashboard runs on localhost:3000 using Next.js App Router."
 
-PRIORITY 5 — Goals & Intentions (category: "goal")
-  Stated aims, planned features, target milestones, or directional intentions for a project or workflow.
-  Example: "User plans to publish Aethos Memory as an open-source MCP server on GitHub."
-
-PRIORITY 6 — Corrections & Retractions (category: varies)
+PRIORITY 4 — Corrections & Retractions (category: "other")
   Explicitly stated overrides of previously stored information. Always act on these immediately (UPDATE or DELETE).
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
