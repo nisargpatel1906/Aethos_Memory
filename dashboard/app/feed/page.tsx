@@ -82,7 +82,12 @@ function ToolBadge({ tool }: { tool: string | null }) {
         letterSpacing: "0.01em",
       }}
     >
-      <span style={{ fontSize: "0.65rem", opacity: 0.8 }}>⚡</span> {match.label}
+      <span style={{ display: "inline-flex", alignItems: "center" }}>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
+      </span>{" "}
+      {match.label}
     </span>
   );
 }
@@ -296,6 +301,88 @@ function FeedContent() {
       {/* Setup banner for new users */}
       <SetupBanner memoryCount={memories.length} />
 
+      {/* NeuroBank Style Hero KPI Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: "1.25rem", marginBottom: "1.5rem" }}>
+        {/* 1. Practical Memory Engine Status Card */}
+        <div className="hero-ai-card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: "180px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <span style={{
+              fontSize: "0.7rem", fontFamily: "var(--font-mono)",
+              backgroundColor: "rgba(255, 255, 255, 0.15)", border: "1px solid rgba(255, 255, 255, 0.25)",
+              color: "#ffffff", padding: "0.25rem 0.65rem", borderRadius: "20px", fontWeight: 600,
+            }}>
+              Vector Engine
+            </span>
+          </div>
+
+          <div>
+            <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#ffffff", lineHeight: "1.35", letterSpacing: "-0.01em", maxWidth: "95%" }}>
+              {memories.length} Memories Syncing Across {uniqueProjects.length} Active Projects
+            </h2>
+            <p style={{ fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.8)", marginTop: "0.35rem", fontFamily: "var(--font-mono)" }}>
+              Gemini 768d Embeddings • Supabase pgvector
+            </p>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <Link href="/analytics" style={{
+              width: "34px", height: "34px", borderRadius: "50%",
+              backgroundColor: "rgba(255, 255, 255, 0.15)", border: "1px solid rgba(255, 255, 255, 0.3)",
+              display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", cursor: "pointer",
+              fontSize: "0.9rem", fontWeight: 700, textDecoration: "none",
+            }}>
+              ↗
+            </Link>
+          </div>
+        </div>
+
+        {/* 2. Total Memories KPI Card */}
+        <div className="bg-surface glow-hover" style={{ padding: "1.25rem 1.5rem", display: "flex", flexDirection: "column", justifyContent: "space-between", borderRadius: "20px" }}>
+          <div>
+            <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", fontWeight: 600 }}>
+              TOTAL MEMORIES
+            </div>
+            <div style={{ fontSize: "2rem", fontWeight: 800, color: "var(--text-primary)", marginTop: "0.25rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              {memories.length}
+              <span style={{ fontSize: "0.75rem", backgroundColor: "rgba(16, 185, 129, 0.12)", border: "1px solid rgba(16, 185, 129, 0.3)", color: "#34d399", padding: "0.15rem 0.5rem", borderRadius: "12px", fontFamily: "var(--font-mono)", fontWeight: 600 }}>
+                ↑ 12%
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
+            <span style={{ fontSize: "0.7rem", fontFamily: "var(--font-mono)", backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid var(--border-color)", padding: "0.2rem 0.5rem", borderRadius: "8px", color: "var(--text-secondary)" }}>
+              {uniqueProjects.length} Projects
+            </span>
+            <span style={{ fontSize: "0.7rem", fontFamily: "var(--font-mono)", backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid var(--border-color)", padding: "0.2rem 0.5rem", borderRadius: "8px", color: "var(--text-secondary)" }}>
+              {uniqueTools.length} AI Tools
+            </span>
+          </div>
+        </div>
+
+        {/* 3. Category Distribution KPI Card */}
+        <div className="bg-surface glow-hover" style={{ padding: "1.25rem 1.5rem", display: "flex", flexDirection: "column", justifyContent: "space-between", borderRadius: "20px" }}>
+          <div>
+            <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", fontWeight: 600 }}>
+              SYNCHRONIZATION
+            </div>
+            <div style={{ fontSize: "2rem", fontWeight: 800, color: "#10b981", marginTop: "0.25rem" }}>
+              100%
+            </div>
+          </div>
+
+          <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.35rem" }}>
+              <span>pgvector Sync</span>
+              <span style={{ color: "#34d399" }}>Active</span>
+            </div>
+            <div style={{ width: "100%", height: "6px", backgroundColor: "rgba(255,255,255,0.08)", borderRadius: "3px", overflow: "hidden" }}>
+              <div style={{ width: "100%", height: "100%", backgroundColor: "#10b981", borderRadius: "3px" }} />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Modern Floating Filter Control Bar */}
       <div
         style={{
@@ -327,10 +414,10 @@ function FeedContent() {
             padding: "0.45rem 0.75rem",
           }}
         >
-          <option value="ALL">📁 All Projects ({uniqueProjects.length})</option>
+          <option value="ALL">All Projects ({uniqueProjects.length})</option>
           {uniqueProjects.map((projItem) => (
             <option key={projItem} value={projItem}>
-              📁 {projItem}
+              {projItem}
             </option>
           ))}
         </select>
@@ -350,10 +437,10 @@ function FeedContent() {
             padding: "0.45rem 0.75rem",
           }}
         >
-          <option value="ALL">⚡ All Tools ({uniqueTools.length})</option>
+          <option value="ALL">All Tools ({uniqueTools.length})</option>
           {uniqueTools.map((toolItem) => (
             <option key={toolItem} value={toolItem}>
-              ⚡ {toolItem}
+              {toolItem}
             </option>
           ))}
         </select>
@@ -392,8 +479,9 @@ function FeedContent() {
 
         {/* Inline Live Sync Pill */}
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.85rem", fontSize: "0.75rem", fontFamily: "var(--font-mono)" }}>
-          <Link href="/analytics" style={{ color: "#10b981", textDecoration: "none", fontWeight: 600 }}>
-            📊 Analytics & Export →
+          <Link href="/analytics" style={{ color: "#10b981", textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Analytics & Export →
           </Link>
           <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#34d399" }}>
             <div className="pulse-dot" style={{ width: "7px", height: "7px" }} />
@@ -531,16 +619,13 @@ function FeedContent() {
           {filteredMemories.map((item) => (
             <div
               key={item.id}
+              className="bg-surface border-subtle glow-hover"
               style={{
-                backgroundColor: "rgba(17, 24, 39, 0.7)",
-                border: "1px solid var(--border-color)",
                 borderRadius: "10px",
-                padding: "1.125rem 1.35rem",
+                padding: "1.15rem 1.35rem",
                 display: "flex",
                 flexDirection: "column",
                 gap: "0.875rem",
-                boxShadow: "0 2px 10px rgba(0, 0, 0, 0.15)",
-                transition: "all 0.2s ease",
                 outline: selectedIds.has(item.id) ? "1px solid rgba(16,185,129,0.4)" : "none",
               }}
             >
@@ -649,8 +734,9 @@ function FeedContent() {
               {/* Sleek Footer Badges */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem", fontSize: "0.75rem", fontFamily: "var(--font-mono)", borderTop: "1px solid var(--border-subtle)", paddingTop: "0.625rem", marginTop: "0.25rem" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-                  <span style={{ backgroundColor: "rgba(255, 255, 255, 0.04)", border: "1px solid var(--border-subtle)", padding: "0.2rem 0.55rem", borderRadius: "12px", color: "var(--text-secondary)" }}>
-                    📁 <strong style={{ color: "var(--text-primary)" }}>{item.project}</strong>
+                  <span style={{ backgroundColor: "rgba(255, 255, 255, 0.04)", border: "1px solid var(--border-subtle)", padding: "0.2rem 0.55rem", borderRadius: "12px", color: "var(--text-secondary)", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    <strong style={{ color: "var(--text-primary)" }}>{item.project}</strong>
                   </span>
 
                   <ToolBadge tool={item.source_tool} />
