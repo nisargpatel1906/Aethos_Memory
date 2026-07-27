@@ -78,14 +78,16 @@ export default function SettingsPage() {
     setTimeout(() => router.replace("/connect"), 600);
   };
 
+  const [revealSecrets, setRevealSecrets] = useState(false);
+
   const generateMcpConfig = () => {
     const envVars = {
-      SUPABASE_URL: formData.supabaseUrl || "<YOUR_SUPABASE_URL>",
-      SUPABASE_SERVICE_ROLE_KEY: formData.supabaseServiceKey || "<YOUR_SUPABASE_SERVICE_ROLE_KEY>",
-      GROQ_API_KEY: formData.groqApiKey || "<YOUR_GROQ_API_KEY>",
-      OPENROUTER_API_KEY: formData.openrouterApiKey || "<YOUR_OPENROUTER_API_KEY>",
-      GEMINI_API_KEY: formData.geminiApiKey || "<YOUR_GEMINI_API_KEY>",
-      AETHOS_USER_ID: userId,
+      SUPABASE_URL: (revealSecrets && formData.supabaseUrl) ? formData.supabaseUrl : "<YOUR_SUPABASE_URL>",
+      SUPABASE_SERVICE_ROLE_KEY: (revealSecrets && formData.supabaseServiceKey) ? formData.supabaseServiceKey : "<YOUR_SUPABASE_SERVICE_ROLE_KEY>",
+      GROQ_API_KEY: (revealSecrets && formData.groqApiKey) ? formData.groqApiKey : "<YOUR_GROQ_API_KEY>",
+      OPENROUTER_API_KEY: (revealSecrets && formData.openrouterApiKey) ? formData.openrouterApiKey : "<YOUR_OPENROUTER_API_KEY>",
+      GEMINI_API_KEY: (revealSecrets && formData.geminiApiKey) ? formData.geminiApiKey : "<YOUR_GEMINI_API_KEY>",
+      AETHOS_USER_ID: (revealSecrets && userId) ? userId : "<YOUR_AETHOS_USER_ID>",
       AETHOS_PROJECT: formData.aethosProject || "global",
     };
 
@@ -403,6 +405,38 @@ export default function SettingsPage() {
               >
                 {generateMcpConfig()}
               </pre>
+              <button
+                onClick={() => setRevealSecrets(!revealSecrets)}
+                style={{
+                  position: "absolute",
+                  top: "0.5rem",
+                  right: "4.5rem",
+                  backgroundColor: "rgba(15, 23, 42, 0.8)",
+                  border: `1px solid ${revealSecrets ? "rgba(245,158,11,0.4)" : "var(--border-color)"}`,
+                  color: revealSecrets ? "#f59e0b" : "var(--text-secondary)",
+                  padding: "0.25rem 0.5rem",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                  fontSize: "0.75rem",
+                  fontFamily: "var(--font-mono)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.25rem",
+                }}
+                title="Toggle displaying actual local keys vs safe placeholders in config snippet"
+              >
+                {revealSecrets ? (
+                  <>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    Mask Secrets
+                  </>
+                ) : (
+                  <>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    Fill Keys
+                  </>
+                )}
+              </button>
               <button
                 onClick={copyToClipboard}
                 style={{

@@ -335,15 +335,16 @@ function buildEnvVars(
     gemini: string;
     userId: string;
   },
-  toolName?: string
+  toolName?: string,
+  revealSecrets: boolean = false
 ) {
   return {
-    SUPABASE_URL: creds.url || "<YOUR_SUPABASE_URL>",
-    SUPABASE_SERVICE_ROLE_KEY: creds.key || "<YOUR_SUPABASE_SERVICE_ROLE_KEY>",
-    GROQ_API_KEY: creds.groq || "<YOUR_GROQ_API_KEY>",
-    OPENROUTER_API_KEY: creds.openrouter || "<YOUR_OPENROUTER_API_KEY>",
-    GEMINI_API_KEY: creds.gemini || "<YOUR_GEMINI_API_KEY>",
-    AETHOS_USER_ID: creds.userId || "<YOUR_USER_ID>",
+    SUPABASE_URL: (revealSecrets && creds.url) ? creds.url : "<YOUR_SUPABASE_URL>",
+    SUPABASE_SERVICE_ROLE_KEY: (revealSecrets && creds.key) ? creds.key : "<YOUR_SUPABASE_SERVICE_ROLE_KEY>",
+    GROQ_API_KEY: (revealSecrets && creds.groq) ? creds.groq : "<YOUR_GROQ_API_KEY>",
+    OPENROUTER_API_KEY: (revealSecrets && creds.openrouter) ? creds.openrouter : "<YOUR_OPENROUTER_API_KEY>",
+    GEMINI_API_KEY: (revealSecrets && creds.gemini) ? creds.gemini : "<YOUR_GEMINI_API_KEY>",
+    AETHOS_USER_ID: (revealSecrets && creds.userId) ? creds.userId : "<YOUR_AETHOS_USER_ID>",
     AETHOS_PROJECT: "global",
     AETHOS_SOURCE_TOOL: toolName || "MCP Client",
   };
@@ -485,6 +486,7 @@ export default function SetupPage() {
   const [activeCategory, setActiveCategory] = useState<CategoryId>("ides");
   const [os, setOs] = useState<"win" | "mac">("win");
   const [copied, setCopied] = useState(false);
+  const [revealSecrets, setRevealSecrets] = useState(false);
   const [creds, setCreds] = useState({
     url: "",
     key: "",
@@ -514,7 +516,7 @@ export default function SetupPage() {
   }, []);
 
   const tool = TOOLS.find((t) => t.id === activeTool)!;
-  const envVars = buildEnvVars(creds, tool?.name);
+  const envVars = buildEnvVars(creds, tool?.name, revealSecrets);
 
   function getSnippet() {
     if (tool.format === "cli") return generateClaudeCodeCommand(envVars);
@@ -801,7 +803,35 @@ export default function SetupPage() {
             </div>
 
             {/* Actions */}
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <button
+                onClick={() => setRevealSecrets(!revealSecrets)}
+                style={{
+                  display: "flex", alignItems: "center", gap: "0.375rem",
+                  padding: "0.5rem 0.875rem",
+                  border: `1px solid ${revealSecrets ? "rgba(245,158,11,0.4)" : "var(--border-color)"}`,
+                  borderRadius: "4px",
+                  backgroundColor: revealSecrets ? "rgba(245,158,11,0.12)" : "transparent",
+                  color: revealSecrets ? "#f59e0b" : "var(--text-secondary)",
+                  fontSize: "0.75rem",
+                  fontFamily: "var(--font-mono)",
+                  cursor: "pointer",
+                }}
+                title="Toggle displaying actual local keys vs safe placeholders in config snippet"
+              >
+                {revealSecrets ? (
+                  <>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    Mask Secrets
+                  </>
+                ) : (
+                  <>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    Fill Local Keys
+                  </>
+                )}
+              </button>
+
               {!tool.isTerminal && (
                 <button
                   onClick={handleDownload}

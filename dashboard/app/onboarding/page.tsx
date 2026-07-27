@@ -106,11 +106,11 @@ export default function OnboardingPage() {
 
   const getSnippet = () => {
     const env: Record<string, string> = {
-      SUPABASE_URL: form.supabaseUrl || "<YOUR_SUPABASE_URL>",
-      SUPABASE_SERVICE_ROLE_KEY: form.supabaseServiceKey || "<YOUR_SECRET_KEY>",
-      GROQ_API_KEY: form.groqApiKey || "<YOUR_GROQ_API_KEY>",
-      GEMINI_API_KEY: form.geminiApiKey || "<YOUR_GEMINI_API_KEY>",
-      AETHOS_USER_ID: userId || "user-id",
+      SUPABASE_URL: "<YOUR_SUPABASE_URL>",
+      SUPABASE_SERVICE_ROLE_KEY: "<YOUR_SUPABASE_SERVICE_ROLE_KEY>",
+      GROQ_API_KEY: "<YOUR_GROQ_API_KEY>",
+      GEMINI_API_KEY: "<YOUR_GEMINI_API_KEY>",
+      AETHOS_USER_ID: "<YOUR_AETHOS_USER_ID>",
       AETHOS_PROJECT: "global",
     };
 
