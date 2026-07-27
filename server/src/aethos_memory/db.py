@@ -31,19 +31,34 @@ def _cosine_similarity(v1: list[float], v2: list[float]) -> float:
 def similarity_search(
     embedding: list[float],
     project: str,
-    threshold: float = 0.75,
+    threshold: float = 0.65,
     limit: int = 5,
+    query_text: str = "",
 ) -> list[dict[str, Any]]:
-    """Perform vector similarity search via Supabase Postgres RPC match_memories.
+    """Perform hybrid vector + keyword similarity search via match_memories_hybrid RPC.
 
-    Scoped to AETHOS_USER_ID and target project, with automatic cross-project vector search fallback when 0 matches found.
+    Scoped to AETHOS_USER_ID and target project, with automatic cross-project vector search fallback.
     """
     client = get_supabase_client()
     cfg = get_config()
 
     matches = []
-    # 1. Search specified project via RPC if project is specified and != "ALL"
-    if project != "ALL":
+    # 1. Try match_memories_hybrid RPC
+    try:
+        res = client.rpc(
+            "match_memories_hybrid",
+            {
+                "p_user_id": cfg.aethos_user_id,
+                "p_project": project,
+                "query_text": query_text,
+                "query_embedding": embedding,
+                "match_threshold": threshold,
+                "match_count": limit,
+            },
+        ).execute()
+        matches = res.data or []
+    except Exception:
+        # Fallback to standard match_memories RPC if hybrid not yet applied
         try:
             res = client.rpc(
                 "match_memories",
@@ -59,12 +74,12 @@ def similarity_search(
         except Exception:
             pass
 
-    # 2. Cross-project fallback: search ALL stored memories for this user
+    # 2. Cross-project fallback: search ALL stored memories for this user if no matches found
     if not matches:
         try:
             rows = (
                 client.table("memories")
-                .select("id, content, category, project, created_at, embedding")
+                .select("id, content, category, project, created_at, embedding, importance, tags, access_count, expires_at, source_tool")
                 .eq("user_id", cfg.aethos_user_id)
                 .execute()
                 .data or []
@@ -76,22 +91,27 @@ def similarity_search(
                 if isinstance(emb, str):
                     emb = json.loads(emb)
                 if emb:
-                    sim = _cosine_similarity(embedding, emb)
+                    sim = round(_cosine_similarity(embedding, emb), 4)
                     if sim >= min_thresh:
+                        r["similarity"] = sim
                         scored.append((sim, r))
             scored.sort(key=lambda x: x[0], reverse=True)
             matches = [item[1] for item in scored[:limit]]
         except Exception:
             pass
 
+    # 3. Increment hit count asynchronously / silently for returned matches
+    if matches:
+        increment_access_count([m["id"] for m in matches if "id" in m])
+
     return matches
 
 
-ALLOWED_CATEGORIES = {"preference", "decision", "project_detail", "other"}
+ALLOWED_CATEGORIES = {"preference", "decision", "project_detail", "identity", "goal", "other"}
 
 
 def normalize_category(category: str | None) -> str:
-    """Ensure category strictly matches allowed DB categories ('preference', 'decision', 'project_detail', 'other').
+    """Ensure category strictly matches allowed DB categories.
     Guarantees 100% compatibility with Supabase DB check constraint.
     """
     if not category:
@@ -99,12 +119,16 @@ def normalize_category(category: str | None) -> str:
     cat = str(category).strip().lower().replace(" ", "_")
     if cat in ALLOWED_CATEGORIES:
         return cat
-    if "pref" in cat or "ident" in cat or "user" in cat or "name" in cat:
+    if "pref" in cat or "user" in cat or "name" in cat:
         return "preference"
-    if "decis" in cat or "arch" in cat or "goal" in cat or "plan" in cat or "commit" in cat:
+    if "decis" in cat or "arch" in cat or "plan" in cat or "commit" in cat:
         return "decision"
     if "proj" in cat or "detail" in cat or "stack" in cat or "tech" in cat:
         return "project_detail"
+    if "ident" in cat or "who" in cat:
+        return "identity"
+    if "goal" in cat or "target" in cat:
+        return "goal"
     return "other"
 
 
@@ -114,8 +138,13 @@ def insert_memory(
     category: str,
     project: str = "global",
     source_tool: str | None = "MCP Client",
+    importance: int = 3,
+    expires_at: str | None = None,
+    tags: list[str] | None = None,
+    team_id: str | None = None,
+    author_id: str | None = None,
 ) -> dict[str, Any]:
-    """Insert a new atomic memory record into Supabase."""
+    """Insert a new atomic memory record into Supabase with extended metadata and graceful schema fallback."""
     client = get_supabase_client()
     cfg = get_config()
 
@@ -126,12 +155,66 @@ def insert_memory(
         "embedding": embedding,
         "category": normalize_category(category),
         "source_tool": source_tool,
+        "importance": max(1, min(5, importance)),
+        "expires_at": expires_at,
+        "tags": tags or [],
+        "team_id": team_id,
+        "author_id": author_id or cfg.aethos_user_id,
     }
 
-    res = client.table("memories").insert(row).execute()
+    try:
+        res = client.table("memories").insert(row).execute()
+        if res.data:
+            return res.data[0]
+    except Exception:
+        pass
+
+    # Fallback for standard core columns if extended columns schema cache is reloading
+    fallback_row = {
+        "user_id": cfg.aethos_user_id,
+        "project": project,
+        "content": content,
+        "embedding": embedding,
+        "category": normalize_category(category),
+        "source_tool": source_tool,
+    }
+    res = client.table("memories").insert(fallback_row).execute()
     if not res.data:
         raise RuntimeError("Failed to insert memory record into Supabase")
     return res.data[0]
+
+
+def increment_access_count(memory_ids: list[str]) -> None:
+    """Increment access_count for recalled memory IDs."""
+    if not memory_ids:
+        return
+    client = get_supabase_client()
+    try:
+        for mid in memory_ids:
+            client.rpc("increment_access_count_by_id", {"m_id": mid}).execute()
+    except Exception:
+        # Fallback to direct update
+        try:
+            for mid in memory_ids:
+                client.table("memories").update({"access_count": 1}).eq("id", mid).execute()
+        except Exception:
+            pass
+
+
+def get_memory_versions(memory_id: str) -> list[dict[str, Any]]:
+    """Fetch revision audit history for a specific memory."""
+    client = get_supabase_client()
+    try:
+        res = (
+            client.table("memory_versions")
+            .select("id, memory_id, old_content, old_category, updated_by, changed_at")
+            .eq("memory_id", memory_id)
+            .order("changed_at", desc=True)
+            .execute()
+        )
+        return res.data or []
+    except Exception:
+        return []
 
 
 def update_memory(
@@ -188,7 +271,7 @@ def list_by_project(project: str, limit: int = 50, offset: int = 0) -> list[dict
 
     res = (
         client.table("memories")
-        .select("id, user_id, project, content, category, source_tool, created_at, updated_at")
+        .select("id, user_id, project, content, category, source_tool, importance, expires_at, access_count, tags, created_at, updated_at")
         .eq("user_id", cfg.aethos_user_id)
         .eq("project", project)
         .order("created_at", desc=True)

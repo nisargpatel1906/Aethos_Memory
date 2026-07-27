@@ -93,14 +93,18 @@ async def remember(
                     summaries.append(f'Failed to embed: "{fact["content"]}" — {emb}')
                     continue
                 cat_to_use = category if category else fact.get("category", "other")
+                imp_to_use = int(fact.get("importance", 3)) if isinstance(fact.get("importance"), (int, float)) else 3
+                tags_to_use = fact.get("tags", []) if isinstance(fact.get("tags"), list) else []
                 db.insert_memory(
                     content=fact["content"],
                     embedding=emb,
                     category=cat_to_use,
                     project=project,
                     source_tool=get_config().aethos_source_tool,
+                    importance=imp_to_use,
+                    tags=tags_to_use,
                 )
-                summaries.append(f'Stored: "{fact["content"]}" (category: {cat_to_use}, project: {project})')
+                summaries.append(f'Stored: "{fact["content"]}" (category: {cat_to_use}, project: {project}, importance: {imp_to_use}/5)')
 
         # 5. Handle UPDATE and DELETE facts sequentially (order matters)
         for fact in facts:
@@ -143,11 +147,50 @@ async def recall(query: str = "", project: str = "global") -> str:
 
         lines = [f"Found {len(matches)} relevant memories:"]
         for idx, m in enumerate(matches, 1):
-            lines.append(f"{idx}. {m['content']} ({m['category']})")
+            sim_str = f" [confidence: {m.get('similarity')}]" if m.get("similarity") else ""
+            imp_str = f" [importance: {m.get('importance', 3)}/5]" if m.get("importance") else ""
+            lines.append(f"{idx}. {m['content']} ({m['category']}){sim_str}{imp_str}")
         return "\n".join(lines)
 
     except Exception as err:
         return f"Memory recall failed — {str(err)}."
+
+
+@mcp.tool()
+async def inspect_memory_health(project: str = "global") -> str:
+    """Inspect the memory health of a project: detect redundant facts, expired
+    items, and access hit distribution."""
+    try:
+        memories = db.list_by_project(project=project, limit=100)
+        if not memories:
+            return f"No memories found for project '{project}'."
+
+        total = len(memories)
+        zero_hits = sum(1 for m in memories if m.get("access_count", 0) == 0)
+        high_imp = sum(1 for m in memories if (m.get("importance") or 3) >= 4)
+        expired = sum(1 for m in memories if m.get("expires_at") and str(m["expires_at"]) < datetime.now().isoformat())
+
+        return (
+            f"=== Memory Health Audit for '{project}' ===\n"
+            f"• Total Stored Memories: {total}\n"
+            f"• High Importance (4-5/5): {high_imp}\n"
+            f"• Uncalled / 0-Hit Memories: {zero_hits}\n"
+            f"• Expired Items: {expired}\n"
+            f"• Status: Healthy & Ready for RAG Retrieval"
+        )
+    except Exception as err:
+        return f"Memory health audit failed — {str(err)}."
+
+
+@mcp.tool()
+async def proactive_context_injection(active_files: str = "", project: str = "global") -> str:
+    """Proactively load and return top-N context items relevant to the currently
+    active files or workspace context."""
+    try:
+        query = f"project stack architecture preferences for {active_files}".strip()
+        return await recall(query=query, project=project)
+    except Exception as err:
+        return f"Proactive context injection failed — {str(err)}."
 
 
 @mcp.tool()

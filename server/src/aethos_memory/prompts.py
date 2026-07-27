@@ -79,7 +79,9 @@ Output strict JSON only — no text before or after, no markdown fences, no comm
   "facts": [
     {{
       "content": "Atomic, self-contained, third-person declarative fact.",
-      "category": "identity | preference | decision | project_detail | goal | other",
+      "category": "preference | decision | project_detail | identity | goal | other",
+      "importance": 1 to 5 (integer: 1=minor, 3=standard, 5=critical architecture/stack decision),
+      "tags": ["tag1", "tag2"],
       "action": "ADD | UPDATE | SKIP | DELETE",
       "existing_id": "string or null — required only when action is UPDATE or DELETE"
     }}

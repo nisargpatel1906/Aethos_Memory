@@ -391,9 +391,14 @@ function FeedContent() {
         </div>
 
         {/* Inline Live Sync Pill */}
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "#34d399" }}>
-          <div className="pulse-dot" style={{ width: "7px", height: "7px" }} />
-          <span>{memories.length} Memories</span>
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.85rem", fontSize: "0.75rem", fontFamily: "var(--font-mono)" }}>
+          <Link href="/analytics" style={{ color: "#10b981", textDecoration: "none", fontWeight: 600 }}>
+            📊 Analytics & Export →
+          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#34d399" }}>
+            <div className="pulse-dot" style={{ width: "7px", height: "7px" }} />
+            <span>{memories.length} Memories</span>
+          </div>
         </div>
       </div>
 
