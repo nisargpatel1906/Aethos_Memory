@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import AethosLogo from "./AethosLogo";
@@ -34,12 +34,6 @@ const SettingsIcon = () => (
   </svg>
 );
 
-const CloudIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
-  </svg>
-);
-
 const TerminalIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="4 17 10 11 4 5"/>
@@ -47,8 +41,7 @@ const TerminalIcon = () => (
   </svg>
 );
 
-
-const NAV_ITEMS = [
+const NAV_MAIN = [
   { href: "/feed",      label: "Memory Feed", icon: <DatabaseIcon /> },
   { href: "/projects",  label: "Projects",     icon: <FolderIcon /> },
   { href: "/analytics", label: "Analytics",    icon: <AnalyticsIcon /> },
@@ -58,11 +51,18 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [todayStr, setTodayStr] = useState("MONDAY, MARCH 27");
+
+  useEffect(() => {
+    const d = new Date();
+    const formatted = d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }).toUpperCase();
+    setTodayStr(formatted);
+  }, []);
 
   return (
     <aside
       style={{
-        width: "240px",
+        width: "250px",
         backgroundColor: "var(--sidebar-bg)",
         borderRight: "1px solid var(--border-color)",
         display: "flex",
@@ -75,20 +75,38 @@ export default function Sidebar() {
         height: "100vh",
       }}
     >
-      {/* Brand */}
       <div>
-        <div style={{ marginBottom: "1.75rem", paddingLeft: "0.5rem" }}>
+        {/* Brand Header */}
+        <div style={{ display: "flex", alignItems: "center", marginBottom: "1.5rem", paddingLeft: "0.25rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
-            <AethosLogo size={24} />
-            <h1 style={{ fontSize: "1.125rem", fontWeight: 700, color: "#10b981", letterSpacing: "-0.01em" }}>
-              Memory Dashboard
+            <AethosLogo size={26} />
+            <h1 style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+              Aethos <span style={{ color: "#10b981" }}>Memory</span>
             </h1>
           </div>
         </div>
 
-        {/* Nav Links */}
-        <nav style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
-          {NAV_ITEMS.map((item) => {
+        {/* User Welcome Card */}
+        <div
+          style={{
+            backgroundColor: "rgba(16, 185, 129, 0.05)",
+            border: "1px solid rgba(16, 185, 129, 0.15)",
+            borderRadius: "14px",
+            padding: "1rem 1.15rem",
+            marginBottom: "1.25rem",
+          }}
+        >
+          <div style={{ fontSize: "0.65rem", fontFamily: "var(--font-mono)", color: "#34d399", letterSpacing: "0.08em", fontWeight: 700, marginBottom: "0.25rem" }}>
+            {todayStr}
+          </div>
+          <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
+            Welcome back, Developer!
+          </div>
+        </div>
+
+        {/* Navigation Items */}
+        <nav style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+          {NAV_MAIN.map((item) => {
             const active = pathname.startsWith(item.href);
             return (
               <Link
@@ -98,18 +116,21 @@ export default function Sidebar() {
                   display: "flex",
                   alignItems: "center",
                   gap: "0.75rem",
-                  padding: "0.625rem 0.75rem",
-                  borderRadius: "4px",
+                  padding: "0.65rem 0.95rem",
+                  borderRadius: "12px",
                   fontSize: "0.875rem",
-                  fontWeight: active ? 600 : 400,
-                  color: active ? "#10b981" : "var(--text-secondary)",
-                  backgroundColor: active ? "rgba(16, 185, 129, 0.08)" : "transparent",
-                  borderLeft: active ? "3px solid #10b981" : "3px solid transparent",
-                  transition: "all 0.15s ease",
+                  fontWeight: active ? 600 : 500,
+                  color: active ? "#34d399" : "var(--text-secondary)",
+                  backgroundColor: active ? "rgba(16, 185, 129, 0.14)" : "transparent",
+                  border: active ? "1px solid rgba(16, 185, 129, 0.35)" : "1px solid transparent",
+                  boxShadow: active ? "0 4px 16px rgba(16, 185, 129, 0.15)" : "none",
+                  transition: "all 0.18s cubic-bezier(0.16, 1, 0.3, 1)",
                   textDecoration: "none",
                 }}
               >
-                <span style={{ display: "flex", alignItems: "center" }}>{item.icon}</span>
+                <span style={{ display: "flex", alignItems: "center", color: active ? "#10b981" : "var(--text-muted)" }}>
+                  {item.icon}
+                </span>
                 {item.label}
               </Link>
             );
@@ -117,25 +138,41 @@ export default function Sidebar() {
         </nav>
       </div>
 
-      {/* Footer Status */}
+      {/* Sensible & Practical System Status Card */}
       <div
+        className="bg-surface border-subtle"
         style={{
-          paddingTop: "1rem",
-          borderTop: "1px solid var(--border-color)",
+          padding: "1rem",
+          borderRadius: "14px",
           display: "flex",
           flexDirection: "column",
           gap: "0.5rem",
-          fontSize: "0.75rem",
-          fontFamily: "var(--font-mono)",
-          color: "var(--text-secondary)",
+          backgroundColor: "rgba(16, 185, 129, 0.04)",
+          border: "1px solid rgba(16, 185, 129, 0.2)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <CloudIcon /> Supabase: Connected
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: "0.65rem", fontFamily: "var(--font-mono)", color: "#34d399", letterSpacing: "0.08em", fontWeight: 700 }}>
+            SYSTEM HEALTH
+          </span>
+          <span style={{ fontSize: "0.7rem", fontFamily: "var(--font-mono)", color: "#34d399", fontWeight: 600, display: "flex", alignItems: "center", gap: "0.35rem" }}>
+            <div className="pulse-dot" style={{ width: "6px", height: "6px" }} /> Active
+          </span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#34d399" }}>
-          <div className="pulse-dot" style={{ width: "6px", height: "6px" }} />
-          MCP Listener: Active
+
+        <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontFamily: "var(--font-mono)", display: "flex", flexDirection: "column", gap: "0.3rem", marginTop: "0.2rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span>Database:</span>
+            <span style={{ color: "#f8fafc", fontWeight: 600 }}>Supabase</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span>Vector Engine:</span>
+            <span style={{ color: "#34d399", fontWeight: 600 }}>pgvector (768d)</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span>MCP Protocol:</span>
+            <span style={{ color: "#34d399", fontWeight: 600 }}>FastMCP v2.4</span>
+          </div>
         </div>
       </div>
     </aside>
