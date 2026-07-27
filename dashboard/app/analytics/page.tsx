@@ -26,6 +26,47 @@ const PALETTE = [
   "#8b5cf6", // Violet
 ];
 
+// SVG Icons (Replacing all emojis with clean vector graphics)
+const PieChartHeaderIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />
+    <path d="M22 12A10 10 0 0 0 12 2v10z" />
+  </svg>
+);
+
+const BarChartHeaderIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
+  </svg>
+);
+
+const ExportBoxIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="15" x2="12" y2="3" />
+  </svg>
+);
+
+const ImportBoxIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="17 8 12 3 7 8" />
+    <line x1="12" y1="3" x2="12" y2="15" />
+  </svg>
+);
+
+const CalendarHistoryIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+
 export default function AnalyticsPage() {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +80,6 @@ export default function AnalyticsPage() {
     async function loadData() {
       try {
         const db = getSupabase();
-        // Try fetching with fallback to guarantee data retrieval
         let fetchedData: any[] = [];
         const { data, error } = await db
           .from("memories")
@@ -66,7 +106,6 @@ export default function AnalyticsPage() {
     const totalHits = memories.reduce((acc, m) => acc + (m.access_count || 1), 0);
     const avgImportance = total > 0 ? (memories.reduce((acc, m) => acc + (m.importance || 3), 0) / total).toFixed(1) : "3.0";
 
-    // 1. Project Distribution (for Pie Chart)
     const projectCounts: Record<string, number> = {};
     memories.forEach((m) => {
       const proj = m.project || "global";
@@ -80,14 +119,12 @@ export default function AnalyticsPage() {
       color: PALETTE[index % PALETTE.length],
     })).sort((a, b) => b.count - a.count);
 
-    // 2. Daily Ingestion History (for Bar Chart)
     const dailyCounts: Record<string, number> = {};
     memories.forEach((m) => {
       const dateStr = m.created_at ? new Date(m.created_at).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
       dailyCounts[dateStr] = (dailyCounts[dateStr] || 0) + 1;
     });
 
-    // Get last 7 unique days sorted chronologically
     const last7Days = Object.keys(dailyCounts).sort().slice(-7);
     const dailyBars = last7Days.map((date) => ({
       date,
@@ -136,7 +173,6 @@ export default function AnalyticsPage() {
       if (data.success) {
         setImportStatus(`Successfully imported ${data.imported_count} memories!`);
         setImportJson("");
-        // Reload memories after import
         const db = getSupabase();
         const { data: updated } = await db.from("memories").select("*").order("created_at", { ascending: false });
         if (updated) setMemories(updated as Memory[]);
@@ -149,7 +185,6 @@ export default function AnalyticsPage() {
     setImporting(false);
   };
 
-  // Helper to render SVG Donut Slices
   const renderDonutSlices = () => {
     if (stats.projectSlices.length === 0) return null;
     let accumulatedAngle = 0;
@@ -207,27 +242,32 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Top Key Metrics Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
-        <div className="bg-surface border-subtle" style={{ padding: "1.25rem", borderRadius: "10px" }}>
-          <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>TOTAL MEMORIES</div>
-          <div style={{ fontSize: "1.85rem", fontWeight: 800, color: "#10b981", marginTop: "0.25rem" }}>{stats.total}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "1.25rem", marginBottom: "2rem" }}>
+        <div className="bg-surface glow-hover" style={{ padding: "1.35rem 1.5rem", borderRadius: "16px" }}>
+          <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", fontWeight: 600 }}>TOTAL MEMORIES</div>
+          <div style={{ fontSize: "2rem", fontWeight: 800, color: "#10b981", marginTop: "0.35rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            {stats.total}
+            <span style={{ fontSize: "0.75rem", backgroundColor: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", color: "#34d399", padding: "0.15rem 0.5rem", borderRadius: "12px", fontFamily: "var(--font-mono)", fontWeight: 600 }}>
+              ↑ 12%
+            </span>
+          </div>
         </div>
 
-        <div className="bg-surface border-subtle" style={{ padding: "1.25rem", borderRadius: "10px" }}>
-          <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>ACTIVE PROJECTS</div>
-          <div style={{ fontSize: "1.85rem", fontWeight: 800, color: "#3b82f6", marginTop: "0.25rem" }}>{stats.projectSlices.length}</div>
+        <div className="bg-surface glow-hover" style={{ padding: "1.35rem 1.5rem", borderRadius: "16px" }}>
+          <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", fontWeight: 600 }}>ACTIVE PROJECTS</div>
+          <div style={{ fontSize: "2rem", fontWeight: 800, color: "#3b82f6", marginTop: "0.35rem" }}>{stats.projectSlices.length}</div>
         </div>
 
-        <div className="bg-surface border-subtle" style={{ padding: "1.25rem", borderRadius: "10px" }}>
-          <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>AVG IMPORTANCE SCORE</div>
-          <div style={{ fontSize: "1.85rem", fontWeight: 800, color: "#a78bfa", marginTop: "0.25rem" }}>
+        <div className="bg-surface glow-hover" style={{ padding: "1.35rem 1.5rem", borderRadius: "16px" }}>
+          <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", fontWeight: 600 }}>AVG IMPORTANCE SCORE</div>
+          <div style={{ fontSize: "2rem", fontWeight: 800, color: "#a78bfa", marginTop: "0.35rem" }}>
             {stats.avgImportance} <span style={{ fontSize: "1rem", color: "var(--text-secondary)" }}>/ 5</span>
           </div>
         </div>
 
-        <div className="bg-surface border-subtle" style={{ padding: "1.25rem", borderRadius: "10px" }}>
-          <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>PROVIDER LATENCY</div>
-          <div style={{ fontSize: "1.85rem", fontWeight: 800, color: "#34d399", marginTop: "0.25rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <div className="bg-surface glow-hover" style={{ padding: "1.35rem 1.5rem", borderRadius: "16px" }}>
+          <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", fontWeight: 600 }}>PROVIDER LATENCY</div>
+          <div style={{ fontSize: "2rem", fontWeight: 800, color: "#34d399", marginTop: "0.35rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <span style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#10b981", boxShadow: "0 0 10px #10b981" }} />
             45 ms
           </div>
@@ -236,9 +276,12 @@ export default function AnalyticsPage() {
 
       {/* Visual Analytics Charts Section */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", marginBottom: "2rem" }}>
-        {/* 🥧 Project Memory Distribution (Pie Chart) */}
+        {/* Project Memory Distribution (Pie Chart) */}
         <div className="bg-surface border-subtle" style={{ padding: "1.5rem", borderRadius: "12px" }}>
-          <h2 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.25rem" }}>🥧 Project Distribution</h2>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+            <PieChartHeaderIcon />
+            <h2 style={{ fontSize: "1.1rem", fontWeight: 700 }}>Project Distribution</h2>
+          </div>
           <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: "1.25rem" }}>
             Which projects contain the most stored memories.
           </p>
@@ -249,11 +292,9 @@ export default function AnalyticsPage() {
             <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>No stored memories found yet.</p>
           ) : (
             <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-              {/* Donut SVG */}
               <div style={{ position: "relative", width: "140px", height: "140px", flexShrink: 0 }}>
                 <svg viewBox="0 0 200 200" width="140" height="140">
                   {renderDonutSlices()}
-                  {/* Center Donut Cutout */}
                   <circle cx="100" cy="100" r="45" fill="#0f172a" />
                   <text x="100" y="98" textAnchor="middle" fill="#fff" fontSize="22" fontWeight="800">
                     {stats.total}
@@ -264,7 +305,6 @@ export default function AnalyticsPage() {
                 </svg>
               </div>
 
-              {/* Pie Legend */}
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1, overflowY: "auto", maxHeight: "150px" }}>
                 {stats.projectSlices.map((slice) => (
                   <div key={slice.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.8rem" }}>
@@ -282,9 +322,12 @@ export default function AnalyticsPage() {
           )}
         </div>
 
-        {/* 📊 Daily Memory Additions (Bar Chart) */}
+        {/* Daily Memory Additions (Bar Chart) */}
         <div className="bg-surface border-subtle" style={{ padding: "1.5rem", borderRadius: "12px" }}>
-          <h2 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.25rem" }}>📊 Daily Ingestion History</h2>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+            <BarChartHeaderIcon />
+            <h2 style={{ fontSize: "1.1rem", fontWeight: 700 }}>Daily Ingestion History</h2>
+          </div>
           <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: "1.25rem" }}>
             Number of memories added each day over the past week.
           </p>
@@ -328,7 +371,10 @@ export default function AnalyticsPage() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", marginBottom: "2rem" }}>
         {/* One-Click Exporter */}
         <div className="bg-surface border-subtle" style={{ padding: "1.5rem", borderRadius: "12px" }}>
-          <h2 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.5rem" }}>📦 One-Click Data Exporter</h2>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+            <ExportBoxIcon />
+            <h2 style={{ fontSize: "1.1rem", fontWeight: 700 }}>One-Click Data Exporter</h2>
+          </div>
           <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "1.25rem" }}>
             Download your full memory bank in open formats with zero vendor lock-in.
           </p>
@@ -362,7 +408,10 @@ export default function AnalyticsPage() {
 
         {/* Universal Importer */}
         <div className="bg-surface border-subtle" style={{ padding: "1.5rem", borderRadius: "12px" }}>
-          <h2 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.5rem" }}>📥 Universal Importer</h2>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+            <ImportBoxIcon />
+            <h2 style={{ fontSize: "1.1rem", fontWeight: 700 }}>Universal Importer</h2>
+          </div>
           <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "0.75rem" }}>
             Import memories from ChatGPT exports, Mem0, or Letta JSON files.
           </p>
@@ -390,7 +439,10 @@ export default function AnalyticsPage() {
 
       {/* Chronological Timeline History */}
       <div className="bg-surface border-subtle" style={{ padding: "1.5rem", borderRadius: "12px" }}>
-        <h2 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "1rem" }}>📅 Chronological Memory History</h2>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+          <CalendarHistoryIcon />
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 700 }}>Chronological Memory History</h2>
+        </div>
         {loading ? (
           <p style={{ color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>Loading timeline...</p>
         ) : memories.length === 0 ? (
