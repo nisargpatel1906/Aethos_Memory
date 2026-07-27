@@ -131,11 +131,9 @@ async def remember(
 
 
 @mcp.tool()
-async def recall(query: str = "", project: str = "global") -> str:
-    """Search stored memory for facts relevant to the current conversation. Call
-    this before answering anything that references past decisions, preferences,
-    or project history, and at the start of a session to load relevant context
-    before doing other work."""
+async def recall(query: str = "", project: str = "global", synthesize: bool = False) -> str:
+    """Search stored memory for facts relevant to the current conversation using Agentic RAG.
+    Set synthesize=True to receive a single compressed executive summary of retrieved context."""
     try:
         project = project or "global"
         if not query or not query.strip():
@@ -145,7 +143,18 @@ async def recall(query: str = "", project: str = "global") -> str:
         if not matches:
             return f"No stored memories match '{query}' in project '{project}'."
 
-        lines = [f"Found {len(matches)} relevant memories:"]
+        if synthesize:
+            memories_text = "\n".join([f"- {m['content']}" for m in matches])
+            synth_prompt = prompts.CONTEXT_SYNTHESIS_PROMPT.format(query=query, memories_text=memories_text)
+            try:
+                synth_res = await providers.call_extraction(synth_prompt)
+                summary = synth_res.get("summary")
+                if summary:
+                    return f"=== Agentic Context Summary ===\n{summary}"
+            except Exception:
+                pass
+
+        lines = [f"Found {len(matches)} relevant memories via Agentic RAG:"]
         for idx, m in enumerate(matches, 1):
             sim_str = f" [confidence: {m.get('similarity')}]" if m.get("similarity") else ""
             imp_str = f" [importance: {m.get('importance', 3)}/5]" if m.get("importance") else ""

@@ -167,3 +167,51 @@ Return strict JSON only — no text before or after, no markdown fences.
 }}
 
 If nothing is worth remembering, return exactly: {{"facts": []}}"""
+
+
+HYDE_PROMPT = """You are Aethos — a precision memory retrieval assistant.
+Generate a hypothetical declarative memory statement that directly answers or satisfies the user query below.
+This statement will be embedded into vector space to match actual stored memories.
+
+User Query: "{query}"
+
+Return strict JSON only — no text, no fences:
+{{"hypothetical_answer": "Declarative, third-person statement containing the expected answer or fact."}}"""
+
+
+QUERY_DECOMPOSITION_PROMPT = """You are Aethos — a memory retrieval assistant.
+Decompose the complex user query below into 2 to 3 atomic, focused sub-queries.
+Each sub-query should capture a single aspect of the request (e.g. stack choice, styling preference, database choice).
+
+Original Query: "{query}"
+
+Return strict JSON only — no text, no fences:
+{{"sub_queries": ["sub_query_1", "sub_query_2"]}}"""
+
+
+INTENT_ROUTER_PROMPT = """You are Aethos — an intent router for memory search.
+Classify the user query into the single most relevant memory category:
+- "preference": Names, identity, user habits, tool preferences, coding conventions.
+- "decision": Architectural decisions, trade-offs, technology choices, agreed approaches.
+- "project_detail": Technical facts, ports, stack details, file paths, known constraints.
+- "identity": User identity, role, background.
+- "goal": Stated goals, target milestones, feature plans.
+- "all": General or ambiguous query matching any category.
+
+User Query: "{query}"
+
+Return strict JSON only — no text, no fences:
+{{"target_category": "preference | decision | project_detail | identity | goal | all"}}"""
+
+
+CONTEXT_SYNTHESIS_PROMPT = """You are Aethos — an executive memory synthesizer.
+Synthesize the retrieved memory cards below into a single, cohesive, highly structured bulleted summary answering the user query.
+Eliminate duplicates, resolve any minor redundancy, and highlight core facts clearly.
+
+USER QUERY: "{query}"
+
+RETRIEVED MEMORIES:
+{memories_text}
+
+Return strict JSON only — no text, no fences:
+{{"summary": "Concise, bulleted executive context summary."}}"""

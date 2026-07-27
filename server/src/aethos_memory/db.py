@@ -269,13 +269,25 @@ def list_by_project(project: str, limit: int = 50, offset: int = 0) -> list[dict
     client = get_supabase_client()
     cfg = get_config()
 
-    res = (
-        client.table("memories")
-        .select("id, user_id, project, content, category, source_tool, importance, expires_at, access_count, tags, created_at, updated_at")
-        .eq("user_id", cfg.aethos_user_id)
-        .eq("project", project)
-        .order("created_at", desc=True)
-        .range(offset, offset + limit - 1)
-        .execute()
-    )
-    return res.data or []
+    try:
+        res = (
+            client.table("memories")
+            .select("id, user_id, project, content, category, source_tool, importance, expires_at, access_count, tags, created_at, updated_at")
+            .eq("user_id", cfg.aethos_user_id)
+            .eq("project", project)
+            .order("created_at", desc=True)
+            .range(offset, offset + limit - 1)
+            .execute()
+        )
+        return res.data or []
+    except Exception:
+        res = (
+            client.table("memories")
+            .select("id, user_id, project, content, category, source_tool, created_at, updated_at")
+            .eq("user_id", cfg.aethos_user_id)
+            .eq("project", project)
+            .order("created_at", desc=True)
+            .range(offset, offset + limit - 1)
+            .execute()
+        )
+        return res.data or []
