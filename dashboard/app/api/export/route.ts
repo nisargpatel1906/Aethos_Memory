@@ -3,17 +3,29 @@ import { getSupabase, getUserId } from "../../../lib/supabaseClient";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const format = searchParams.get("format") || "json";
+  const format = (searchParams.get("format") || "json").toLowerCase();
 
   try {
     const db = getSupabase();
-    const { data: memories, error } = await db
-      .from("memories")
-      .select("id, project, content, category, source_tool, importance, created_at")
-      .order("created_at", { ascending: false });
+    let memories: any[] = [];
 
-    if (error) throw error;
-    const items = memories || [];
+    // Try selecting with extended columns first, with fallback to core columns
+    try {
+      const { data, error } = await db
+        .from("memories")
+        .select("id, project, content, category, source_tool, importance, created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      memories = data || [];
+    } catch (e) {
+      const { data } = await db
+        .from("memories")
+        .select("id, project, content, category, source_tool, created_at")
+        .order("created_at", { ascending: false });
+      memories = data || [];
+    }
+
+    const items = memories;
 
     if (format === "markdown") {
       let md = `# Aethos Memory Export\n*Exported on ${new Date().toISOString()}*\n\n`;
@@ -26,7 +38,7 @@ export async function GET(req: Request) {
       });
       return new Response(md, {
         headers: {
-          "Content-Type": "text/markdown",
+          "Content-Type": "text/markdown; charset=utf-8",
           "Content-Disposition": 'attachment; filename="aethos_memories_backup.md"',
         },
       });
@@ -40,13 +52,20 @@ export async function GET(req: Request) {
       });
       return new Response(csv, {
         headers: {
-          "Content-Type": "text/csv",
+          "Content-Type": "text/csv; charset=utf-8",
           "Content-Disposition": 'attachment; filename="aethos_memories_backup.csv"',
         },
       });
     }
 
-    return NextResponse.json({ exported_at: new Date().toISOString(), total: items.length, memories: items });
+    // JSON Format with forced file download headers
+    const jsonStr = JSON.stringify({ exported_at: new Date().toISOString(), total: items.length, memories: items }, null, 2);
+    return new Response(jsonStr, {
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Content-Disposition": 'attachment; filename="aethos_memories_backup.json"',
+      },
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
@@ -62,14 +81,16 @@ export async function POST(req: Request) {
     }
 
     const db = getSupabase();
-    const rows = items.map((item) => ({
-      user_id: getUserId(),
-      project: item.project || "imported",
-      content: typeof item === "string" ? item : item.content || item.text || item.memory,
-      category: item.category || "preference",
-      source_tool: `Imported from ${source}`,
-      importance: item.importance || 3,
-    })).filter((r) => r.content && r.content.trim());
+    const rows = items
+      .map((item) => ({
+        user_id: getUserId(),
+        project: item.project || "imported",
+        content: typeof item === "string" ? item : item.content || item.text || item.memory,
+        category: item.category || "preference",
+        source_tool: `Imported from ${source}`,
+        importance: item.importance || 3,
+      }))
+      .filter((r) => r.content && r.content.trim());
 
     const { data, error } = await db.from("memories").insert(rows).select();
     if (error) throw error;

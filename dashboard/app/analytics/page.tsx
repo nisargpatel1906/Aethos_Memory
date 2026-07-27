@@ -55,8 +55,26 @@ export default function AnalyticsPage() {
     return { total, totalHits, avgImportance, catMap, toolMap };
   }, [memories]);
 
-  const handleExport = () => {
-    window.open(`/api/export?format=${exportFormat}`, "_blank");
+  const [downloading, setDownloading] = useState(false);
+
+  const handleExport = async () => {
+    setDownloading(true);
+    try {
+      const res = await fetch(`/api/export?format=${exportFormat}`);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const ext = exportFormat === "markdown" ? "md" : exportFormat;
+      a.download = `aethos_memories_backup.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+    }
+    setDownloading(false);
   };
 
   const handleImport = async () => {
@@ -158,8 +176,8 @@ export default function AnalyticsPage() {
             ))}
           </div>
 
-          <button onClick={handleExport} className="btn-primary" style={{ width: "100%", padding: "0.6rem" }}>
-            Download Memory Backup ({exportFormat.toUpperCase()}) →
+          <button onClick={handleExport} disabled={downloading} className="btn-primary" style={{ width: "100%", padding: "0.6rem" }}>
+            {downloading ? "Preparing Download..." : `Download Memory Backup (${exportFormat.toUpperCase()}) →`}
           </button>
         </div>
 
