@@ -68,7 +68,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 // DELETE /api/memories/[id] — delete a single memory
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const supabase = getSupabase();
     const { error } = await supabase.from("memories").delete().eq("id", params.id);

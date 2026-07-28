@@ -82,6 +82,10 @@ async def process_transcript_text(text: str, source_tool: str = "Auto-Ingest", p
             if "auto-ingested" not in tags:
                 tags.append("auto-ingested")
 
+            entities = fact.get("entities", [])
+            if not isinstance(entities, list):
+                entities = []
+
             db.insert_memory(
                 content=content,
                 embedding=emb,
@@ -90,6 +94,7 @@ async def process_transcript_text(text: str, source_tool: str = "Auto-Ingest", p
                 importance=imp,
                 source_tool=source_tool,
                 tags=tags,
+                entities=entities,
             )
             inserted_count += 1
 

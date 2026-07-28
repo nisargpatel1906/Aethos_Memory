@@ -22,7 +22,7 @@ export default function SettingsPage() {
     aethosProject: "global",
   });
 
-  const activeEmbeddingModel = "gemini-embedding-001 (768 dimensions)";
+
 
   useEffect(() => {
     // Read credentials: localStorage first, then cookies as fallback

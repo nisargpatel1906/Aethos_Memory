@@ -102,6 +102,7 @@ async def remember(
                 cat_to_use = category if category else fact.get("category", "other")
                 imp_to_use = int(fact.get("importance", 3)) if isinstance(fact.get("importance"), (int, float)) else 3
                 tags_to_use = fact.get("tags", []) if isinstance(fact.get("tags"), list) else []
+                entities_to_use = fact.get("entities", []) if isinstance(fact.get("entities"), list) else []
                 db.insert_memory(
                     content=fact["content"],
                     embedding=emb,
@@ -110,6 +111,7 @@ async def remember(
                     source_tool=get_config().aethos_source_tool,
                     importance=imp_to_use,
                     tags=tags_to_use,
+                    entities=entities_to_use,
                 )
                 summaries.append(f'Stored: "{fact["content"]}" (category: {cat_to_use}, project: {project}, importance: {imp_to_use}/5)')
 

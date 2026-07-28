@@ -157,6 +157,7 @@ def insert_memory(
     importance: int = 3,
     expires_at: str | None = None,
     tags: list[str] | None = None,
+    entities: list[str] | None = None,
     team_id: str | None = None,
     author_id: str | None = None,
 ) -> dict[str, Any]:
@@ -176,6 +177,10 @@ def insert_memory(
         "category": normalize_category(category),
         "source_tool": tool_label,
     }
+    if tags is not None:
+        row["tags"] = tags
+    if entities is not None:
+        row["entities"] = entities
 
     res = client.table("memories").insert(row).execute()
     if not res.data:

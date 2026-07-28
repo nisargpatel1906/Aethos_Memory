@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 
 export default function GlobalError({
   error,
@@ -9,22 +9,24 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    console.error("Global Error:", error);
+  }, [error]);
+
   return (
-    <html>
-      <body style={{ margin: 0, backgroundColor: "#0b1326", color: "#fff", fontFamily: "sans-serif" }}>
-        <div style={{ display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
-          <div style={{ textAlign: "center", maxWidth: "450px" }}>
-            <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#f87171", marginBottom: "0.5rem" }}>
-              Application Error
-            </h2>
+    <html lang="en">
+      <body style={{ margin: 0, padding: 0, backgroundColor: "#050b08", color: "#f8fafc", fontFamily: "sans-serif" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "2rem" }}>
+          <div style={{ backgroundColor: "#0d1914", border: "1px solid rgba(255,255,255,0.08)", padding: "2rem", borderRadius: "16px", textAlign: "center", maxWidth: "480px" }}>
+            <h2 style={{ fontSize: "1.25rem", color: "#f87171", marginBottom: "0.5rem" }}>Global Application Error</h2>
             <p style={{ color: "#94a3b8", fontSize: "0.875rem", marginBottom: "1.5rem" }}>
-              {error?.message || "A critical error occurred."}
+              {error?.message || "An error occurred in the root layout."}
             </p>
             <button
               onClick={() => reset()}
-              style={{ backgroundColor: "#10b981", color: "#0b1326", border: "none", fontWeight: 700, padding: "0.75rem 1.5rem", borderRadius: "4px", cursor: "pointer" }}
+              style={{ backgroundColor: "#10b981", color: "#021a12", border: "none", fontWeight: 700, padding: "0.6rem 1.25rem", borderRadius: "8px", cursor: "pointer" }}
             >
-              Reload Application
+              Try Again
             </button>
           </div>
         </div>

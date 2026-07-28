@@ -12,6 +12,8 @@ interface Memory {
   content: string;
   category: "preference" | "decision" | "project_detail" | "other";
   source_tool: string | null;
+  tags: string[];
+  entities: string[];
   created_at: string;
   updated_at: string;
 }
@@ -195,6 +197,7 @@ function FeedContent() {
   const [selectedProject, setSelectedProject] = useState<string>(searchParams.get("project") || "ALL");
   const [selectedSourceTool, setSelectedSourceTool] = useState<string>("ALL");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+  const [selectedTag, setSelectedTag] = useState<string>("ALL");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [editSaving, setEditSaving] = useState(false);
@@ -228,7 +231,7 @@ function FeedContent() {
       const db = getSupabase();
       const { data, error } = await db
         .from("memories")
-        .select("id, project, content, category, source_tool, created_at, updated_at")
+        .select("id, project, content, category, source_tool, tags, entities, created_at, updated_at")
         .order("created_at", { ascending: false });
       if (!error && data) {
         setMemories(data as Memory[]);
@@ -253,9 +256,15 @@ function FeedContent() {
         { event: "*", schema: "public", table: "memories" },
         (payload: any) => {
           if (payload.eventType === "INSERT" && payload.new) {
-            const newMem = payload.new as Memory;
-            setMemories((prev) => [newMem, ...prev.filter((m) => m.id !== newMem.id)]);
-            setLiveToast(`⚡ Live Memory Auto-Saved: "${newMem.content.slice(0, 60)}..."`);
+            const newData = payload.new as any;
+            setMemories((prev) => {
+              const has = prev.some((p) => p.id === newData.id);
+              if (has) {
+                return prev.map((p) => (p.id === newData.id ? { ...p, ...newData } : p));
+              }
+              return [newData as Memory, ...prev];
+            });
+            setLiveToast(`⚡ Live Memory Auto-Saved: "${newData.content.slice(0, 60)}..."`);
             setTimeout(() => setLiveToast(null), 5000);
           } else if (payload.eventType === "DELETE" && payload.old) {
             setMemories((prev) => prev.filter((m) => m.id !== payload.old.id));
@@ -335,6 +344,14 @@ function FeedContent() {
     if (selectedCategory !== "ALL") {
       result = result.filter((rec) => rec.category === selectedCategory);
     }
+    
+    if (selectedTag !== "ALL") {
+      result = result.filter((rec) => {
+        const hasTag = rec.tags && rec.tags.includes(selectedTag);
+        const hasEntity = rec.entities && rec.entities.includes(selectedTag);
+        return hasTag || hasEntity;
+      });
+    }
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -347,7 +364,7 @@ function FeedContent() {
     }
 
     return result;
-  }, [selectedProject, selectedSourceTool, selectedCategory, searchQuery, memories]);
+  }, [selectedProject, selectedSourceTool, selectedCategory, selectedTag, searchQuery, memories]);
 
   const handleEditSave = async (id: string) => {
     if (!editContent.trim() || editSaving) return;
@@ -421,6 +438,20 @@ function FeedContent() {
     const toolName = item.source_tool || "unknown";
     if (!uniqueTools.includes(toolName)) {
       uniqueTools.push(toolName);
+    }
+  });
+
+  const uniqueTags: string[] = [];
+  memories.forEach((item) => {
+    if (item.tags && Array.isArray(item.tags)) {
+      item.tags.forEach((tag) => {
+        if (!uniqueTags.includes(tag)) uniqueTags.push(tag);
+      });
+    }
+    if (item.entities && Array.isArray(item.entities)) {
+      item.entities.forEach((entity) => {
+        if (!uniqueTags.includes(entity)) uniqueTags.push(entity);
+      });
     }
   });
 
@@ -600,6 +631,51 @@ function FeedContent() {
           {uniqueTools.map((toolItem) => (
             <option key={toolItem} value={toolItem}>
               {toolItem}
+            </option>
+          ))}
+        </select>
+
+        {/* Categories Dropdown */}
+        <select
+          value={selectedCategory}
+          onChange={(evt) => setSelectedCategory(evt.target.value)}
+          className="input-field"
+          style={{
+            width: "auto",
+            minWidth: "150px",
+            backgroundColor: "rgba(11, 19, 38, 0.8)",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: "8px",
+            fontSize: "0.8125rem",
+            padding: "0.45rem 0.75rem",
+          }}
+        >
+          <option value="ALL">All Categories</option>
+          <option value="preference">User Preferences</option>
+          <option value="decision">Architecture Decisions</option>
+          <option value="project_detail">Project Details</option>
+          <option value="other">Other Observations</option>
+        </select>
+
+        {/* Tags Dropdown */}
+        <select
+          value={selectedTag}
+          onChange={(evt) => setSelectedTag(evt.target.value)}
+          className="input-field"
+          style={{
+            width: "auto",
+            minWidth: "150px",
+            backgroundColor: "rgba(11, 19, 38, 0.8)",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: "8px",
+            fontSize: "0.8125rem",
+            padding: "0.45rem 0.75rem",
+          }}
+        >
+          <option value="ALL">All Tags ({uniqueTags.length})</option>
+          {uniqueTags.map((tagItem) => (
+            <option key={tagItem} value={tagItem}>
+              #{tagItem}
             </option>
           ))}
         </select>
@@ -864,6 +940,44 @@ function FeedContent() {
                   )}
                 </div>
               </div>
+
+              {/* Tags & Entities */}
+              {!editingId || editingId !== item.id ? (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginTop: "0.5rem" }}>
+                  {item.tags && item.tags.map((tag: string, idx: number) => (
+                    <span
+                      key={`tag-${idx}`}
+                      style={{
+                        backgroundColor: "rgba(59, 130, 246, 0.1)",
+                        color: "#60a5fa",
+                        border: "1px solid rgba(59, 130, 246, 0.2)",
+                        padding: "0.15rem 0.5rem",
+                        borderRadius: "12px",
+                        fontSize: "0.7rem",
+                        fontFamily: "var(--font-mono)",
+                      }}
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                  {item.entities && item.entities.map((entity: string, idx: number) => (
+                    <span
+                      key={`ent-${idx}`}
+                      style={{
+                        backgroundColor: "rgba(16, 185, 129, 0.1)",
+                        color: "#34d399",
+                        border: "1px solid rgba(16, 185, 129, 0.2)",
+                        padding: "0.15rem 0.5rem",
+                        borderRadius: "12px",
+                        fontSize: "0.7rem",
+                        fontFamily: "var(--font-mono)",
+                      }}
+                    >
+                      {entity.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase())}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
 
               {/* Delete Confirmation Box */}
               {deleteConfirmId === item.id && (

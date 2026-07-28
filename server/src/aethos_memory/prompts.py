@@ -72,7 +72,8 @@ Output strict JSON only — no text before or after, no markdown fences, no comm
       "content": "Origin-prefixed unified complete statement (e.g. 'AI recommendation: ...' or 'User preference: ...')",
       "category": "user_preference | user_decision | ai_recommendation | ai_solution | project_detail | other",
       "importance": 1 to 5 (integer: 1=minor, 3=standard, 5=critical architecture/stack decision),
-      "tags": ["user-generated" OR "ai-generated"],
+      "tags": ["user-generated" OR "ai-generated", "other-tags"],
+      "entities": ["list", "of", "core", "technologies", "or", "entities", "mentioned", "like", "Next.js", "Authentication"],
       "action": "ADD | UPDATE | SKIP | DELETE",
       "existing_id": "string or null — required only when action is UPDATE or DELETE"
     }}
@@ -146,6 +147,7 @@ Return strict JSON only — no text before or after, no markdown fences.
       "content": "Origin-prefixed unified statement (e.g. 'AI recommendation: ...' or 'User preference: ...')",
       "category": "user_preference | user_decision | ai_recommendation | ai_solution | project_detail | other",
       "tags": ["user-generated" OR "ai-generated"],
+      "entities": ["list", "of", "core", "technologies", "or", "entities", "mentioned", "like", "Next.js", "Authentication"],
       "action": "ADD"
     }}
   ]

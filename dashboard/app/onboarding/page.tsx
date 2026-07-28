@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { getUserId } from "../../lib/supabaseClient";
+
 import AethosLogo from "../components/AethosLogo";
 
 type ToolId = "claude_desktop" | "claude_code" | "cursor" | "opencode";
@@ -43,12 +43,12 @@ const AI_TOOLS: {
 type DbStatus = "idle" | "setting_up" | "ready" | "manual_sql" | "error";
 
 export default function OnboardingPage() {
-  const [userId, setUserId] = useState("");
+
   const [selectedTool, setSelectedTool] = useState<ToolId>("claude_desktop");
   const [copied, setCopied] = useState(false);
   const [dbStatus, setDbStatus] = useState<DbStatus>("idle");
   const [dbMessage, setDbMessage] = useState("");
-  const [manualSql, setManualSql] = useState("");
+
 
   const [form, setForm] = useState({
     supabaseUrl: "",
@@ -58,7 +58,7 @@ export default function OnboardingPage() {
   });
 
   useEffect(() => {
-    setUserId(getUserId());
+
     // Auto fill from localStorage if available
     const savedUrl = localStorage.getItem("aethos_supabase_url") || "";
     const savedKey = localStorage.getItem("aethos_supabase_key") || "";
@@ -93,7 +93,7 @@ export default function OnboardingPage() {
       } else if (data.manualRequired) {
         setDbStatus("manual_sql");
         setDbMessage(data.message);
-        setManualSql(data.sql || "");
+
       } else {
         setDbStatus("error");
         setDbMessage(data.error || "Setup failed. Double check your URL and secret key.");
