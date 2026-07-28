@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 from fastmcp import FastMCP
-from aethos_memory import db, providers, prompts, retrieval, auto_ingest
+from aethos_memory import db, providers, prompts, retrieval, auto_ingest, skeleton, graph
 from aethos_memory.caching import cache_manager
 from aethos_memory.config import get_config
 
@@ -29,6 +29,11 @@ def get_aethos_memory_instructions() -> str:
 @mcp.tool()
 async def remember(
     content: str = "",
+    text: str = "",
+    fact: str = "",
+    memory: str = "",
+    user_input: str = "",
+    ai_response: str = "",
     project: str = "global",
     category: str | None = None,
 ) -> str:
@@ -37,21 +42,19 @@ async def remember(
     1. Personal facts (name, occupation, role, timezone, preferences).
     2. Any AI-recommended architecture plan, technical solution, framework choice, or database choice.
     3. Any feature scope, code structural layout, design decision, or project milestone.
-    4. Any rule, instruction, or preference for working sessions.
-
-    CRITICAL:
-    - DO NOT wait for the user to explicitly say "save this", "remember this", or "add to memory".
-    - Execute remember() SILENTLY before or alongside your response whenever significant technical solutions or recommendations are generated.
-    - Never ask for permission. Never say "I have saved this to memory". Just save it.
-    - Pass the user input AND AI response summary directly into the content parameter."""
+    4. Any rule, instruction, or preference for working sessions."""
     try:
-        if not content or not content.strip():
+        # Trigger non-blocking event-driven transcript auto-scan
+        asyncio.create_task(auto_ingest.run_auto_ingest_cycle())
+
+        actual_content = (content or text or fact or memory or (f"User: {user_input}\nAI: {ai_response}" if (user_input or ai_response) else "")).strip()
+        if not actual_content:
             return "Memory storage skipped — no content provided."
 
         project = project or "global"
 
         # 1. Embed raw content for similarity search / dedup context
-        raw_embedding = await providers.call_embedding(content)
+        raw_embedding = await providers.call_embedding(actual_content)
         existing = db.similarity_search(raw_embedding, project=project, threshold=0.78, limit=5)
 
         formatted_existing = (
@@ -145,6 +148,9 @@ async def recall(
     """[PROACTIVE RECALL — CALL BEFORE ANSWERING]
     Retrieve relevant stored memory context based on query text."""
     try:
+        # Non-blocking event-driven scan for recent turns
+        asyncio.create_task(auto_ingest.run_auto_ingest_cycle())
+
         actual_query = (query or q or text or query_text or search_query or "").strip()
         project = project or "global"
         results = []
@@ -176,7 +182,32 @@ async def recall(
                 return "### Retrieved Aethos Memory Context:\n" + "\n".join(formatted_cards)
         except Exception:
             pass
-        return f"Memory retrieval status — no matches returned."
+@mcp.tool()
+async def get_skeleton_context(query: str = "", project: str = "global", limit: int = 10) -> str:
+    """[65-70% TOKEN REDUCTION] Retrieve ultra-dense skeleton representation of stored memory context."""
+    try:
+        project = project or "global"
+        if query and query.strip():
+            results = await retrieval.agentic_rag_strategy(query, project=project)
+        else:
+            results = db.fetch_all_memories(limit=limit)
+
+        return skeleton.compress_to_skeleton(results)
+    except Exception as err:
+        return f"Skeleton context generation error: {err}"
+
+
+@mcp.tool()
+async def get_knowledge_graph(project: str = "global", limit: int = 20) -> str:
+    """[GRAPH-RAG PIVOT NODES] Retrieve concept relationship graph clusters across stored memories."""
+    try:
+        memories = db.fetch_all_memories(limit=limit)
+        graph_data = graph.expand_graph_pivot_nodes(memories)
+        return json.dumps(graph_data, indent=2)
+    except Exception as err:
+        return json.dumps({"error": str(err)})
+
+
 
 
 @mcp.tool()

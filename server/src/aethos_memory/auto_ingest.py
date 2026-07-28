@@ -44,7 +44,7 @@ async def process_transcript_text(text: str, source_tool: str = "Auto-Ingest", p
         return 0
 
     try:
-        prompt = prompts.SESSION_SUMMARY_PROMPT.format(session_transcript=text[:8000], project=project)
+        prompt = prompts.SESSION_SUMMARY_PROMPT.format(session_transcript=text[-8000:], project=project)
         res = await providers.call_extraction(prompt)
         facts = res.get("facts", [])
 
@@ -114,30 +114,15 @@ def find_transcript_files() -> list[tuple[str, str, str]]:
                 if file.endswith(".jsonl") or file.endswith(".json"):
                     found.append((os.path.join(root, file), "Codex CLI", "global"))
 
-    # 3. OpenCode logs — scan ~/.local/share/opencode/ and ~/.config/opencode/
-    opencode_paths = [
-        os.path.join(user, ".local", "share", "opencode"),
-        os.path.join(user, ".config", "opencode"),
-    ]
-    for op_path in opencode_paths:
-        if os.path.exists(op_path):
-            for root, _, files in os.walk(op_path):
-                if "node_modules" in root or "cache" in root or "plugins" in root:
-                    continue
-                for file in files:
-                    if file.endswith(".json") or file.endswith(".jsonl"):
-                        found.append((os.path.join(root, file), "OpenCode", "global"))
-
     return found
 
 
-async def ingest_opencode_sqlite_db() -> int:
+async def ingest_opencode_sqlite_db(state: dict, is_first_run: bool = False) -> int:
     """Read un-ingested conversation turns directly from OpenCode's SQLite database."""
     db_path = os.path.expanduser("~/.local/share/opencode/opencode.db")
     if not os.path.exists(db_path):
         return 0
 
-    state = load_state()
     processed = set(state.get("processed_opencode_part_ids", []))
     new_inserted = 0
 
@@ -151,6 +136,12 @@ async def ingest_opencode_sqlite_db() -> int:
             ORDER BY p.time_created ASC
         """)
         rows = cur.fetchall()
+
+        if is_first_run:
+            for part_id, _, _, _ in rows:
+                processed.add(part_id)
+            state["processed_opencode_part_ids"] = list(processed)[-5000:]
+            return 0
 
         current_turn = []
         for part_id, session_id, msg_data_raw, part_data_raw in rows:
@@ -176,7 +167,6 @@ async def ingest_opencode_sqlite_db() -> int:
                 current_turn = []
 
         state["processed_opencode_part_ids"] = list(processed)[-5000:]
-        save_state(state)
 
     except Exception as e:
         logger.error(f"Error reading OpenCode SQLite DB: {e}")
@@ -187,34 +177,58 @@ async def ingest_opencode_sqlite_db() -> int:
 async def run_auto_ingest_cycle() -> int:
     """Run a single pass scanning local transcript files for new conversation turns."""
     state = load_state()
+    is_first_run = state.get("last_run", 0) == 0
     processed_files = state.get("processed_files", {})
+    file_positions = state.get("file_positions", {})
     total_new_memories = 0
+    now = time.time()
+    cutoff = now - 600  # Only scan files touched in the last 10 minutes for sub-second performance
 
     # 1. File-based transcripts
     transcripts = find_transcript_files()
     for file_path, tool_name, project in transcripts:
         try:
             mtime = os.path.getmtime(file_path)
+            
+            if is_first_run:
+                processed_files[file_path] = mtime
+                file_positions[file_path] = os.path.getsize(file_path)
+                continue
+
+            if mtime < cutoff:
+                continue
             last_mtime = processed_files.get(file_path, 0)
             if mtime > last_mtime:
                 # File was modified! Read new content
+                last_pos = file_positions.get(file_path, 0)
+                current_size = os.path.getsize(file_path)
+                
+                # If file shrank, it was truncated/recreated
+                if current_size < last_pos:
+                    last_pos = 0
+                
                 with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                    f.seek(last_pos)
                     content = f.read()
+                    new_pos = f.tell()
 
                 if len(content) > 50:
                     count = await process_transcript_text(content, source_tool=tool_name, project=project)
                     total_new_memories += count
 
                 processed_files[file_path] = mtime
+                file_positions[file_path] = new_pos
         except Exception as e:
             logger.debug(f"Skipping file {file_path}: {e}")
 
     # 2. OpenCode SQLite DB ingestion
-    opencode_count = await ingest_opencode_sqlite_db()
-    total_new_memories += opencode_count
+    opencode_count = await ingest_opencode_sqlite_db(state=state, is_first_run=is_first_run)
+    if not is_first_run:
+        total_new_memories += opencode_count
 
     state["processed_files"] = processed_files
-    state["last_run"] = time.time()
+    state["file_positions"] = file_positions
+    state["last_run"] = now
     save_state(state)
     return total_new_memories
 
@@ -231,4 +245,4 @@ async def start_auto_ingest_loop(interval_seconds: int = 30):
 
 
 if __name__ == "__main__":
-    asyncio.run(run_auto_ingest_cycle())
+    asyncio.run(start_auto_ingest_loop())

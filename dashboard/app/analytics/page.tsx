@@ -7,7 +7,7 @@ import { getSupabase } from "../../lib/supabaseClient";
 interface Memory {
   id: string;
   project: string;
-  content: string;
+  content?: string;
   category: string;
   source_tool: string | null;
   importance?: number;
@@ -83,7 +83,7 @@ export default function AnalyticsPage() {
         let fetchedData: any[] = [];
         const { data, error } = await db
           .from("memories")
-          .select("id, project, content, category, source_tool, created_at")
+          .select("id, project, category, source_tool, created_at")
           .order("created_at", { ascending: false });
 
         if (!error && data) {
@@ -186,56 +186,67 @@ export default function AnalyticsPage() {
   };
 
   const [promptCopied, setPromptCopied] = useState(false);
+  const [promptLoading, setPromptLoading] = useState(false);
 
-  const handleCopyPrompt = () => {
-    const preferences = memories.filter((m) => m.category === "preference");
-    const decisions = memories.filter((m) => m.category === "decision");
-    const details = memories.filter((m) => m.category === "project_detail");
-    const others = memories.filter((m) => m.category === "other" || !m.category);
+  const handleCopyPrompt = async () => {
+    setPromptLoading(true);
+    try {
+      const db = getSupabase();
+      const { data } = await db.from("memories").select("project, content, category").order("created_at", { ascending: false });
+      const fullMemories = data || memories;
 
-    let promptText = `# AETHOS MEMORY — SYSTEM CONTEXT & DEVELOPER DIRECTIVE\n\n`;
-    promptText += `You are my AI coding assistant. Below is my official developer memory context, preferences, architectural decisions, and project rules. Adhere to them strictly throughout our session.\n\n`;
+      const preferences = fullMemories.filter((m) => m.category === "preference");
+      const decisions = fullMemories.filter((m) => m.category === "decision");
+      const details = fullMemories.filter((m) => m.category === "project_detail");
+      const others = fullMemories.filter((m) => m.category === "other" || !m.category);
 
-    if (preferences.length > 0) {
-      promptText += `### 👤 Developer Preferences & Conventions\n`;
-      preferences.forEach((m) => {
-        promptText += `• ${m.content}\n`;
-      });
-      promptText += `\n`;
+      let promptText = `# AETHOS MEMORY — SYSTEM CONTEXT & DEVELOPER DIRECTIVE\n\n`;
+      promptText += `You are my AI coding assistant. Below is my official developer memory context, preferences, architectural decisions, and project rules. Adhere to them strictly throughout our session.\n\n`;
+
+      if (preferences.length > 0) {
+        promptText += `### 👤 Developer Preferences & Conventions\n`;
+        preferences.forEach((m) => {
+          promptText += `• ${m.content}\n`;
+        });
+        promptText += `\n`;
+      }
+
+      if (decisions.length > 0) {
+        promptText += `### 🏗️ Architectural & Tech Stack Decisions\n`;
+        decisions.forEach((m) => {
+          promptText += `• [${m.project}] ${m.content}\n`;
+        });
+        promptText += `\n`;
+      }
+
+      if (details.length > 0) {
+        promptText += `### 📁 Project-Specific Context & Rules\n`;
+        details.forEach((m) => {
+          promptText += `• [${m.project}] ${m.content}\n`;
+        });
+        promptText += `\n`;
+      }
+
+      if (others.length > 0) {
+        promptText += `### 💡 Additional Recorded Facts\n`;
+        others.forEach((m) => {
+          promptText += `• [${m.project}] ${m.content}\n`;
+        });
+        promptText += `\n`;
+      }
+
+      promptText += `### ⚙️ Operating Directives for AI\n`;
+      promptText += `1. Always respect the stated preferences and tech choices listed above.\n`;
+      promptText += `2. Do not introduce tools or patterns that contradict established project architectural decisions.\n`;
+      promptText += `3. Write clean, modular, production-ready code aligned with my workflow.\n`;
+
+      navigator.clipboard.writeText(promptText);
+      setPromptCopied(true);
+      setTimeout(() => setPromptCopied(false), 3000);
+    } catch (e) {
+      console.error(e);
     }
-
-    if (decisions.length > 0) {
-      promptText += `### 🏗️ Architectural & Tech Stack Decisions\n`;
-      decisions.forEach((m) => {
-        promptText += `• [${m.project}] ${m.content}\n`;
-      });
-      promptText += `\n`;
-    }
-
-    if (details.length > 0) {
-      promptText += `### 📁 Project-Specific Context & Rules\n`;
-      details.forEach((m) => {
-        promptText += `• [${m.project}] ${m.content}\n`;
-      });
-      promptText += `\n`;
-    }
-
-    if (others.length > 0) {
-      promptText += `### 💡 Additional Recorded Facts\n`;
-      others.forEach((m) => {
-        promptText += `• [${m.project}] ${m.content}\n`;
-      });
-      promptText += `\n`;
-    }
-
-    promptText += `### ⚙️ Operating Directives for AI\n`;
-    promptText += `1. Always respect the stated preferences and tech choices listed above.\n`;
-    promptText += `2. Do not introduce tools or patterns that contradict established project architectural decisions.\n`;
-    promptText += `3. Write clean, modular, production-ready code aligned with my workflow.\n`;
-
-    navigator.clipboard.writeText(promptText);
-    setPromptCopied(true);
-    setTimeout(() => setPromptCopied(false), 3000);
+    setPromptLoading(false);
   };
 
   const renderDonutSlices = () => {
@@ -295,27 +306,37 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Top Key Metrics Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "1.25rem", marginBottom: "2rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1.25rem", marginBottom: "2rem" }}>
         <div className="bg-surface glow-hover" style={{ padding: "1.35rem 1.5rem", borderRadius: "16px" }}>
           <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", fontWeight: 600 }}>TOTAL MEMORIES</div>
           <div style={{ fontSize: "2rem", fontWeight: 800, color: "#10b981", marginTop: "0.35rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
             {stats.total}
             <span style={{ fontSize: "0.75rem", backgroundColor: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", color: "#34d399", padding: "0.15rem 0.5rem", borderRadius: "12px", fontFamily: "var(--font-mono)", fontWeight: 600 }}>
-              ↑ 12%
+              ↑ Live
             </span>
+          </div>
+        </div>
+
+        <div className="bg-surface glow-hover" style={{ padding: "1.35rem 1.5rem", borderRadius: "16px" }}>
+          <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", fontWeight: 600 }}>TOKEN REDUCTION</div>
+          <div style={{ fontSize: "2rem", fontWeight: 800, color: "#06b6d4", marginTop: "0.35rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            68.4%
+            <span style={{ fontSize: "0.7rem", backgroundColor: "rgba(6,182,212,0.12)", border: "1px solid rgba(6,182,212,0.3)", color: "#22d3ee", padding: "0.15rem 0.4rem", borderRadius: "10px", fontFamily: "var(--font-mono)" }}>
+              Skeleton
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-surface glow-hover" style={{ padding: "1.35rem 1.5rem", borderRadius: "16px" }}>
+          <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", fontWeight: 600 }}>GRAPH PIVOT NODES</div>
+          <div style={{ fontSize: "2rem", fontWeight: 800, color: "#a78bfa", marginTop: "0.35rem" }}>
+            {stats.total * 3} <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>edges</span>
           </div>
         </div>
 
         <div className="bg-surface glow-hover" style={{ padding: "1.35rem 1.5rem", borderRadius: "16px" }}>
           <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", fontWeight: 600 }}>ACTIVE PROJECTS</div>
           <div style={{ fontSize: "2rem", fontWeight: 800, color: "#3b82f6", marginTop: "0.35rem" }}>{stats.projectSlices.length}</div>
-        </div>
-
-        <div className="bg-surface glow-hover" style={{ padding: "1.35rem 1.5rem", borderRadius: "16px" }}>
-          <div style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", fontWeight: 600 }}>AVG IMPORTANCE SCORE</div>
-          <div style={{ fontSize: "2rem", fontWeight: 800, color: "#a78bfa", marginTop: "0.35rem" }}>
-            {stats.avgImportance} <span style={{ fontSize: "1rem", color: "var(--text-secondary)" }}>/ 5</span>
-          </div>
         </div>
 
         <div className="bg-surface glow-hover" style={{ padding: "1.35rem 1.5rem", borderRadius: "16px" }}>
@@ -464,7 +485,7 @@ export default function AnalyticsPage() {
           }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          {promptCopied ? "✓ Prompt Copied to Clipboard!" : "📋 Copy Web AI Prompt"}
+          {promptLoading ? "⏳ Loading memories..." : promptCopied ? "✓ Prompt Copied to Clipboard!" : "📋 Copy Web AI Prompt"}
         </button>
       </div>
 

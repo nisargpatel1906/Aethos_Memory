@@ -79,7 +79,7 @@ def similarity_search(
         try:
             rows = (
                 client.table("memories")
-                .select("id, content, category, project, created_at, embedding, importance, tags, access_count, expires_at, source_tool")
+                .select("id, content, category, project, created_at, embedding, source_tool")
                 .eq("user_id", cfg.aethos_user_id)
                 .execute()
                 .data or []
@@ -209,9 +209,28 @@ def get_memory_versions(memory_id: str) -> list[dict[str, Any]]:
             .order("changed_at", desc=True)
             .execute()
         )
+    except Exception:
+        return []
+
+
+def fetch_all_memories(limit: int = 10) -> list[dict[str, Any]]:
+    """Fetch recent memories for current user."""
+    client = get_supabase_client()
+    cfg = get_config()
+    try:
+        res = (
+            client.table("memories")
+            .select("id, content, category, project, source_tool, created_at")
+            .eq("user_id", cfg.aethos_user_id)
+            .order("created_at", desc=True)
+            .limit(limit)
+            .execute()
+        )
         return res.data or []
     except Exception:
         return []
+
+
 
 
 def update_memory(
