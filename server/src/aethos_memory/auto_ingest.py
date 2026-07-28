@@ -123,30 +123,30 @@ async def ingest_opencode_sqlite_db(state: dict, is_first_run: bool = False) -> 
     if not os.path.exists(db_path):
         return 0
 
-    processed = set(state.get("processed_opencode_part_ids", []))
+    last_time = state.get("opencode_last_time", 0)
     new_inserted = 0
+    max_time_seen = last_time
 
     try:
         conn = sqlite3.connect(db_path)
         cur = conn.cursor()
         cur.execute("""
-            SELECT p.id, p.session_id, m.data, p.data
+            SELECT p.id, p.session_id, m.data, p.data, p.time_created
             FROM part p
             JOIN message m ON p.message_id = m.id
+            WHERE p.time_created > ?
             ORDER BY p.time_created ASC
-        """)
+        """, (last_time,))
         rows = cur.fetchall()
 
         if is_first_run:
-            for part_id, _, _, _ in rows:
-                processed.add(part_id)
-            state["processed_opencode_part_ids"] = list(processed)[-5000:]
+            if rows:
+                state["opencode_last_time"] = max(r[4] for r in rows)
             return 0
 
         current_turn = []
-        for part_id, session_id, msg_data_raw, part_data_raw in rows:
-            if part_id in processed:
-                continue
+        for part_id, session_id, msg_data_raw, part_data_raw, time_created in rows:
+            max_time_seen = max(max_time_seen, time_created)
 
             try:
                 m_json = json.loads(msg_data_raw)
@@ -166,7 +166,8 @@ async def ingest_opencode_sqlite_db(state: dict, is_first_run: bool = False) -> 
                 new_inserted += count
                 current_turn = []
 
-        state["processed_opencode_part_ids"] = list(processed)[-5000:]
+        if max_time_seen > last_time:
+            state["opencode_last_time"] = max_time_seen
 
     except Exception as e:
         logger.error(f"Error reading OpenCode SQLite DB: {e}")
