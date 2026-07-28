@@ -45,8 +45,67 @@ function CategoryBadge({ cat }: { cat: string }) {
   );
 }
 
+function ProvenanceBadge({ content, cat }: { content: string; cat: string }) {
+  const isAi =
+    cat.includes("ai") ||
+    content.toLowerCase().startsWith("ai ") ||
+    content.toLowerCase().includes("ai generated") ||
+    content.toLowerCase().includes("ai recommendation");
+
+  if (isAi) {
+    return (
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "0.35rem",
+          backgroundColor: "rgba(6, 182, 212, 0.12)",
+          border: "1px solid rgba(6, 182, 212, 0.35)",
+          color: "#22d3ee",
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.6875rem",
+          fontWeight: 700,
+          padding: "0.2rem 0.55rem",
+          borderRadius: "12px",
+          letterSpacing: "0.01em",
+        }}
+      >
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>
+        AI Generated Answer
+      </span>
+    );
+  }
+
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "0.35rem",
+        backgroundColor: "rgba(16, 185, 129, 0.12)",
+        border: "1px solid rgba(16, 185, 129, 0.35)",
+        color: "#34d399",
+        fontFamily: "var(--font-mono)",
+        fontSize: "0.6875rem",
+        fontWeight: 700,
+        padding: "0.2rem 0.55rem",
+        borderRadius: "12px",
+        letterSpacing: "0.01em",
+      }}
+    >
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      User Statement
+    </span>
+  );
+}
+
 function ToolBadge({ tool }: { tool: string | null }) {
-  const name = (tool || "").toLowerCase().replace(/[\s_-]/g, "");
+  const raw = tool || "MCP Client";
+  const ipMatch = raw.match(/\(([\d\.]+)\)/);
+  const ip = ipMatch ? ipMatch[1] : null;
+  const toolBase = raw.replace(/\s*\([\d\.]+\)/, "").trim();
+
+  const name = toolBase.toLowerCase().replace(/[\s_-]/g, "");
 
   const toolMap: Record<string, { label: string; bg: string; border: string; color: string }> = {
     claude:           { label: "Claude",        bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.3)",  color: "#f59e0b" },
@@ -63,31 +122,52 @@ function ToolBadge({ tool }: { tool: string | null }) {
     mcpclient:        { label: "MCP Client",    bg: "rgba(148,163,184,0.12)", border: "rgba(148,163,184,0.3)", color: "#94a3b8" },
   };
 
-  const match = toolMap[name] ?? { label: tool || "Unknown", bg: "rgba(148,163,184,0.1)", border: "rgba(148,163,184,0.3)", color: "#94a3b8" };
+  const match = toolMap[name] ?? { label: toolBase || "Unknown", bg: "rgba(148,163,184,0.1)", border: "rgba(148,163,184,0.3)", color: "#94a3b8" };
 
   return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "0.3rem",
-        backgroundColor: match.bg,
-        border: `1px solid ${match.border}`,
-        color: match.color,
-        fontFamily: "var(--font-mono)",
-        fontSize: "0.6875rem",
-        fontWeight: 600,
-        padding: "0.2rem 0.55rem",
-        borderRadius: "12px",
-        letterSpacing: "0.01em",
-      }}
-    >
-      <span style={{ display: "inline-flex", alignItems: "center" }}>
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-        </svg>
-      </span>{" "}
-      {match.label}
+    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "0.3rem",
+          backgroundColor: match.bg,
+          border: `1px solid ${match.border}`,
+          color: match.color,
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.6875rem",
+          fontWeight: 600,
+          padding: "0.2rem 0.55rem",
+          borderRadius: "12px",
+          letterSpacing: "0.01em",
+        }}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center" }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+          </svg>
+        </span>{" "}
+        {match.label}
+      </span>
+      {ip && (
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.2rem",
+            backgroundColor: "rgba(59, 130, 246, 0.12)",
+            border: "1px solid rgba(59, 130, 246, 0.3)",
+            color: "#60a5fa",
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.6875rem",
+            fontWeight: 600,
+            padding: "0.2rem 0.55rem",
+            borderRadius: "12px",
+          }}
+        >
+          🌐 {ip}
+        </span>
+      )}
     </span>
   );
 }
@@ -124,6 +204,8 @@ function FeedContent() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
+  const [liveToast, setLiveToast] = useState<string | null>(null);
+
   // Sync searchParams reactively when URL changes
   useEffect(() => {
     const q = searchParams.get("q");
@@ -135,7 +217,7 @@ function FeedContent() {
   // Fetch Memories directly via Supabase client with instant local cache
   const fetchMemories = async () => {
     const cached = localStorage.getItem("aethos_cached_memories");
-    if (cached) {
+    if (cached && memories.length === 0) {
       try {
         setMemories(JSON.parse(cached));
         setLoading(false);
@@ -157,6 +239,52 @@ function FeedContent() {
     }
     setLoading(false);
   };
+
+  // Real-Time Supabase WebSocket Subscription & 3-Second Live Polling Loop
+  useEffect(() => {
+    fetchMemories();
+
+    const db = getSupabase();
+    // 1. Realtime Supabase WebSockets channel
+    const channel = db
+      .channel("realtime-memories-feed")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "memories" },
+        (payload: any) => {
+          if (payload.eventType === "INSERT" && payload.new) {
+            const newMem = payload.new as Memory;
+            setMemories((prev) => [newMem, ...prev.filter((m) => m.id !== newMem.id)]);
+            setLiveToast(`⚡ Live Memory Auto-Saved: "${newMem.content.slice(0, 60)}..."`);
+            setTimeout(() => setLiveToast(null), 5000);
+          } else if (payload.eventType === "DELETE" && payload.old) {
+            setMemories((prev) => prev.filter((m) => m.id !== payload.old.id));
+          } else if (payload.eventType === "UPDATE" && payload.new) {
+            setMemories((prev) => prev.map((m) => (m.id === payload.new.id ? (payload.new as Memory) : m)));
+          }
+        }
+      )
+      .subscribe();
+
+    // 2. 2-second live sync polling loop — unconditionally syncs feed state
+    const interval = setInterval(async () => {
+      try {
+        const { data, error } = await db
+          .from("memories")
+          .select("id, project, content, category, source_tool, created_at, updated_at")
+          .order("created_at", { ascending: false });
+        if (!error && data) {
+          setMemories(data as Memory[]);
+          localStorage.setItem("aethos_cached_memories", JSON.stringify(data));
+        }
+      } catch {}
+    }, 2000);
+
+    return () => {
+      db.removeChannel(channel);
+      clearInterval(interval);
+    };
+  }, []);
 
   const handleQuickAdd = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter" || !quickAddContent.trim()) return;
@@ -301,6 +429,35 @@ function FeedContent() {
       {/* Setup banner for new users */}
       <SetupBanner memoryCount={memories.length} />
 
+      {/* Real-Time Live Ingestion Toast Notification */}
+      {liveToast && (
+        <div
+          style={{
+            padding: "0.85rem 1.25rem",
+            marginBottom: "1.25rem",
+            borderRadius: "10px",
+            backgroundColor: "rgba(16, 185, 129, 0.15)",
+            border: "1px solid #10b981",
+            color: "#34d399",
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            boxShadow: "0 4px 20px rgba(16, 185, 129, 0.25)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span style={{ fontSize: "1rem" }}>⚡</span>
+            <span>{liveToast}</span>
+          </div>
+          <span style={{ fontSize: "0.7rem", backgroundColor: "rgba(16, 185, 129, 0.25)", padding: "0.2rem 0.5rem", borderRadius: "12px", border: "1px solid #34d399" }}>
+            REALTIME LIVE
+          </span>
+        </div>
+      )}
+
       {/* NeuroBank Style Hero KPI Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: "1.25rem", marginBottom: "1.5rem" }}>
         {/* 1. Practical Memory Engine Status Card */}
@@ -308,10 +465,12 @@ function FeedContent() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <span style={{
               fontSize: "0.7rem", fontFamily: "var(--font-mono)",
-              backgroundColor: "rgba(255, 255, 255, 0.15)", border: "1px solid rgba(255, 255, 255, 0.25)",
+              backgroundColor: "rgba(16, 185, 129, 0.25)", border: "1px solid #34d399",
               color: "#ffffff", padding: "0.25rem 0.65rem", borderRadius: "20px", fontWeight: 600,
+              display: "inline-flex", alignItems: "center", gap: "0.35rem",
             }}>
-              Vector Engine
+              <span style={{ width: "7px", height: "7px", borderRadius: "50%", backgroundColor: "#34d399", boxShadow: "0 0 8px #34d399" }} />
+              Live Sync 🟢
             </span>
           </div>
 
@@ -742,6 +901,8 @@ function FeedContent() {
                   <ToolBadge tool={item.source_tool} />
 
                   <CategoryBadge cat={item.category} />
+
+                  <ProvenanceBadge content={item.content} cat={item.category} />
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>

@@ -185,6 +185,59 @@ export default function AnalyticsPage() {
     setImporting(false);
   };
 
+  const [promptCopied, setPromptCopied] = useState(false);
+
+  const handleCopyPrompt = () => {
+    const preferences = memories.filter((m) => m.category === "preference");
+    const decisions = memories.filter((m) => m.category === "decision");
+    const details = memories.filter((m) => m.category === "project_detail");
+    const others = memories.filter((m) => m.category === "other" || !m.category);
+
+    let promptText = `# AETHOS MEMORY — SYSTEM CONTEXT & DEVELOPER DIRECTIVE\n\n`;
+    promptText += `You are my AI coding assistant. Below is my official developer memory context, preferences, architectural decisions, and project rules. Adhere to them strictly throughout our session.\n\n`;
+
+    if (preferences.length > 0) {
+      promptText += `### 👤 Developer Preferences & Conventions\n`;
+      preferences.forEach((m) => {
+        promptText += `• ${m.content}\n`;
+      });
+      promptText += `\n`;
+    }
+
+    if (decisions.length > 0) {
+      promptText += `### 🏗️ Architectural & Tech Stack Decisions\n`;
+      decisions.forEach((m) => {
+        promptText += `• [${m.project}] ${m.content}\n`;
+      });
+      promptText += `\n`;
+    }
+
+    if (details.length > 0) {
+      promptText += `### 📁 Project-Specific Context & Rules\n`;
+      details.forEach((m) => {
+        promptText += `• [${m.project}] ${m.content}\n`;
+      });
+      promptText += `\n`;
+    }
+
+    if (others.length > 0) {
+      promptText += `### 💡 Additional Recorded Facts\n`;
+      others.forEach((m) => {
+        promptText += `• [${m.project}] ${m.content}\n`;
+      });
+      promptText += `\n`;
+    }
+
+    promptText += `### ⚙️ Operating Directives for AI\n`;
+    promptText += `1. Always respect the stated preferences and tech choices listed above.\n`;
+    promptText += `2. Do not introduce tools or patterns that contradict established project architectural decisions.\n`;
+    promptText += `3. Write clean, modular, production-ready code aligned with my workflow.\n`;
+
+    navigator.clipboard.writeText(promptText);
+    setPromptCopied(true);
+    setTimeout(() => setPromptCopied(false), 3000);
+  };
+
   const renderDonutSlices = () => {
     if (stats.projectSlices.length === 0) return null;
     let accumulatedAngle = 0;
@@ -367,6 +420,54 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
+      {/* Dedicated Web AI Prompt Generator Banner Card */}
+      <div
+        className="hero-ai-card"
+        style={{
+          padding: "1.5rem 2rem",
+          borderRadius: "16px",
+          marginBottom: "2rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "1.5rem",
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ flex: 1, minWidth: "280px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.4rem" }}>
+            <span style={{ fontSize: "0.7rem", fontFamily: "var(--font-mono)", backgroundColor: "rgba(255, 255, 255, 0.18)", border: "1px solid rgba(255, 255, 255, 0.3)", color: "#fff", padding: "0.2rem 0.6rem", borderRadius: "12px", fontWeight: 700 }}>
+              UNIVERSAL AI PROMPT
+            </span>
+            <span style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "#6ee7b7" }}>
+              For Gemini Web, ChatGPT & Claude Web
+            </span>
+          </div>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff", marginBottom: "0.25rem" }}>
+            Using an AI Web App without MCP?
+          </h2>
+          <p style={{ fontSize: "0.85rem", color: "rgba(255, 255, 255, 0.85)" }}>
+            Copy your entire structured memory context in one click and paste it into Gemini Web App, ChatGPT, or Claude Web.
+          </p>
+        </div>
+
+        <button
+          onClick={handleCopyPrompt}
+          className="btn-primary"
+          style={{
+            padding: "0.75rem 1.5rem",
+            fontSize: "0.9rem",
+            fontWeight: 700,
+            borderRadius: "10px",
+            whiteSpace: "nowrap",
+            backgroundColor: promptCopied ? "#059669" : undefined,
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          {promptCopied ? "✓ Prompt Copied to Clipboard!" : "📋 Copy Web AI Prompt"}
+        </button>
+      </div>
+
       {/* Export & Import Portability Suite */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", marginBottom: "2rem" }}>
         {/* One-Click Exporter */}
@@ -425,9 +526,15 @@ export default function AnalyticsPage() {
             style={{ fontSize: "0.8rem", fontFamily: "var(--font-mono)", marginBottom: "0.75rem" }}
           />
 
-          <button onClick={handleImport} disabled={importing} className="btn-ghost" style={{ width: "100%", padding: "0.5rem" }}>
-            {importing ? "Importing..." : "Import Memories"}
-          </button>
+          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+            <button onClick={handleImport} disabled={importing} className="btn-primary" style={{ flex: 1, padding: "0.5rem", fontSize: "0.8rem" }}>
+              {importing ? "Importing..." : "Import Memories"}
+            </button>
+            <button onClick={handleCopyPrompt} className="btn-ghost" style={{ flex: 1, padding: "0.5rem", fontSize: "0.8rem", color: promptCopied ? "#34d399" : "var(--text-primary)", borderColor: promptCopied ? "#10b981" : "var(--border-color)", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.35rem" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              {promptCopied ? "✓ Prompt Copied!" : "Copy Web AI Prompt"}
+            </button>
+          </div>
 
           {importStatus && (
             <p style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", marginTop: "0.5rem", color: importStatus.includes("failed") ? "#f87171" : "#34d399" }}>

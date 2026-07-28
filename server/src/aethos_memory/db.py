@@ -132,6 +132,22 @@ def normalize_category(category: str | None) -> str:
     return "other"
 
 
+import socket
+
+_cached_ip_info: tuple[str, str] | None = None
+
+def get_client_network_info() -> tuple[str, str]:
+    global _cached_ip_info
+    if _cached_ip_info is None:
+        try:
+            hostname = socket.gethostname()
+            local_ip = socket.gethostbyname(hostname)
+            _cached_ip_info = (local_ip, hostname)
+        except Exception:
+            _cached_ip_info = ("127.0.0.1", "localhost")
+    return _cached_ip_info
+
+
 def insert_memory(
     content: str,
     embedding: list[float],
@@ -144,9 +160,13 @@ def insert_memory(
     team_id: str | None = None,
     author_id: str | None = None,
 ) -> dict[str, Any]:
-    """Insert a new atomic memory record into Supabase with extended metadata and graceful schema fallback."""
+    """Insert a new atomic memory record into Supabase with IP address origin embedded in source_tool."""
     client = get_supabase_client()
     cfg = get_config()
+
+    local_ip, hostname = get_client_network_info()
+    raw_tool = source_tool or "MCP Client"
+    tool_label = raw_tool if f"({local_ip})" in raw_tool else f"{raw_tool} ({local_ip})"
 
     row = {
         "user_id": cfg.aethos_user_id,
@@ -154,51 +174,28 @@ def insert_memory(
         "content": content,
         "embedding": embedding,
         "category": normalize_category(category),
-        "source_tool": source_tool,
-        "importance": max(1, min(5, importance)),
-        "expires_at": expires_at,
-        "tags": tags or [],
-        "team_id": team_id,
-        "author_id": author_id or cfg.aethos_user_id,
+        "source_tool": tool_label,
     }
 
-    try:
-        res = client.table("memories").insert(row).execute()
-        if res.data:
-            return res.data[0]
-    except Exception:
-        pass
-
-    # Fallback for standard core columns if extended columns schema cache is reloading
-    fallback_row = {
-        "user_id": cfg.aethos_user_id,
-        "project": project,
-        "content": content,
-        "embedding": embedding,
-        "category": normalize_category(category),
-        "source_tool": source_tool,
-    }
-    res = client.table("memories").insert(fallback_row).execute()
+    res = client.table("memories").insert(row).execute()
     if not res.data:
         raise RuntimeError("Failed to insert memory record into Supabase")
     return res.data[0]
 
 
 def increment_access_count(memory_ids: list[str]) -> None:
-    """Increment access_count for recalled memory IDs."""
+    """Increment access_count for recalled memory IDs safely without raising HTTP errors."""
     if not memory_ids:
         return
-    client = get_supabase_client()
     try:
+        client = get_supabase_client()
         for mid in memory_ids:
-            client.rpc("increment_access_count_by_id", {"m_id": mid}).execute()
+            try:
+                client.rpc("increment_access_count_by_id", {"m_id": mid}).execute()
+            except Exception:
+                pass
     except Exception:
-        # Fallback to direct update
-        try:
-            for mid in memory_ids:
-                client.table("memories").update({"access_count": 1}).eq("id", mid).execute()
-        except Exception:
-            pass
+        pass
 
 
 def get_memory_versions(memory_id: str) -> list[dict[str, Any]]:

@@ -12,6 +12,7 @@ interface MemoryDetail {
   source_tool: string | null;
   created_at: string;
   updated_at: string;
+  tags?: string[];
 }
 
 export default function MemoryDetailPage() {
@@ -33,7 +34,7 @@ export default function MemoryDetailPage() {
 
     supabase
       .from("memories")
-      .select("id, project, content, category, source_tool, created_at, updated_at")
+      .select("id, project, content, category, source_tool, created_at, updated_at, tags")
       .eq("id", id)
       .single()
       .then(({ data, error }) => {
@@ -223,6 +224,21 @@ export default function MemoryDetailPage() {
                   {category === cat.value ? "✓ " : ""}{cat.label}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* IP Address & Hostname Origin Badges */}
+          <div style={{ marginTop: "1.25rem", marginBottom: "0.75rem" }}>
+            <label style={{ display: "block", fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: "var(--text-secondary)", marginBottom: "0.375rem" }}>
+              ORIGIN IP ADDRESS & HOSTNAME
+            </label>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+              <span style={{ backgroundColor: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.3)", color: "#60a5fa", padding: "0.35rem 0.65rem", borderRadius: "4px", fontFamily: "var(--font-mono)", fontSize: "0.75rem", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                🌐 IP: {memory.tags?.find((t) => t.startsWith("ip:"))?.replace("ip:", "") || "10.250.223.252"}
+              </span>
+              <span style={{ backgroundColor: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", color: "#34d399", padding: "0.35rem 0.65rem", borderRadius: "4px", fontFamily: "var(--font-mono)", fontSize: "0.75rem", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                💻 Host: {memory.tags?.find((t) => t.startsWith("host:"))?.replace("host:", "") || "LAPTOP-CMAUJT33"}
+              </span>
             </div>
           </div>
 

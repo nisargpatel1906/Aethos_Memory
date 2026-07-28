@@ -109,9 +109,17 @@ async def call_extraction(prompt: str) -> dict:
 async def call_embedding(text: str) -> list[float]:
     """Generate 768-dimensional embedding vector using Gemini gemini-embedding-001.
 
+    Uses in-memory LRU cache to eliminate duplicate network calls for identical strings.
     No fallback provider permitted to prevent vector space corruption.
-    Fails loud on error.
     """
+    if not text or not text.strip():
+        return [0.0] * 768
+
+    from aethos_memory.caching import cache_manager
+    cached_emb = cache_manager.get_embedding(text)
+    if cached_emb is not None:
+        return cached_emb
+
     cfg = get_config()
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={cfg.gemini_api_key}"
     payload = {
@@ -128,6 +136,7 @@ async def call_embedding(text: str) -> list[float]:
             embedding = data.get("embedding", {}).get("values")
             if not embedding or not isinstance(embedding, list):
                 raise ValueError("Response missing embedding values array")
+            cache_manager.set_embedding(text, embedding)
             return embedding
     except Exception as err:
         raise RuntimeError(
