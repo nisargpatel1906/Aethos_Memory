@@ -2,7 +2,7 @@
 
 > **How to use this file:**  
 > Simply copy the prompt for your AI tool below and paste it directly into your AI assistant (Claude Code, OpenCode, Cursor, Windsurf, Antigravity, Zed, Cline, etc.).  
-> **Your AI assistant will automatically read your config paths, configure the MCP server, write the auto-save rules, and verify the connection for you with zero manual work!**
+> **Your AI assistant will automatically read your config paths, configure the MCP server, write the auto-save rules (enforcing automatic memory and entity extraction for your Knowledge Graph), and verify the connection for you with zero manual work!**
 
 ---
 

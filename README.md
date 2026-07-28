@@ -96,7 +96,7 @@ Every time you start a new chat, your AI assistant forgets everything — your s
         v                   v                       v
 +---------------------------------------------------------------+
 |                    Aethos Memory Server                       |
-|              FastMCP + Python + Gemini Embeddings             |
+|        FastMCP + Python + Gemini/Groq + Entity Extractor      |
 |                                                               |
 |   +-----------------------------------------------------+    |
 |   |          3-Pass Agentic RAG Retrieval Engine         |    |
@@ -109,17 +109,17 @@ Every time you start a new chat, your AI assistant forgets everything — your s
                                v
 +---------------------------------------------------------------+
 |                 Supabase Postgres + pgvector                  |
-|                   Your Private Context Bank                   |
+|          Memories, Vectors, Tags & Knowledge Entities         |
 +---------------------------------------------------------------+
                                ^
-                               | View, Edit, Manage
+                               | View, Edit, Knowledge Graph
                     +----------+----------+
                     |  Next.js Web App UI |
                     |  localhost:3000     |
                     +---------------------+
 ```
 
-The AI never sees your full database. Aethos converts queries into 768-dimensional vectors, searches Supabase for the closest matches by cosine similarity, and returns only the relevant facts — fast, private, and precise.
+The AI never sees your full database. Aethos converts queries into 768-dimensional vectors, extracts structured knowledge entities, searches Supabase for closest matches by cosine similarity, and maps multi-hop tech relationships in a real-time Knowledge Graph.
 
 <br/>
 
@@ -627,14 +627,16 @@ Aethos_Memory/
 |   +-- src/aethos_memory/
 |       +-- server.py                    MCP tool definitions
 |       +-- retrieval.py                 3-pass Agentic RAG retrieval strategies
+|       +-- graph.py                     Knowledge Graph entity extraction & co-occurrence logic
 |       +-- prompts.py                   Extraction and instruction prompts
 |       +-- providers.py                 Gemini embeddings and Groq/OpenRouter LLM
-|       +-- db.py                        Supabase pgvector operations
+|       +-- db.py                        Supabase pgvector & entity operations
 |       +-- config.py                    Environment variable loader
 |
 +-- dashboard/                           Next.js 14 Web Application
     +-- app/
     |   +-- feed/                        Memory feed and card view
+    |   +-- graph/                       Interactive Knowledge Graph visualizer
     |   +-- add/                         Add new memories manually
     |   +-- projects/                    Project tag management
     |   +-- settings/                    API keys and Supabase connection
