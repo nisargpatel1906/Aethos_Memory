@@ -138,12 +138,12 @@ async def ingest_opencode_sqlite_db(state: dict, is_first_run: bool = False) -> 
         conn = sqlite3.connect(db_path)
         cur = conn.cursor()
         cur.execute("""
-            SELECT p.id, p.session_id, m.data, p.data, p.time_created
+            SELECT p.id, p.session_id, m.data, p.data, p.time_updated
             FROM part p
             JOIN message m ON p.message_id = m.id
-            WHERE p.time_created > ?
-            ORDER BY p.time_created ASC
-        """, (last_time,))
+            WHERE p.time_updated > ? AND p.time_updated < ?
+            ORDER BY p.time_updated ASC
+        """, (last_time, int(time.time() * 1000) - 15000))
         rows = cur.fetchall()
 
         if is_first_run:
@@ -151,9 +151,9 @@ async def ingest_opencode_sqlite_db(state: dict, is_first_run: bool = False) -> 
                 state["opencode_last_time"] = max(r[4] for r in rows)
             return 0
 
-        current_turn = []
-        for part_id, session_id, msg_data_raw, part_data_raw, time_created in rows:
-            max_time_seen = max(max_time_seen, time_created)
+        sessions = {}
+        for part_id, session_id, msg_data_raw, part_data_raw, time_updated in rows:
+            max_time_seen = max(max_time_seen, time_updated)
 
             try:
                 m_json = json.loads(msg_data_raw)
@@ -162,16 +162,16 @@ async def ingest_opencode_sqlite_db(state: dict, is_first_run: bool = False) -> 
                 text = p_json.get("text", "").strip()
 
                 if text and len(text) > 15:
-                    current_turn.append(f"{role.upper()}: {text}")
-                    processed.add(part_id)
+                    if session_id not in sessions:
+                        sessions[session_id] = []
+                    sessions[session_id].append(f"{role.upper()}: {text}")
             except Exception:
                 pass
 
-            if len(current_turn) >= 2:
-                turn_text = "\n\n".join(current_turn)
-                count = await process_transcript_text(turn_text, source_tool="OpenCode", project="global")
-                new_inserted += count
-                current_turn = []
+        for session_id, messages in sessions.items():
+            turn_text = "\n\n".join(messages)
+            count = await process_transcript_text(turn_text, source_tool="OpenCode", project="global")
+            new_inserted += count
 
         if max_time_seen > last_time:
             state["opencode_last_time"] = max_time_seen

@@ -37,6 +37,7 @@ Never extract:
 - Vague statements with no resolvable referent ("it broke", "this is fine")
 - Rejected AI suggestions (only store AI recommendations that were accepted, agreed upon, or implemented)
 - Anything already fully expressed by an existing memory
+- **CRITICAL**: Do NOT extract choices from questions! If the AI asks "Do you prefer X or Y?", you MUST NOT extract "User prefers X" unless the user explicitly answered the question!
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 UNIFIED STATEMENT RULES (CRITICAL: DO NOT FRAGMENT)
@@ -128,6 +129,7 @@ STRICT SKIP LIST:
 - Transient errors that were already fixed
 - Questions without concrete answers
 - API keys, tokens, passwords
+- **CRITICAL**: Do NOT extract choices from questions! If the AI asks "Do you prefer X or Y?", you MUST NOT extract "User prefers X" unless the user explicitly answered the question!
 
 CRITICAL CONSOLIDATION RULE — DO NOT FRAGMENT:
 - Store the entire AI recommendation, technical solution, or user decision as ONE unified, complete statement.
