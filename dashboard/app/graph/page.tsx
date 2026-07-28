@@ -13,7 +13,6 @@ export default function GraphView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<any>();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [graphReady, setGraphReady] = useState(false);
 
   useEffect(() => {
     async function load() {
