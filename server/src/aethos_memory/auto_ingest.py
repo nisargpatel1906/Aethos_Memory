@@ -58,6 +58,13 @@ async def process_transcript_text(text: str, source_tool: str = "Auto-Ingest", p
                 continue
 
             emb = await providers.call_embedding(content)
+            
+            # Prevent duplicate inserts if the MCP tool already saved this exact fact
+            existing = db.similarity_search(emb, project=project, threshold=0.92, limit=1)
+            if existing:
+                logger.info(f"Auto-Ingest: Skipping duplicate fact '{content[:30]}...'")
+                continue
+
             cat = fact.get("category", "other")
             imp = int(fact.get("importance", 3)) if isinstance(fact.get("importance"), (int, float)) else 3
 
