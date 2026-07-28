@@ -3,6 +3,9 @@ import re
 import asyncio
 import time
 import httpx
+import logging
+
+logger = logging.getLogger("aethos_memory.providers")
 from aethos_memory.config import get_config
 
 
@@ -95,7 +98,8 @@ async def call_extraction(prompt: str) -> dict:
                         raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
                         cleaned = _clean_json_response(raw_text)
                         return json.loads(cleaned)
-            except Exception:
+            except Exception as e:
+                logger.error(f"Gemini extraction failed: {e}")
                 pass
 
     # Safe fallback if LLM extraction services are rate-limited or unavailable

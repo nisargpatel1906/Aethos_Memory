@@ -2,6 +2,9 @@ from datetime import datetime, timezone
 from typing import Any
 from supabase import Client, create_client
 from aethos_memory.config import get_config
+import logging
+
+logger = logging.getLogger("aethos_memory.db")
 
 _supabase_client: Client | None = None
 
@@ -57,7 +60,8 @@ def similarity_search(
             },
         ).execute()
         matches = res.data or []
-    except Exception:
+    except Exception as e:
+        logger.error(f"Hybrid match failed: {e}. Falling back to standard match.")
         # Fallback to standard match_memories RPC if hybrid not yet applied
         try:
             res = client.rpc(
@@ -143,7 +147,8 @@ def get_client_network_info() -> tuple[str, str]:
             hostname = socket.gethostname()
             local_ip = socket.gethostbyname(hostname)
             _cached_ip_info = (local_ip, hostname)
-        except Exception:
+        except Exception as e:
+            logger.error(f"Failed to get host IP/name: {e}. Using default.")
             _cached_ip_info = ("127.0.0.1", "localhost")
     return _cached_ip_info
 
@@ -197,10 +202,11 @@ def increment_access_count(memory_ids: list[str]) -> None:
         for mid in memory_ids:
             try:
                 client.rpc("increment_access_count_by_id", {"m_id": mid}).execute()
-            except Exception:
-                pass
-    except Exception:
-        pass
+            except Exception as e:
+                logger.error(f"Failed to increment access count for memory {mid}: {e}")
+                # Continue with other IDs
+    except Exception as e:
+        logger.error(f"Unexpected error in increment_access_count: {e}")
 
 
 def get_memory_versions(memory_id: str) -> list[dict[str, Any]]:
@@ -214,7 +220,8 @@ def get_memory_versions(memory_id: str) -> list[dict[str, Any]]:
             .order("changed_at", desc=True)
             .execute()
         )
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to get memory versions for {memory_id}: {e}")
         return []
 
 
@@ -232,7 +239,8 @@ def fetch_all_memories(limit: int = 10) -> list[dict[str, Any]]:
             .execute()
         )
         return res.data or []
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to fetch all memories: {e}")
         return []
 
 

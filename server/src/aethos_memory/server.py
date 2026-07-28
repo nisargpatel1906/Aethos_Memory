@@ -182,8 +182,9 @@ async def recall(
             if results:
                 formatted_cards = [f"{i}. [{m.get('project', 'global')}][{m.get('category', 'other')}] {m['content']}" for i, m in enumerate(results, 1)]
                 return "### Retrieved Aethos Memory Context:\n" + "\n".join(formatted_cards)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"Fallback recall also failed: {e}")
+            return "### Retrieved Aethos Memory Context:\nNo memories retrieved due to an error."
 @mcp.tool()
 async def get_skeleton_context(query: str = "", project: str = "global", limit: int = 10) -> str:
     """[65-70% TOKEN REDUCTION] Retrieve ultra-dense skeleton representation of stored memory context."""
