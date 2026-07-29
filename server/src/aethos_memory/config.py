@@ -48,18 +48,18 @@ def _detect_source_tool() -> str:
     if explicit and explicit.strip() and explicit.strip() != "MCP Client":
         return explicit.strip()
 
+    # Only check environment variable NAMES (not values) to avoid exposing secrets
     env_keys = {k.upper() for k in os.environ.keys()}
-    env_str = " ".join(f"{k}={v}" for k, v in os.environ.items()).upper()
 
-    if any(k in env_keys for k in ["OPENCODE", "OPENCODE_VERSION", "OPENCODE_CONFIG"]) or "OPENCODE" in env_str:
+    if any(k in env_keys for k in ["OPENCODE", "OPENCODE_VERSION", "OPENCODE_CONFIG"]):
         return "OpenCode"
-    if any(k in env_keys for k in ["CLAUDE_CODE", "CLAUDE_CODE_VERSION", "CLAUDE_PROJECT"]) or "CLAUDE_CODE" in env_str:
+    if any(k in env_keys for k in ["CLAUDE_CODE", "CLAUDE_CODE_VERSION", "CLAUDE_PROJECT"]):
         return "Claude Code"
-    if any(k in env_keys for k in ["CURSOR_VERSION", "CURSOR_BUILD_VERSION"]) or "CURSOR" in env_str:
+    if any(k in env_keys for k in ["CURSOR_VERSION", "CURSOR_BUILD_VERSION"]):
         return "Cursor"
-    if any(k in env_keys for k in ["WINDSURF_VERSION", "WINDSURF"]) or "WINDSURF" in env_str:
+    if any(k in env_keys for k in ["WINDSURF_VERSION", "WINDSURF"]):
         return "Windsurf"
-    if any(k in env_keys for k in ["ANTIGRAVITY"]) or "ANTIGRAVITY" in env_str:
+    if "ANTIGRAVITY" in env_keys:
         return "Antigravity"
 
     return explicit.strip() if (explicit and explicit.strip()) else "MCP Client"

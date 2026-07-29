@@ -10,7 +10,7 @@ from typing import Any
 def expand_graph_pivot_nodes(memories: list[dict[str, Any]]) -> dict[str, Any]:
     """Build pivot node graph clusters connecting related memories."""
     nodes: dict[str, list[dict[str, Any]]] = {}
-    edges: list[tuple[str, str]] = []
+    edges: set[tuple[str, str]] = set()
 
     for m in memories:
         extracted = m.get("entities", [])
@@ -37,12 +37,11 @@ def expand_graph_pivot_nodes(memories: list[dict[str, Any]]) -> dict[str, Any]:
         for i in range(len(extracted)):
             for j in range(i + 1, len(extracted)):
                 edge = tuple(sorted([extracted[i], extracted[j]]))
-                if edge not in edges:
-                    edges.append(edge)
+                edges.add(edge)
 
     return {
         "pivot_nodes": nodes,
-        "edges": edges,
+        "edges": list(edges),
         "total_nodes": len(nodes),
         "total_edges": len(edges),
     }

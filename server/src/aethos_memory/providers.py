@@ -8,6 +8,18 @@ import logging
 logger = logging.getLogger("aethos_memory.providers")
 from aethos_memory.config import get_config
 
+# Module-level persistent HTTP client — reused across all API calls to avoid
+# TCP connection overhead on every embedding/extraction request.
+_http_client: httpx.AsyncClient | None = None
+
+
+async def _get_http_client() -> httpx.AsyncClient:
+    """Return the shared persistent httpx.AsyncClient, creating it on first use."""
+    global _http_client
+    if _http_client is None or _http_client.is_closed:
+        _http_client = httpx.AsyncClient(timeout=15.0)
+    return _http_client
+
 
 def _clean_json_response(text: str) -> str:
     """Defensively strip markdown code fences and whitespace from raw LLM output."""
@@ -25,6 +37,7 @@ async def call_extraction(prompt: str) -> dict:
     Defensively falls back to raw fact insertion if all LLM extraction calls fail/rate-limit.
     """
     cfg = get_config()
+    client = await _get_http_client()
 
     # 1. Try Groq (Primary)
     if cfg.groq_api_key and not cfg.groq_api_key.startswith("gsk_dummy"):
@@ -40,15 +53,16 @@ async def call_extraction(prompt: str) -> dict:
                 "temperature": 0.1,
                 "response_format": {"type": "json_object"},
             }
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                resp = await client.post(url, headers=headers, json=payload)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    raw_text = data["choices"][0]["message"]["content"]
-                    cleaned = _clean_json_response(raw_text)
-                    return json.loads(cleaned)
-        except Exception:
-            pass
+            resp = await client.post(url, headers=headers, json=payload)
+            if resp.status_code == 200:
+                data = resp.json()
+                raw_text = data["choices"][0]["message"]["content"]
+                cleaned = _clean_json_response(raw_text)
+                return json.loads(cleaned)
+            else:
+                logger.warning(f"Groq extraction returned HTTP {resp.status_code}")
+        except Exception as e:
+            logger.warning(f"Groq extraction failed: {e}")
 
     # 2. Try OpenRouter (Fallback 1)
     if cfg.openrouter_api_key and not cfg.openrouter_api_key.startswith("sk-or-dummy"):
@@ -66,15 +80,16 @@ async def call_extraction(prompt: str) -> dict:
                 "temperature": 0.1,
                 "response_format": {"type": "json_object"},
             }
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                resp = await client.post(url, headers=headers, json=payload)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    raw_text = data["choices"][0]["message"]["content"]
-                    cleaned = _clean_json_response(raw_text)
-                    return json.loads(cleaned)
-        except Exception:
-            pass
+            resp = await client.post(url, headers=headers, json=payload)
+            if resp.status_code == 200:
+                data = resp.json()
+                raw_text = data["choices"][0]["message"]["content"]
+                cleaned = _clean_json_response(raw_text)
+                return json.loads(cleaned)
+            else:
+                logger.warning(f"OpenRouter extraction returned HTTP {resp.status_code}")
+        except Exception as e:
+            logger.warning(f"OpenRouter extraction failed: {e}")
 
     # 3. Try Gemini Flash (Fallback 2 with rate limit backoff)
     if cfg.gemini_api_key:
@@ -88,19 +103,17 @@ async def call_extraction(prompt: str) -> dict:
         }
         for attempt in range(3):
             try:
-                async with httpx.AsyncClient(timeout=15.0) as client:
-                    resp = await client.post(url, json=payload)
-                    if resp.status_code == 429:
-                        await asyncio.sleep(1.5 * (attempt + 1))
-                        continue
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
-                        cleaned = _clean_json_response(raw_text)
-                        return json.loads(cleaned)
+                resp = await client.post(url, json=payload)
+                if resp.status_code == 429:
+                    await asyncio.sleep(1.5 * (attempt + 1))
+                    continue
+                if resp.status_code == 200:
+                    data = resp.json()
+                    raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
+                    cleaned = _clean_json_response(raw_text)
+                    return json.loads(cleaned)
             except Exception as e:
                 logger.error(f"Gemini extraction failed: {e}")
-                pass
 
     # Safe fallback if LLM extraction services are rate-limited or unavailable
     match_raw = re.search(r"NEW_CONTENT:\s*(.*?)(?:\n-|\n\n|\n[A-Z]|$)", prompt, re.DOTALL)
@@ -134,22 +147,22 @@ async def call_embedding(text: str) -> list[float]:
     }
 
     last_err = None
+    client = await _get_http_client()
     for attempt in range(4):
         try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                resp = await client.post(url, json=payload)
-                if resp.status_code == 429 and attempt < 3:
-                    sleep_time = 2.0 * (attempt + 1)
-                    logger.warning(f"Gemini embedding 429 rate limit hit. Retrying attempt {attempt + 1} in {sleep_time}s...")
-                    await asyncio.sleep(sleep_time)
-                    continue
-                resp.raise_for_status()
-                data = resp.json()
-                embedding = data.get("embedding", {}).get("values")
-                if not embedding or not isinstance(embedding, list):
-                    raise ValueError("Response missing embedding values array")
-                cache_manager.set_embedding(text, embedding)
-                return embedding
+            resp = await client.post(url, json=payload)
+            if resp.status_code == 429 and attempt < 3:
+                sleep_time = 2.0 * (attempt + 1)
+                logger.warning(f"Gemini embedding 429 rate limit hit. Retrying attempt {attempt + 1} in {sleep_time}s...")
+                await asyncio.sleep(sleep_time)
+                continue
+            resp.raise_for_status()
+            data = resp.json()
+            embedding = data.get("embedding", {}).get("values")
+            if not embedding or not isinstance(embedding, list):
+                raise ValueError("Response missing embedding values array")
+            cache_manager.set_embedding(text, embedding)
+            return embedding
         except Exception as err:
             last_err = err
             if isinstance(err, httpx.HTTPStatusError) and err.response.status_code == 429 and attempt < 3:

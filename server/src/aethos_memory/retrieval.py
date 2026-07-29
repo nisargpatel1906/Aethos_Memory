@@ -1,9 +1,12 @@
 import asyncio
+import logging
 from typing import Any, Callable
 from aethos_memory.db import similarity_search
 from aethos_memory.providers import call_embedding, call_extraction
 from aethos_memory.caching import cache_manager
 from aethos_memory import prompts
+
+logger = logging.getLogger("aethos_memory.retrieval")
 
 
 async def plain_search(query: str, project: str = "global") -> list[dict[str, Any]]:
@@ -49,8 +52,8 @@ async def decompose_query(query: str) -> list[str]:
         sub_queries = res.get("sub_queries", [])
         if isinstance(sub_queries, list) and len(sub_queries) > 0:
             return sub_queries[:3]
-    except Exception:
-        pass
+    except Exception as err:
+        logger.error(f"Query decomposition failed: {err}. Falling back to original query.")
     return [query]
 
 

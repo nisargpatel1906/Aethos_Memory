@@ -34,6 +34,7 @@ alter table memories add column if not exists access_count int not null default 
 alter table memories add column if not exists tags text[] not null default '{}';
 alter table memories add column if not exists team_id text default null;
 alter table memories add column if not exists author_id text default null;
+alter table memories add column if not exists entities text[] not null default '{}';
 
 -- 3. Row-level security — service role key bypasses this automatically
 alter table memories enable row level security;
@@ -47,6 +48,7 @@ create policy "Service role has full access"
 -- 4. Index for fast per-user + per-project lookups & tags
 create index if not exists memories_user_project_idx on memories (user_id, project);
 create index if not exists memories_tags_idx on memories using gin (tags);
+create index if not exists memories_entities_idx on memories using gin (entities);
 
 -- 5. Memory Versioning Audit Table & Trigger
 create table if not exists memory_versions (
@@ -84,7 +86,56 @@ create table if not exists api_keys (
   created_at  timestamptz not null default now()
 );
 
--- 7. Advanced Hybrid Search Function (Keyword + Vector + Recency Weighting)
+-- 7. Increment Access Count RPC (called by server on every recall)
+create or replace function increment_access_count_by_id(m_id uuid)
+returns void
+language sql
+as $$
+  update memories set access_count = access_count + 1 where id = m_id;
+$$;
+
+-- 8. Standard Vector-Only Search Function (fallback when hybrid is unavailable)
+create or replace function match_memories(
+  p_user_id       text,
+  p_project       text,
+  query_embedding vector(768),
+  match_threshold float default 0.65,
+  match_count     int   default 10
+)
+returns table (
+  id           uuid,
+  content      text,
+  category     text,
+  project      text,
+  importance   int,
+  tags         text[],
+  source_tool  text,
+  access_count int,
+  expires_at   timestamptz,
+  created_at   timestamptz,
+  similarity   float
+)
+language sql stable
+as $$
+  select 
+    m.id, m.content, m.category, m.project,
+    coalesce(m.importance, 3) as importance,
+    coalesce(m.tags, '{}'::text[]) as tags,
+    m.source_tool,
+    coalesce(m.access_count, 0) as access_count,
+    m.expires_at, m.created_at,
+    round((1 - (m.embedding <=> query_embedding))::numeric, 4)::float as similarity
+  from memories m
+  where m.user_id = p_user_id
+    and (p_project = 'ALL' or m.project = p_project or m.project = 'global')
+    and m.embedding is not null
+    and (m.expires_at is null or m.expires_at > now())
+    and (1 - (m.embedding <=> query_embedding)) > match_threshold
+  order by similarity desc
+  limit match_count;
+$$;
+
+-- 9. Advanced Hybrid Search Function (Keyword + Vector + Recency Weighting)
 create or replace function match_memories_hybrid(
   p_user_id       text,
   p_project       text,

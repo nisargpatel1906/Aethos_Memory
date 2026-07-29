@@ -78,13 +78,15 @@ def similarity_search(
         except Exception:
             pass
 
-    # 2. Cross-project fallback: search ALL stored memories for this user if no matches found
+    # 2. Cross-project fallback: search recent memories for this user if no matches found
     if not matches:
         try:
             rows = (
                 client.table("memories")
                 .select("id, content, category, project, created_at, embedding, source_tool")
                 .eq("user_id", cfg.aethos_user_id)
+                .order("created_at", desc=True)
+                .limit(200)
                 .execute()
                 .data or []
             )
@@ -220,6 +222,7 @@ def get_memory_versions(memory_id: str) -> list[dict[str, Any]]:
             .order("changed_at", desc=True)
             .execute()
         )
+        return res.data or []
     except Exception as e:
         logger.error(f"Failed to get memory versions for {memory_id}: {e}")
         return []

@@ -8,6 +8,13 @@ from aethos_memory.config import get_config
 
 logger = logging.getLogger("aethos_server")
 
+
+def _safe_background_task(coro):
+    """Launch a background task with exception logging to prevent silent failures."""
+    task = asyncio.create_task(coro)
+    task.add_done_callback(lambda t: logger.error(f"Background task failed: {t.exception()}") if not t.cancelled() and t.exception() else None)
+    return task
+
 mcp = FastMCP(
     "aethos-memory",
     instructions=prompts.INSTRUCTION_SNIPPET,
@@ -45,7 +52,7 @@ async def remember(
     4. Any rule, instruction, or preference for working sessions."""
     try:
         # Trigger non-blocking event-driven transcript auto-scan
-        asyncio.create_task(auto_ingest.run_auto_ingest_cycle())
+        _safe_background_task(auto_ingest.run_auto_ingest_cycle())
 
         actual_content = (content or text or fact or memory or (f"User: {user_input}\nAI: {ai_response}" if (user_input or ai_response) else "")).strip()
         if not actual_content:
@@ -151,7 +158,7 @@ async def recall(
     Retrieve relevant stored memory context based on query text."""
     try:
         # Non-blocking event-driven scan for recent turns
-        asyncio.create_task(auto_ingest.run_auto_ingest_cycle())
+        _safe_background_task(auto_ingest.run_auto_ingest_cycle())
 
         actual_query = (query or q or text or query_text or search_query or "").strip()
         project = project or "global"
@@ -184,7 +191,9 @@ async def recall(
                 return "### Retrieved Aethos Memory Context:\n" + "\n".join(formatted_cards)
         except Exception as e:
             logger.error(f"Fallback recall also failed: {e}")
-            return "### Retrieved Aethos Memory Context:\nNo memories retrieved due to an error."
+        return "### Retrieved Aethos Memory Context:\nNo memories retrieved due to an error."
+
+
 @mcp.tool()
 async def get_skeleton_context(query: str = "", project: str = "global", limit: int = 10) -> str:
     """[65-70% TOKEN REDUCTION] Retrieve ultra-dense skeleton representation of stored memory context."""
