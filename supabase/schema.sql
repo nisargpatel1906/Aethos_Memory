@@ -126,7 +126,7 @@ as $$
     m.expires_at, m.created_at,
     round((1 - (m.embedding <=> query_embedding))::numeric, 4)::float as similarity
   from memories m
-  where m.user_id = p_user_id
+  where m.user_id::text = p_user_id::text
     and (p_project = 'ALL' or m.project = p_project or m.project = 'global')
     and m.embedding is not null
     and (m.expires_at is null or m.expires_at > now())
@@ -172,7 +172,7 @@ as $$
     m.created_at,
     round((1 - (m.embedding <=> query_embedding))::numeric, 4)::float as similarity
   from memories m
-  where m.user_id = p_user_id
+  where m.user_id::text = p_user_id::text
     and (
       p_project = 'ALL'
       or m.project = p_project
