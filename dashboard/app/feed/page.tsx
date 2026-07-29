@@ -492,7 +492,7 @@ function FeedContent() {
       {/* NeuroBank Style Hero KPI Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: "1.25rem", marginBottom: "1.5rem" }}>
         {/* 1. Practical Memory Engine Status Card */}
-        <div className="hero-ai-card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: "180px" }}>
+        <div className="bg-surface glow-hover" style={{ padding: "1.25rem 1.5rem", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: "180px", borderRadius: "20px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <span style={{
               fontSize: "0.7rem", fontFamily: "var(--font-mono)",
@@ -501,7 +501,7 @@ function FeedContent() {
               display: "inline-flex", alignItems: "center", gap: "0.35rem",
             }}>
               <span style={{ width: "7px", height: "7px", borderRadius: "50%", backgroundColor: "#34d399", boxShadow: "0 0 8px #34d399" }} />
-              Live Sync 🟢
+              Live Sync
             </span>
           </div>
 
