@@ -186,6 +186,7 @@ export default function AnalyticsPage() {
   };
 
   const [promptCopied, setPromptCopied] = useState(false);
+  const [importPromptCopied, setImportPromptCopied] = useState(false);
   const [promptLoading, setPromptLoading] = useState(false);
 
   const handleCopyPrompt = async () => {
@@ -247,6 +248,23 @@ export default function AnalyticsPage() {
       console.error(e);
     }
     setPromptLoading(false);
+  };
+
+  const handleCopyImportPrompt = () => {
+    const promptText = `Please extract all the developer rules, preferences, architectural decisions, and constraints we have established in this conversation. 
+Format them EXACTLY as a JSON array of objects with the following schema:
+[
+  {
+    "content": "The actual memory text or rule",
+    "category": "preference" | "project_detail" | "decision" | "other",
+    "project": "project_name or global",
+    "tags": ["tag1", "tag2"]
+  }
+]
+Do not wrap it in markdown blockquotes, just output the raw JSON array so I can import it directly.`;
+    navigator.clipboard.writeText(promptText);
+    setImportPromptCopied(true);
+    setTimeout(() => setImportPromptCopied(false), 3000);
   };
 
   const renderDonutSlices = () => {
@@ -443,7 +461,7 @@ export default function AnalyticsPage() {
 
       {/* Dedicated Web AI Prompt Generator Banner Card */}
       <div
-        className="hero-ai-card"
+        className="bg-surface glow-hover"
         style={{
           padding: "1.5rem 2rem",
           borderRadius: "16px",
@@ -551,9 +569,9 @@ export default function AnalyticsPage() {
             <button onClick={handleImport} disabled={importing} className="btn-primary" style={{ flex: 1, padding: "0.5rem", fontSize: "0.8rem" }}>
               {importing ? "Importing..." : "Import Memories"}
             </button>
-            <button onClick={handleCopyPrompt} className="btn-ghost" style={{ flex: 1, padding: "0.5rem", fontSize: "0.8rem", color: promptCopied ? "#34d399" : "var(--text-primary)", borderColor: promptCopied ? "#10b981" : "var(--border-color)", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.35rem" }}>
+            <button onClick={handleCopyImportPrompt} className="btn-ghost" style={{ flex: 1, padding: "0.5rem", fontSize: "0.8rem", color: importPromptCopied ? "#34d399" : "var(--text-primary)", borderColor: importPromptCopied ? "#10b981" : "var(--border-color)", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.35rem" }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              {promptCopied ? "✓ Prompt Copied!" : "Copy Web AI Prompt"}
+              {importPromptCopied ? "✓ Prompt Copied!" : "Copy Extraction Prompt"}
             </button>
           </div>
 
