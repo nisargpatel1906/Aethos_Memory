@@ -114,6 +114,7 @@ async def call_embedding(text: str) -> list[float]:
     """Generate 768-dimensional embedding vector using Gemini gemini-embedding-001.
 
     Uses in-memory LRU cache to eliminate duplicate network calls for identical strings.
+    Includes exponential backoff retries for HTTP 429 rate limit handling.
     No fallback provider permitted to prevent vector space corruption.
     """
     if not text or not text.strip():
@@ -132,18 +133,33 @@ async def call_embedding(text: str) -> list[float]:
         "outputDimensionality": 768,
     }
 
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.post(url, json=payload)
-            resp.raise_for_status()
-            data = resp.json()
-            embedding = data.get("embedding", {}).get("values")
-            if not embedding or not isinstance(embedding, list):
-                raise ValueError("Response missing embedding values array")
-            cache_manager.set_embedding(text, embedding)
-            return embedding
-    except Exception as err:
-        raise RuntimeError(
-            f"Embedding generation failed via Gemini (gemini-embedding-001): {str(err)}. "
-            "Note: Embedding generation does not fall back to other providers to avoid vector space corruption."
-        )
+    last_err = None
+    for attempt in range(4):
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.post(url, json=payload)
+                if resp.status_code == 429 and attempt < 3:
+                    sleep_time = 2.0 * (attempt + 1)
+                    logger.warning(f"Gemini embedding 429 rate limit hit. Retrying attempt {attempt + 1} in {sleep_time}s...")
+                    await asyncio.sleep(sleep_time)
+                    continue
+                resp.raise_for_status()
+                data = resp.json()
+                embedding = data.get("embedding", {}).get("values")
+                if not embedding or not isinstance(embedding, list):
+                    raise ValueError("Response missing embedding values array")
+                cache_manager.set_embedding(text, embedding)
+                return embedding
+        except Exception as err:
+            last_err = err
+            if isinstance(err, httpx.HTTPStatusError) and err.response.status_code == 429 and attempt < 3:
+                sleep_time = 2.0 * (attempt + 1)
+                await asyncio.sleep(sleep_time)
+                continue
+            if attempt == 3:
+                break
+
+    raise RuntimeError(
+        f"Embedding generation failed via Gemini (gemini-embedding-001): {str(last_err)}. "
+        "Note: Embedding generation does not fall back to other providers to avoid vector space corruption."
+    )
