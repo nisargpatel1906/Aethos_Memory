@@ -14,6 +14,8 @@ def expand_graph_pivot_nodes(memories: list[dict[str, Any]]) -> dict[str, Any]:
 
     for m in memories:
         extracted = m.get("entities", [])
+        if not isinstance(extracted, list) or len(extracted) == 0:
+            extracted = m.get("tags", [])
         if not isinstance(extracted, list):
             extracted = []
             
@@ -30,6 +32,8 @@ def expand_graph_pivot_nodes(memories: list[dict[str, Any]]) -> dict[str, Any]:
     # Create edges between concepts that co-occur in the same memory
     for m in memories:
         extracted = m.get("entities", [])
+        if not isinstance(extracted, list) or len(extracted) == 0:
+            extracted = m.get("tags", [])
         if not isinstance(extracted, list):
             extracted = []
             
