@@ -46,6 +46,7 @@ UNIFIED STATEMENT RULES (CRITICAL: DO NOT FRAGMENT)
 2. Resolve all pronouns explicitly ("AI assistant recommended...", "User decided...").
 3. Write in third-person declarative form.
 4. Only create a second entry if the content covers completely distinct and unrelated topics.
+5. Explicitly include the User's name as the subject of the sentence whenever possible (e.g., "User [Name] built X" instead of "User built X") so entity graphs connect back to the user.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SECURITY RULE
@@ -135,6 +136,7 @@ STRICT SKIP LIST:
 CRITICAL CONSOLIDATION RULE — DO NOT FRAGMENT:
 - Store the entire AI recommendation, technical solution, or user decision as ONE unified, complete statement.
 - Do NOT break down a single recommendation into multiple tiny pieces.
+- Explicitly include the User's name as the subject of the sentence whenever possible (e.g., "User [Name] built X" instead of "User built X") so entity graphs connect back to the user.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT FORMAT
