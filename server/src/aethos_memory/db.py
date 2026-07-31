@@ -86,7 +86,7 @@ def similarity_search(
                 .select("id, content, category, project, created_at, embedding, source_tool")
                 .eq("user_id", cfg.aethos_user_id)
                 .order("created_at", desc=True)
-                .limit(200)
+                .limit(5000)
                 .execute()
                 .data or []
             )
