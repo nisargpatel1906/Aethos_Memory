@@ -47,3 +47,7 @@ desktop.ini
 Thumbs.db
 .vscode/
 .idea/
+
+# Local Scripts
+start_cloud_mcp.bat
+start_cloud_mcp.ps1
