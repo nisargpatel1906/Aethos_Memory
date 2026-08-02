@@ -434,3 +434,62 @@ mcpServers:
     env:
       AETHOS_SOURCE_TOOL: "LibreChat"
 ```
+
+---
+
+## ⚡ 23. Gemini Spark (Cloud MCP via Ngrok)
+
+> Gemini Spark connects to MCP servers over HTTPS, not locally. You need to expose your local Aethos Memory server publicly using a free Ngrok tunnel.
+
+```text
+Please set up Aethos Memory for Gemini Spark using a cloud tunnel:
+
+1. Install Ngrok on Windows:
+   winget install ngrok.ngrok
+
+2. Sign up free at https://ngrok.com and get your authtoken from:
+   https://dashboard.ngrok.com/get-started/your-authtoken
+
+3. Authenticate Ngrok:
+   ngrok config add-authtoken YOUR_AUTHTOKEN_HERE
+
+4. Claim your free permanent domain at:
+   https://dashboard.ngrok.com/cloud-edge/domains
+   Click "New Domain" to get a free permanent URL like:
+   https://your-name-here.ngrok-free.app
+
+5. Create a file called start_cloud_mcp.ps1 in the Aethos_Memory root:
+
+# Aethos Memory - Cloud MCP Launcher (PowerShell)
+$rootDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$envFile = Join-Path $rootDir "server\.env"
+Get-Content $envFile | ForEach-Object {
+    if ($_ -match '^([^#][^=]+)=(.*)$') {
+        [System.Environment]::SetEnvironmentVariable($Matches[1].Trim(), $Matches[2].Trim(), 'Process')
+    }
+}
+$env:AETHOS_SOURCE_TOOL = "Gemini Spark"
+
+$serverCmd = "cd '$rootDir\server'; `$env:SUPABASE_URL='$env:SUPABASE_URL'; `$env:SUPABASE_SERVICE_ROLE_KEY='$env:SUPABASE_SERVICE_ROLE_KEY'; `$env:GEMINI_API_KEY='$env:GEMINI_API_KEY'; `$env:GROQ_API_KEY='$env:GROQ_API_KEY'; `$env:AETHOS_USER_ID='$env:AETHOS_USER_ID'; `$env:AETHOS_PROJECT='$env:AETHOS_PROJECT'; `$env:AETHOS_SOURCE_TOOL='Gemini Spark'; .\.venv\Scripts\fastmcp.exe run src/aethos_memory/server.py --transport streamable-http --port 8000"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", $serverCmd
+Start-Sleep -Seconds 2
+
+$tunnelCmd = "ngrok http --domain=YOUR_NGROK_DOMAIN.ngrok-free.app 8000"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", $tunnelCmd
+
+Write-Host "Your Gemini Spark URL: https://YOUR_NGROK_DOMAIN.ngrok-free.app/mcp"
+
+6. Create start_cloud_mcp.bat in the same folder:
+   @echo off
+   powershell -ExecutionPolicy Bypass -File "%~dp0start_cloud_mcp.ps1"
+   pause
+
+7. Add both files to .gitignore (they contain your personal domain).
+
+8. Double-click start_cloud_mcp.bat to launch everything.
+   Then paste https://YOUR_NGROK_DOMAIN.ngrok-free.app/mcp into:
+   Gemini Spark → Custom Apps → Add a custom app link
+```
+
+> **Note:** `start_cloud_mcp.ps1` and `start_cloud_mcp.bat` are in `.gitignore` and never committed to GitHub. Create them locally following the template above.
+

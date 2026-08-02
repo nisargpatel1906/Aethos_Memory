@@ -39,6 +39,7 @@
     <td align="center"><a href="#how-it-works"><b>How It Works</b></a></td>
     <td align="center"><a href="#setup-guide--windows"><b>Windows Setup</b></a></td>
     <td align="center"><a href="#setup-guide--macos"><b>macOS Setup</b></a></td>
+    <td align="center"><a href="#setup-guide--gemini-spark"><b>Gemini Spark</b></a></td>
     <td align="center"><a href="#mcp-tools"><b>MCP Tools</b></a></td>
     <td align="center"><a href="#privacy--security"><b>Privacy</b></a></td>
   </tr>
@@ -542,6 +543,85 @@ Open a new session and ask again — it will remember across sessions and tools.
 
 ---
 
+## Setup Guide — Gemini Spark
+
+Gemini Spark connects to MCP servers over **HTTPS**, not locally. You need to expose your Aethos Memory server to the internet using a free permanent Ngrok tunnel. This runs on your PC and works exactly like the local setup — the AI still uses your own Supabase database.
+
+### Prerequisites
+
+Complete the full [Windows Setup](#setup-guide--windows) first (Steps 1–4) so your `server/.env` is configured and the Python server runs correctly.
+
+### Step 1 — Install and Configure Ngrok (Free)
+
+```powershell
+# Install Ngrok
+winget install ngrok.ngrok
+
+# Link your free Ngrok account (get token from https://dashboard.ngrok.com/get-started/your-authtoken)
+ngrok config add-authtoken YOUR_AUTHTOKEN_HERE
+```
+
+Sign up at [ngrok.com](https://ngrok.com) — it is completely free. After signing in, go to **Cloud Edge → Domains** and click **New Domain** to claim your free permanent URL (e.g. `https://your-name.ngrok-free.app`).
+
+### Step 2 — Create Your Local Launcher Script
+
+Create a file called `start_cloud_mcp.ps1` in your `Aethos_Memory` root folder:
+
+```powershell
+# Aethos Memory - Cloud MCP Launcher (PowerShell)
+$rootDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$envFile = Join-Path $rootDir "server\.env"
+Get-Content $envFile | ForEach-Object {
+    if ($_ -match '^([^#][^=]+)=(.*)$') {
+        [System.Environment]::SetEnvironmentVariable($Matches[1].Trim(), $Matches[2].Trim(), 'Process')
+    }
+}
+$env:AETHOS_SOURCE_TOOL = "Gemini Spark"
+
+# Start the MCP server
+$serverCmd = "cd '$rootDir\server'; `$env:SUPABASE_URL='$env:SUPABASE_URL'; `$env:SUPABASE_SERVICE_ROLE_KEY='$env:SUPABASE_SERVICE_ROLE_KEY'; `$env:GEMINI_API_KEY='$env:GEMINI_API_KEY'; `$env:GROQ_API_KEY='$env:GROQ_API_KEY'; `$env:AETHOS_USER_ID='$env:AETHOS_USER_ID'; `$env:AETHOS_PROJECT='$env:AETHOS_PROJECT'; `$env:AETHOS_SOURCE_TOOL='Gemini Spark'; .`\.venv`\Scripts`\fastmcp.exe run src/aethos_memory/server.py --transport streamable-http --port 8000"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", $serverCmd
+Start-Sleep -Seconds 2
+
+# Start the Ngrok tunnel (replace with YOUR domain)
+$tunnelCmd = "ngrok http --domain=YOUR_NGROK_DOMAIN.ngrok-free.app 8000"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", $tunnelCmd
+
+Write-Host "`nYour permanent Gemini Spark URL:" -ForegroundColor Cyan
+Write-Host "https://YOUR_NGROK_DOMAIN.ngrok-free.app/mcp" -ForegroundColor Yellow
+```
+
+Also create `start_cloud_mcp.bat` as a 1-click launcher:
+
+```batch
+@echo off
+powershell -ExecutionPolicy Bypass -File "%~dp0start_cloud_mcp.ps1"
+pause
+```
+
+> **Both files are already in `.gitignore`** and will never be committed to GitHub, since they contain your personal Ngrok domain.
+
+### Step 3 — Launch the Server
+
+Double-click `start_cloud_mcp.bat`. Two PowerShell windows will open — one running the Aethos Memory server, one running the Ngrok tunnel.
+
+### Step 4 — Connect Gemini Spark
+
+1. Open **[Gemini Spark](https://gemini.google.com/spark)** in your browser.
+2. Go to the **Custom Apps** section.
+3. Click **Add a custom app link**.
+4. Paste your permanent Ngrok URL:
+   ```
+   https://YOUR_NGROK_DOMAIN.ngrok-free.app/mcp
+   ```
+5. Click **Next** — Gemini Spark will connect and load the Aethos Memory tools instantly.
+
+> **Important:** Your PC must be running `start_cloud_mcp.bat` for Gemini Spark to reach the server. The URL itself is permanent and never changes between sessions.
+
+<br/>
+
+---
+
 ## MCP Tools
 
 Aethos Memory exposes **4 core tools** and **3 aliases** for cross-client compatibility:
@@ -581,6 +661,12 @@ Aethos Memory exposes **4 core tools** and **3 aliases** for cross-client compat
     <td align="center" width="130"><b>Goose</b><br/><sub>CLI</sub></td>
     <td align="center" width="130"><b>Cline</b><br/><sub>VS Code Extension</sub></td>
     <td align="center" width="130"><b>Continue</b><br/><sub>VS Code Extension</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="130"><b>Gemini Spark</b><br/><sub>Cloud MCP via Ngrok</sub></td>
+    <td align="center" width="130"><b>Gemini CLI</b><br/><sub>CLI</sub></td>
+    <td align="center" width="130"><b>Zed Editor</b><br/><sub>IDE</sub></td>
+    <td align="center" width="130"><b>LibreChat</b><br/><sub>Web UI</sub></td>
   </tr>
 </table>
 
