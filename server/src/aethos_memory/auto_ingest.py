@@ -113,10 +113,10 @@ def find_transcript_files() -> list[tuple[str, str, str]]:
     user = os.path.expanduser("~")
     found = []
 
-    # 1. Claude Code (.claude.json)
-    claude_json = os.path.join(user, ".claude.json")
-    if os.path.exists(claude_json):
-        found.append((claude_json, "Claude Code", "global"))
+    # 1. Claude Code (~/.claude/history.jsonl)
+    claude_history = os.path.join(user, ".claude", "history.jsonl")
+    if os.path.exists(claude_history):
+        found.append((claude_history, "Claude Code", "global"))
 
     # 2. Codex logs — ONLY scan actual session transcripts in ~/.codex/sessions/
     codex_sessions_dir = os.path.join(user, ".codex", "sessions")
@@ -125,6 +125,15 @@ def find_transcript_files() -> list[tuple[str, str, str]]:
             for file in files:
                 if file.endswith(".jsonl") or file.endswith(".json"):
                     found.append((os.path.join(root, file), "Codex CLI", "global"))
+                    
+    # 3. Antigravity IDE logs
+    antigravity_dir = os.path.join(user, ".gemini", "antigravity-ide", "brain")
+    if os.path.exists(antigravity_dir):
+        for root, _, files in os.walk(antigravity_dir):
+            if ".system_generated" in root and "logs" in root:
+                for file in files:
+                    if file == "transcript.jsonl":
+                        found.append((os.path.join(root, file), "Antigravity", "global"))
 
     return found
 
@@ -225,8 +234,38 @@ async def run_auto_ingest_cycle() -> int:
                     content = f.read()
                     new_pos = f.tell()
 
-                if len(content) > 50:
-                    count = await process_transcript_text(content, source_tool=tool_name, project=project)
+                extracted_text = []
+                for line in content.split("\n"):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        obj = json.loads(line)
+                        # Antigravity format
+                        if "step_index" in obj and "content" in obj:
+                            if obj.get("type") in ["USER_INPUT", "PLANNER_RESPONSE", "MODEL_RESPONSE"]:
+                                text_val = obj["content"].strip()
+                                if text_val:
+                                    extracted_text.append(f"{obj.get('source', 'UNKNOWN')}: {text_val}")
+                        # Codex format
+                        elif "payload" in obj and isinstance(obj["payload"], dict):
+                            payload = obj["payload"]
+                            if payload.get("type") == "message" and "content" in payload:
+                                for c in payload["content"]:
+                                    if isinstance(c, dict) and "text" in c:
+                                        extracted_text.append(f"{payload.get('role', 'unknown')}: {c['text']}")
+                            elif payload.get("type") == "user_message" and "message" in payload:
+                                extracted_text.append(f"user: {payload['message']}")
+                        # Claude Code history.jsonl
+                        elif "display" in obj and "timestamp" in obj:
+                            extracted_text.append(f"USER: {obj['display']}")
+                    except Exception:
+                        pass
+                
+                parsed_content = "\n\n".join(extracted_text)
+
+                if len(parsed_content) > 15:
+                    count = await process_transcript_text(parsed_content, source_tool=tool_name, project=project)
                     total_new_memories += count
 
                 processed_files[file_path] = mtime

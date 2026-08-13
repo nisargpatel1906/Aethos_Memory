@@ -69,7 +69,7 @@ Please configure Aethos Memory MCP server and auto-save rules for Cursor:
   }
 }
 
-2. Create or update `.cursorrules` in my current workspace root with:
+2. Create or update `.cursorrules` in my current workspace root (or in my main `%USERPROFILE%` folder for global cross-project coverage) with:
    ## Aethos Memory System Rules
    - You are equipped with Aethos Memory (aethos-memory_remember).
    - You MUST automatically and silently call remember() on EVERY turn whenever the user mentions identity facts, preferences, stack choices, decisions, or project goals.
@@ -98,7 +98,7 @@ Please configure Aethos Memory for Windsurf:
   }
 }
 
-2. Create `.windsurfrules` in the root of my project directory:
+2. Create `.windsurfrules` in the root of my project directory (or in my `%USERPROFILE%` for global coverage):
    ## Aethos Memory Rules
    - Automatically and silently call aethos-memory_remember on EVERY turn whenever user preferences, tech stack choices, or project decisions are mentioned.
 
@@ -125,7 +125,7 @@ Please set up Aethos Memory MCP server for Antigravity IDE:
   }
 }
 
-2. Create a `.instructions.md` rule file in my project root enforcing automatic background saving.
+2. Create a `.instructions.md` rule file in my project root (or in `%USERPROFILE%` for global coverage) enforcing automatic background saving.
 3. Test that the MCP server functions are loaded.
 ```
 
@@ -229,7 +229,7 @@ Please set up Aethos Memory for Cline:
   }
 }
 
-2. Create `.clinerules` in my workspace root:
+2. Create `.clinerules` in my workspace root (or in `%USERPROFILE%` for global coverage):
    ## Aethos Memory System Rules
    - Automatically and silently call remember() on EVERY turn whenever the user mentions identity facts, preferences, stack choices, decisions, or project goals.
 ```
@@ -329,6 +329,9 @@ Configure Aethos Memory in my OpenHands config at `%USERPROFILE%\.openhands\conf
 command = "uvx"
 args = ["aethos-memory"]
 env = { AETHOS_SOURCE_TOOL = "OpenHands" }
+
+[instructions]
+aethos_memory = "AUTOMATIC MEMORY PERSISTENCE: You are equipped with Aethos Memory (aethos-memory_remember). You MUST automatically and silently call remember() on EVERY turn whenever the user mentions identity facts, preferences, stack choices, decisions, or project goals. Do NOT wait for explicit user prompt commands to save."
 ```
 
 ---
@@ -341,6 +344,9 @@ Add Aethos Memory to `.replit` file:
 command = "uvx"
 args = ["aethos-memory"]
 env = { AETHOS_SOURCE_TOOL = "Replit Agent" }
+
+[instructions]
+aethos_memory = "AUTOMATIC MEMORY PERSISTENCE: You are equipped with Aethos Memory (aethos-memory_remember). You MUST automatically and silently call remember() on EVERY turn whenever the user mentions identity facts, preferences, stack choices, decisions, or project goals. Do NOT wait for explicit user prompt commands to save."
 ```
 
 ---
@@ -358,7 +364,8 @@ Add Aethos Memory to `.lovable/mcp.json`:
         "AETHOS_SOURCE_TOOL": "Lovable"
       }
     }
-  }
+  },
+  "systemInstructions": "AUTOMATIC MEMORY PERSISTENCE: You are equipped with Aethos Memory (aethos-memory_remember). You MUST automatically and silently call remember() on EVERY turn whenever the user mentions identity facts, preferences, stack choices, decisions, or project goals. Do NOT wait for explicit user prompt commands to save."
 }
 ```
 
@@ -377,7 +384,8 @@ Add Aethos Memory to `.bolt/mcp.json`:
         "AETHOS_SOURCE_TOOL": "Bolt.new"
       }
     }
-  }
+  },
+  "systemInstructions": "AUTOMATIC MEMORY PERSISTENCE: You are equipped with Aethos Memory (aethos-memory_remember). You MUST automatically and silently call remember() on EVERY turn whenever the user mentions identity facts, preferences, stack choices, decisions, or project goals. Do NOT wait for explicit user prompt commands to save."
 }
 ```
 
@@ -396,7 +404,8 @@ Add Aethos Memory to `v0.json`:
         "AETHOS_SOURCE_TOOL": "v0"
       }
     }
-  }
+  },
+  "systemInstructions": "AUTOMATIC MEMORY PERSISTENCE: You are equipped with Aethos Memory (aethos-memory_remember). You MUST automatically and silently call remember() on EVERY turn whenever the user mentions identity facts, preferences, stack choices, decisions, or project goals. Do NOT wait for explicit user prompt commands to save."
 }
 ```
 
@@ -415,7 +424,8 @@ Add Aethos Memory to `.devin/mcp.json`:
         "AETHOS_SOURCE_TOOL": "Devin"
       }
     }
-  }
+  },
+  "systemInstructions": "AUTOMATIC MEMORY PERSISTENCE: You are equipped with Aethos Memory (aethos-memory_remember). You MUST automatically and silently call remember() on EVERY turn whenever the user mentions identity facts, preferences, stack choices, decisions, or project goals. Do NOT wait for explicit user prompt commands to save."
 }
 ```
 
@@ -433,6 +443,7 @@ mcpServers:
       - aethos-memory
     env:
       AETHOS_SOURCE_TOOL: "LibreChat"
+    instructions: "AUTOMATIC MEMORY PERSISTENCE: You are equipped with Aethos Memory (aethos-memory_remember). You MUST automatically and silently call remember() on EVERY turn whenever the user mentions identity facts, preferences, stack choices, decisions, or project goals. Do NOT wait for explicit user prompt commands to save."
 ```
 
 ---
