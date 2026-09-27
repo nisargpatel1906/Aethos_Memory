@@ -625,22 +625,54 @@ Double-click `start_cloud_mcp.bat`. Two PowerShell windows will open — one run
 
 ## MCP Tools
 
-Aethos Memory exposes **4 core tools** and **3 aliases** for cross-client compatibility:
+Aethos Memory provides an unbeatable, enterprise-grade suite of **native MCP tools** organized into 5 core pillars:
 
+### 1. Semantic Memory & Knowledge Graph
 | Tool | Alias | Description |
 |---|---|---|
-| `remember` | `save_memory` | Extracts atomic facts from conversation and stores them in vector memory |
-| `recall` | `search_memories` | Runs 3-pass semantic search to find the most relevant context for any query |
-| `forget` | `delete_memory` | Deletes a stored memory by ID or natural language description |
-| `list_memories` | — | Returns all stored memories for a given project tag, unfiltered |
+| `remember` | `save_memory` | Extracts atomic facts from conversations and stores them with automatic secret scrubbing |
+| `recall` | `search_memories` | Runs 3-pass semantic search (Vector $\to$ Expansion $\to$ Rerank) to retrieve context |
+| `get_skeleton_context` | — | Compresses stored memories into dense skeleton context, cutting tokens by 65–70% |
+| `get_knowledge_graph` | — | Returns concept co-occurrence clusters and graph pivot nodes |
+| `forget` | `delete_memory` | Deletes a stored memory by UUID or semantic description |
+
+### 2. Threat Rules & Safety Guardrails
+| Tool | Description |
+|---|---|
+| `audit_action` | Pre-flight security audit for shell commands, scripts, file edits, or prompts against destructive filesystem ops, dangerous pipes, unbounded DB drops, credential leaks, and prompt injections. Returns `ALLOW`, `WARN`, or `BLOCK` with risk rationale. |
+
+### 3. Cross-Harness Activity Telemetry & Flight Recorder
+| Tool | Description |
+|---|---|
+| `record_activity` | Ingests live execution steps (commands run, tool calls, bash stdout/stderr, diffs, approvals, agent thinking thoughts) across any harness into Supabase with automatic secret scrubbing. |
+| `search_activity` | Search past execution steps, commands, and error traces across sessions and harnesses. |
+| `get_activity_event` | Fetch complete raw payload (stdout, diff, arguments, reasoning) for a specific event ID. |
+| `summarize_activity` | Analytical breakdown of recent runs (commands executed, tool usage, failures). |
+| `list_activity_filters` | List available harnesses, event types, and sessions recorded in telemetry. |
+
+### 4. Knowledge Distillation & Skill Promotion (Traces to Skills)
+| Tool | Description |
+|---|---|
+| `distill_lesson` | Analyzes debugging runs or session traces and distills high-signal lessons categorized by kind (`workflow`, `correction`, `debugging_pattern`, `gotcha`, `convention`). |
+| `list_candidates` | Lists candidate lessons awaiting user review or promotion. |
+| `get_candidate` | Fetches complete lesson body, applicability triggers, and evidence traces. |
+| `approve_candidate` | Approves a candidate and indexes it directly into active vector memory with maximum priority (importance=5). |
+| `reject_candidate` | Marks a candidate as rejected with reason. |
+| `promote_to_skill` | Installs an approved lesson as a standard Agent Skill in `.agents/skills/<slug>/SKILL.md` in the project root so all agents auto-load it! |
+
+### 5. Task-Oriented Context & Memory Recall
+| Tool | Description |
+|---|---|
+| `get_memory_context` | Retrieves high-relevance approved memories, lessons, conventions, and debugging patterns for the current task before starting execution. |
+| `search_memory` | Searches approved memories and lessons with kind and project scoping. |
 
 ### 3-Pass Agentic RAG Retrieval
-
 | Pass | Strategy | Similarity Threshold |
 |---|---|---|
 | 1 — Direct Vector Match | Cosine similarity search via pgvector | 0.50 |
 | 2 — Query Expansion | LLM rewrites query, searches globally at lower threshold | 0.40 |
 | 3 — LLM Reranking | LLM grades all candidates and returns them ordered by relevance | — |
+
 
 <br/>
 

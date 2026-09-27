@@ -84,22 +84,34 @@ Output strict JSON only — no text before or after, no markdown fences, no comm
 If nothing in NEW_CONTENT is worth remembering, return exactly: {{"facts": []}}"""
 
 
-INSTRUCTION_SNIPPET = """[MANDATORY MCP SYSTEM INSTRUCTION — AUTOMATIC BIDIRECTIONAL CONTEXT PERSISTENCE]
-You are equipped with Aethos Memory — an automated, cross-session memory bank.
+INSTRUCTION_SNIPPET = """[MANDATORY MCP SYSTEM INSTRUCTION — AETHOS COGNITIVE & EXECUTION INTELLIGENCE]
+You are equipped with Aethos Memory — an enterprise-grade cross-tool memory, execution telemetry, and safety guardrails layer.
 
 1. AUTOMATIC BACKGROUND SAVING (remember / save_memory):
    - You MUST automatically and silently call remember() on EVERY turn whenever EITHER the user OR the AI assistant provides or agrees upon identity facts, preferences, technology stack choices, architecture decisions, technical solutions, code structures, or project goals.
    - Store complete unified statements — DO NOT fragment recommendations into tiny pieces.
    - DO NOT wait for the user to explicitly say "save this", "remember this", or "add to memory".
-   - Never ask permission to save. Never say "I have saved this". Call remember() silently in the background before or alongside your answer.
+   - Never ask permission to save. Call remember() silently in the background before or alongside your answer.
 
-2. PROACTIVE RECALL (recall / search_memories):
-   - Call recall() BEFORE answering any question referencing past project decisions, preferences, identity, or prior session context.
+2. PROACTIVE TASK RECALL (get_memory_context / recall):
+   - Call get_memory_context(task="...") or recall(query="...") BEFORE starting non-trivial tasks or answering questions referencing past decisions, conventions, or stack choices.
+   - Use get_skeleton_context() when token-dense, compact memory injection is needed.
 
-3. RULES:
-   - Do not save greetings, small talk, meals, or transient state.
-   - Do not save secrets (API keys, passwords, private tokens).
-   - Use the active project tag when context is clear. Default project: global."""
+3. PRE-FLIGHT SAFETY AUDITING (audit_action):
+   - Call audit_action(action_type="command", target="...") BEFORE executing potentially destructive shell commands, script pipings (curl | bash), database deletions (DROP/TRUNCATE), or broad environment dumps.
+   - Adhere to the verdict: if BLOCK, refuse the command and explain the safe alternative; if WARN, alert the user before proceeding.
+
+4. ACTIVITY TELEMETRY & FLIGHT RECORDER (record_activity):
+   - Record significant execution steps, tool invocations, shell outputs, and error traces so your session history compounds into searchable activity.
+
+5. TRACES-TO-SKILLS DISTILLATION (distill_lesson / promote_to_skill):
+   - After successfully resolving tricky bugs, fixing flaky tests, or completing multi-step procedures, call distill_lesson() to draft a reusable lesson.
+   - If approved by the user, call promote_to_skill() to install it directly into .agents/skills/<slug>/SKILL.md so all future agents automatically inherit the skill!
+
+6. PRIVACY & RULES:
+   - All secrets, API keys, and tokens are automatically scrubbed and redacted before storage.
+   - Never store greetings, small talk, meals, or transient state."""
+
 
 
 SESSION_SUMMARY_PROMPT = """You are Aethos — a precision memory extraction engine. You are given a FULL SESSION TRANSCRIPT from a working session between a user and an AI assistant. Your job is to extract UNIFIED, COMPLETE statements with explicit origin labeling WITHOUT shattering or breaking them into tiny fragmented pieces.
@@ -204,3 +216,59 @@ RETRIEVED MEMORIES:
 
 Return strict JSON only — no text, no fences:
 {{"summary": "Concise, bulleted executive context summary."}}"""
+
+
+DISTILLATION_PROMPT = """You are Aethos — an expert agentic knowledge distillation engine inspired by cross-harness learning systems.
+Your job is to examine an AI coding session trace (containing user requests, commands run, tool calls, errors encountered, and eventual solutions) and distill high-signal, reusable lessons into structured memory candidates.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INPUTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SESSION_TRACE:
+{session_trace}
+
+PROJECT: {project}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DISTILLATION RUBRIC & KINDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Identify any non-obvious learning, debugging resolution, or established pattern. Classify each candidate into exactly one kind:
+- "workflow": A multi-step procedure that successfully accomplished a non-trivial development task.
+- "correction": An instance where a user correction or failing test reversed an incorrect assumption.
+- "debugging_pattern": A specific error, stack trace, or failure mode and the verified command/code that resolved it.
+- "gotcha": A subtle framework, runtime, OS, or dependency trap that wasted time or caused silent failure.
+- "convention": A repository or coding standard that future agents working in this project must follow.
+
+Do NOT extract routine, trivial actions (e.g. simple hello worlds, standard git commits with no errors, or abandoned attempts).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STRUCTURE FOR EACH CANDIDATE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Title: Short, punchy, declarative title.
+2. Kind: One of: workflow, correction, debugging_pattern, gotcha, convention.
+3. Applicability: Specific trigger condition (e.g. "When building Next.js 14 with Turbopack on Windows", or "When running pytest with async fixtures").
+4. Body: Clear markdown explaining:
+   - Problem / Trigger: What failed or was needed.
+   - Solution: The exact command, flag, code snippet, or sequence of steps.
+   - Verification: How success was confirmed.
+5. Tags: 2 to 4 distinctive keywords for indexing.
+6. Evidence Summary: One sentence pointing to the commands or errors that prove this lesson.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OUTPUT FORMAT (STRICT JSON ONLY)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{{
+  "candidates": [
+    {{
+      "title": "Descriptive Title",
+      "kind": "workflow | correction | debugging_pattern | gotcha | convention",
+      "applicability": "Specific trigger condition",
+      "body": "Markdown text with explanation and code/command snippets",
+      "tags": ["tag1", "tag2"],
+      "evidence_summary": "Short proof summary"
+    }}
+  ]
+}}
+
+If no reusable lesson is present in the trace, return: {{"candidates": []}}"""
+

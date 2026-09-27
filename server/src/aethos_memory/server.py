@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 from fastmcp import FastMCP
-from aethos_memory import db, providers, prompts, retrieval, auto_ingest, skeleton, graph
+from aethos_memory import db, providers, prompts, retrieval, auto_ingest, skeleton, graph, threat_rules, activity, distillation
 from aethos_memory.caching import cache_manager
 from aethos_memory.config import get_config
 
@@ -58,7 +58,14 @@ async def remember(
         if not actual_content:
             return "Memory storage skipped — no content provided."
 
+        # Scrub secrets before processing
+        clean_content, detected = threat_rules.scrub_secrets(actual_content)
+        if detected:
+            logger.info(f"remember: scrubbed sensitive secrets: {detected}")
+        actual_content = clean_content
+
         project = project or "global"
+
 
         # 1. Embed raw content for similarity search / dedup context
         raw_embedding = await providers.call_embedding(actual_content)
@@ -289,6 +296,272 @@ async def summarize_session(
         return f"Session summarization failed — {str(err)}."
 
 
+# =====================================================================
+# Threat Rules & Safety Guardrail Tools
+# =====================================================================
+
+@mcp.tool()
+async def audit_action(
+    action_type: str = "command",
+    target: str = "",
+    content: str = "",
+    context: str = "",
+) -> str:
+    """[SAFETY & THREAT RULES GUARDRAIL — CALL BEFORE RISKY COMMANDS OR EDITS]
+    Audit a proposed shell command, script, file edit, database query, or prompt against threat rules.
+    Evaluates against: destructive filesystem ops, dangerous pipes to shell, unbounded DROP/DELETE,
+    credential/token scraping, security config edits, and prompt injection patterns.
+    Returns verdict ('ALLOW', 'WARN', 'BLOCK'), risk score (0.0 to 1.0), and safety recommendations."""
+    report = threat_rules.audit_action(action_type=action_type, target=target, content=content, context=context)
+    return json.dumps(report, indent=2)
+
+
+# =====================================================================
+# Cross-Harness Activity Telemetry & Execution Tracing Tools
+# =====================================================================
+
+@mcp.tool()
+async def record_activity(
+    event_type: str = "command",
+    title: str = "",
+    command: str = "",
+    tool_name: str = "",
+    tool_input: str = "",
+    tool_output: str = "",
+    diff: str = "",
+    error: str = "",
+    agent_thought: str = "",
+    exit_code: int | None = None,
+    status: str = "success",
+    harness: str = "mcp_client",
+    session_id: str = "",
+    project: str = "global",
+) -> str:
+    """[CROSS-HARNESS EXECUTION TELEMETRY — FLIGHT RECORDER]
+    Record an agent execution step (commands, tool calls, bash stdout, diffs, operator approvals, agent thoughts)
+    into Supabase with automatic secret scrubbing. Enables full session replay and post-session distillation."""
+    ev = activity.record_activity_event(
+        event_type=event_type,
+        title=title,
+        command=command or None,
+        tool_name=tool_name or None,
+        tool_input=tool_input or None,
+        tool_output=tool_output or None,
+        diff=diff or None,
+        error=error or None,
+        agent_thought=agent_thought or None,
+        exit_code=exit_code,
+        status=status,
+        harness=harness,
+        session_id=session_id or None,
+        project=project or "global",
+    )
+    return f"Activity event recorded: {ev.get('id')} [{status}]"
+
+
+@mcp.tool()
+async def search_activity(
+    query: str = "",
+    harness: str = "",
+    event_type: str = "",
+    session_id: str = "",
+    project: str = "global",
+    limit: int = 15,
+) -> str:
+    """[ACTIVITY SEARCH & REPLAY]
+    Search past agent execution steps, commands run, tool calls, and error traces across sessions and harnesses."""
+    events = activity.search_activity(
+        query=query or None,
+        harness=harness or None,
+        event_type=event_type or None,
+        session_id=session_id or None,
+        project=project,
+        limit=limit,
+    )
+    if not events:
+        return "No matching activity events found."
+
+    lines = []
+    for i, ev in enumerate(events, 1):
+        payload = ev.get("payload") or {}
+        cmd_str = f" | cmd: {payload.get('command')}" if "command" in payload else ""
+        tool_str = f" | tool: {payload.get('tool_name')}" if "tool_name" in payload else ""
+        lines.append(f"{i}. [{ev.get('harness')}][{ev.get('event_type')}][{ev.get('status')}] {ev.get('title')}{cmd_str}{tool_str} (ID: {ev.get('id')})")
+    return "### Recorded Agent Activity Events:\n" + "\n".join(lines)
+
+
+@mcp.tool()
+async def get_activity_event(event_id: str) -> str:
+    """[ACTIVITY DETAIL INSPECTION]
+    Fetch complete raw payload (stdout, stderr, tool input/output, diff, reasoning) for an activity event."""
+    ev = activity.get_activity_event(event_id)
+    if not ev:
+        return f"Activity event '{event_id}' not found."
+    return json.dumps(ev, indent=2)
+
+
+@mcp.tool()
+async def summarize_activity(
+    session_id: str = "",
+    project: str = "global",
+    limit: int = 30,
+) -> str:
+    """[ACTIVITY OBSERVABILITY SUMMARY]
+    Return analytical summary of recent agent runs (total events, commands executed, tool usage, failures)."""
+    summary = activity.summarize_activity(session_id=session_id or None, project=project, limit=limit)
+    return json.dumps(summary, indent=2)
+
+
+@mcp.tool()
+async def list_activity_filters(project: str = "global") -> str:
+    """List distinct harnesses, event types, and sessions recorded in activity telemetry."""
+    filters = activity.list_activity_filters(project=project)
+    return json.dumps(filters, indent=2)
+
+
+# =====================================================================
+# Knowledge Distillation & Skill Promotion Tools (Traces to Skills)
+# =====================================================================
+
+@mcp.tool()
+async def distill_lesson(
+    session_trace: str = "",
+    session_id: str = "",
+    project: str = "global",
+) -> str:
+    """[TRACES-TO-MEMORY DISTILLATION]
+    Analyze an agent session trace (or recent activity events) and distill high-signal lessons
+    categorized by kind: 'workflow', 'correction', 'debugging_pattern', 'gotcha', or 'convention'.
+    Creates review candidates in Supabase awaiting user approval."""
+    trace_text = session_trace
+    if not trace_text and session_id:
+        events = activity.search_activity(session_id=session_id, project=project, limit=50)
+        trace_text = json.dumps(events, indent=2)
+    if not trace_text:
+        return "Please provide session_trace text or a valid session_id to distill."
+
+    candidates = await distillation.distill_lesson(trace_text, project=project, session_id=session_id or None)
+    if not candidates:
+        return "No reusable lesson candidates could be distilled from the provided trace."
+
+    lines = []
+    for c in candidates:
+        lines.append(f"- Candidate ID: {c.get('id')} | Kind: [{c.get('kind')}] | Title: {c.get('title')}\n  Applicability: {c.get('applicability')}\n  Tags: {', '.join(c.get('tags', []))}")
+    return f"Distilled {len(candidates)} candidate lesson(s) awaiting review:\n" + "\n\n".join(lines)
+
+
+@mcp.tool()
+async def list_candidates(
+    state: str = "candidate",
+    kind: str = "",
+    project: str = "global",
+    limit: int = 25,
+) -> str:
+    """[CANDIDATE REVIEW PIPELINE]
+    List memory candidates awaiting review or promotion (state: 'candidate', 'approved', 'rejected', 'superseded')."""
+    candidates = distillation.list_candidates(project=project, state=state or None, kind=kind or None, limit=limit)
+    if not candidates:
+        return f"No memory candidates found with state '{state}'."
+
+    lines = []
+    for i, c in enumerate(candidates, 1):
+        lines.append(f"{i}. [{c.get('state').upper()}][{c.get('kind')}] {c.get('title')} (ID: {c.get('id')})\n   Applicability: {c.get('applicability')}\n   Tags: {', '.join(c.get('tags', []))}")
+    return "### Distilled Memory Candidates:\n" + "\n".join(lines)
+
+
+@mcp.tool()
+async def get_candidate(candidate_id: str) -> str:
+    """Fetch complete details of a memory candidate including body and evidence."""
+    cand = distillation.get_candidate(candidate_id)
+    if not cand:
+        return f"Candidate '{candidate_id}' not found."
+    return json.dumps(cand, indent=2)
+
+
+@mcp.tool()
+async def approve_candidate(
+    candidate_id: str,
+    title: str = "",
+    kind: str = "",
+    applicability: str = "",
+    body: str = "",
+    tags: str = "",
+    reason: str = "Approved by user review",
+    project: str = "global",
+) -> str:
+    """[APPROVE & PROMOTE CANDIDATE TO MEMORY]
+    Approve a candidate lesson, embedding and indexing it into active vector memory with maximum priority (importance=5)."""
+    tags_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else None
+    res = await distillation.approve_candidate(
+        candidate_id=candidate_id,
+        title=title or None,
+        kind=kind or None,
+        applicability=applicability or None,
+        body=body or None,
+        tags=tags_list,
+        reason=reason,
+        project=project,
+    )
+    return res.get("message", "Candidate approved.")
+
+
+@mcp.tool()
+async def reject_candidate(candidate_id: str, reason: str = "Rejected by user review") -> str:
+    """[REJECT CANDIDATE] Mark a candidate lesson as rejected."""
+    res = distillation.reject_candidate(candidate_id, reason=reason)
+    return res.get("message", "Candidate rejected.")
+
+
+@mcp.tool()
+async def supersede_candidate(candidate_id: str, replacement_id: str, reason: str = "Superseded by newer memory") -> str:
+    """[SUPERSEDE CANDIDATE] Mark a candidate lesson as superseded by another memory item."""
+    res = distillation.supersede_candidate(candidate_id, replacement_id, reason=reason)
+    return res.get("message", "Candidate superseded.")
+
+
+@mcp.tool()
+async def promote_to_skill(
+    candidate_id: str,
+    project_root: str = "",
+    force: bool = False,
+) -> str:
+    """[PROMOTE LESSON TO AGENT SKILL — AUTO-LOAD IN ALL HARNESSES]
+    Install an approved memory candidate as an Agent Skill in .agents/skills/<slug>/SKILL.md in the project root.
+    All skill-capable AI agents (Cursor, Claude Code, Codex, OpenCode, Antigravity) will automatically load and follow the lesson!"""
+    res = distillation.promote_to_skill(candidate_id=candidate_id, project_root=project_root or None, force=force)
+    if res.get("success"):
+        return f"Success! Agent Skill installed at: {res.get('path')} (Slug: {res.get('slug')})\nTitle: {res.get('title')}"
+    return f"Skill promotion failed: {res.get('error')}"
+
+
+# =====================================================================
+# Task-Oriented Context & Semantic Retrieval Tools
+# =====================================================================
+
+@mcp.tool()
+async def get_memory_context(
+    task: str = "",
+    project: str = "global",
+    limit: int = 5,
+    kind: str = "",
+) -> str:
+    """[TASK-ORIENTED APPROVED MEMORY CONTEXT]
+    Return high-relevance approved memories, lessons, conventions, and debugging patterns for the current task before starting execution."""
+    return await recall(query=task, project=project)
+
+
+@mcp.tool()
+async def search_memory(
+    query: str = "",
+    project: str = "global",
+    limit: int = 10,
+    kind: str = "",
+) -> str:
+    """[SEARCH APPROVED MEMORIES]
+    Search approved project memory and lessons with kind and project scoping."""
+    return await recall(query=query, project=project)
+
+
 # Alias registrations
 @mcp.tool()
 async def save_memory(
@@ -315,6 +588,7 @@ async def delete_memory(memory_id: str = None, description: str = None, project:
 
 def main():
     mcp.run()
+
 
 
 if __name__ == "__main__":

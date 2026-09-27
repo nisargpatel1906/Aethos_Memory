@@ -188,3 +188,68 @@ as $$
     (1 - (m.embedding <=> query_embedding)) * (1 + (coalesce(m.importance, 3) * 0.05)) desc
   limit match_count;
 $$;
+
+-- 10. Columns for Cross-Harness Structured Lessons & Distillation
+alter table memories add column if not exists kind text default 'convention'
+  check (kind in ('workflow', 'correction', 'debugging_pattern', 'gotcha', 'convention', 'preference', 'decision'));
+alter table memories add column if not exists applicability text default '';
+alter table memories add column if not exists candidate_id uuid default null;
+
+-- 11. Cross-Harness Activity Events Table (Execution Traces, Tools, Commands, Diffs, Approvals)
+create table if not exists activity_events (
+  id          uuid        primary key default gen_random_uuid(),
+  user_id     text        not null,
+  project     text        not null default 'global',
+  session_id  text,
+  harness     text        not null default 'mcp_client',
+  event_type  text        not null check (event_type in ('user_message', 'tool_call', 'command', 'tool_result', 'approval', 'error', 'agent_thought', 'metric')),
+  title       text,
+  payload     jsonb       not null default '{}'::jsonb,
+  status      text        not null default 'success' check (status in ('success', 'failed', 'pending', 'blocked', 'warning')),
+  created_at  timestamptz not null default now()
+);
+
+alter table activity_events enable row level security;
+drop policy if exists "Service role has full access to activity_events" on activity_events;
+create policy "Service role has full access to activity_events"
+  on activity_events for all
+  using (true)
+  with check (true);
+
+create index if not exists activity_events_user_project_idx on activity_events (user_id, project);
+create index if not exists activity_events_session_idx on activity_events (user_id, session_id);
+create index if not exists activity_events_type_idx on activity_events (event_type);
+create index if not exists activity_events_created_idx on activity_events (created_at desc);
+
+-- 12. Memory Candidates Table (Distillation, Review Lifecycle & Skill Promotion)
+create table if not exists memory_candidates (
+  id            uuid        primary key default gen_random_uuid(),
+  user_id       text        not null,
+  project       text        not null default 'global',
+  memory_id     uuid        references memories(id) on delete set null,
+  state         text        not null default 'candidate' check (state in ('candidate', 'approved', 'rejected', 'superseded')),
+  kind          text        not null default 'workflow' check (kind in ('workflow', 'correction', 'debugging_pattern', 'gotcha', 'convention', 'preference', 'decision')),
+  title         text        not null,
+  body          text        not null,
+  applicability text        default '',
+  tags          text[]      not null default '{}',
+  evidence      jsonb       not null default '{}'::jsonb,
+  review_reason text        default '',
+  superseded_by uuid        references memory_candidates(id) on delete set null,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+  approved_at   timestamptz default null
+);
+
+alter table memory_candidates enable row level security;
+drop policy if exists "Service role has full access to memory_candidates" on memory_candidates;
+create policy "Service role has full access to memory_candidates"
+  on memory_candidates for all
+  using (true)
+  with check (true);
+
+create index if not exists memory_candidates_user_project_idx on memory_candidates (user_id, project);
+create index if not exists memory_candidates_state_idx on memory_candidates (state);
+create index if not exists memory_candidates_kind_idx on memory_candidates (kind);
+create index if not exists memory_candidates_created_idx on memory_candidates (created_at desc);
+

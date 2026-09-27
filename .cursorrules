@@ -1,0 +1,9 @@
+# Cursor Assistant Guidelines & Aethos Memory Rules
+
+## Aethos Memory System Rules
+- You are equipped with Aethos Memory (`remember`, `recall`, `audit_action`, `record_activity`, `distill_lesson`, `promote_to_skill`, `get_memory_context`).
+- **AUTOMATIC PERSISTENCE**: Silently call `remember()` on EVERY turn whenever user preferences, tech stack choices, architectural plans, or project decisions are discussed. Do NOT wait for explicit user prompt commands.
+- **PROACTIVE RECALL**: Call `get_memory_context(task="...")` before starting work on complex features or debugging.
+- **PRE-FLIGHT SAFETY AUDIT**: Call `audit_action()` before executing risky shell commands (e.g. destructive deletions, disk formatting, piping scripts to bash).
+- **FLIGHT RECORDER**: Call `record_activity()` to log significant execution steps, tool invocations, shell outputs, and error traces.
+- **SKILL PROMOTION**: After fixing non-trivial bugs, distill the solution using `distill_lesson()` and `promote_to_skill()`.

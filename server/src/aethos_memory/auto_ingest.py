@@ -11,7 +11,8 @@ import asyncio
 import time
 import logging
 from typing import Any
-from aethos_memory import db, providers, prompts
+from aethos_memory import db, providers, prompts, activity
+from aethos_memory.threat_rules import scrub_secrets
 from aethos_memory.caching import cache_manager
 
 logger = logging.getLogger("aethos_auto_ingest")
@@ -39,17 +40,36 @@ def save_state(state: dict[str, Any]) -> None:
 
 
 async def process_transcript_text(text: str, source_tool: str = "Auto-Ingest", project: str = "global") -> int:
-    """Extract and insert atomic facts from conversation text asynchronously."""
+    """Extract and insert atomic facts from conversation text asynchronously with secret scrubbing and activity tracing."""
     if not text or len(text.strip()) < 20:
         return 0
 
+    # 1. Scrub secrets before processing
+    clean_text, detected_secrets = scrub_secrets(text)
+    if detected_secrets:
+        logger.info(f"Auto-Ingest: Scrubbed {len(detected_secrets)} secrets from conversation turn ({', '.join(set(detected_secrets))})")
+
+    # 2. Record telemetry activity event
     try:
-        prompt = prompts.SESSION_SUMMARY_PROMPT.format(session_transcript=text[-8000:], project=project)
+        activity.record_activity_event(
+            event_type="user_message",
+            harness=source_tool,
+            title=f"Turn from {source_tool}: {clean_text[:60].strip()}...",
+            tool_output=clean_text[:2000],
+            project=project,
+            status="success",
+        )
+    except Exception as e:
+        logger.debug(f"Failed to record activity event during auto-ingest: {e}")
+
+    try:
+        prompt = prompts.SESSION_SUMMARY_PROMPT.format(session_transcript=clean_text[-8000:], project=project)
         res = await providers.call_extraction(prompt)
         facts = res.get("facts", [])
 
         if not facts:
             return 0
+
 
         inserted_count = 0
         for fact in facts:

@@ -323,3 +323,249 @@ def list_by_project(project: str, limit: int = 50, offset: int = 0) -> list[dict
             .execute()
         )
         return res.data or []
+    except Exception:
+        res = (
+            client.table("memories")
+            .select("id, user_id, project, content, category, source_tool, created_at, updated_at")
+            .eq("user_id", cfg.aethos_user_id)
+            .eq("project", project)
+            .order("created_at", desc=True)
+            .range(offset, offset + limit - 1)
+            .execute()
+        )
+        return res.data or []
+
+
+# =====================================================================
+# Cross-Harness Activity Telemetry Methods (Activity Events)
+# =====================================================================
+
+def insert_activity_event(
+    event_type: str,
+    title: str = "",
+    payload: dict[str, Any] | None = None,
+    harness: str = "mcp_client",
+    session_id: str | None = None,
+    project: str = "global",
+    status: str = "success",
+) -> dict[str, Any]:
+    """Insert a raw or normalized agent execution activity event into Supabase."""
+    client = get_supabase_client()
+    cfg = get_config()
+
+    row = {
+        "user_id": cfg.aethos_user_id,
+        "project": project or "global",
+        "session_id": session_id or "default_session",
+        "harness": harness or "mcp_client",
+        "event_type": event_type,
+        "title": title or f"[{harness}] {event_type}",
+        "payload": payload or {},
+        "status": status,
+    }
+
+    try:
+        res = client.table("activity_events").insert(row).execute()
+        if res.data:
+            return res.data[0]
+    except Exception as e:
+        logger.error(f"Failed to insert activity event: {e}")
+    return {"id": "local_fallback", **row}
+
+
+def query_activity_events(
+    project: str = "global",
+    harness: str | None = None,
+    event_type: str | None = None,
+    session_id: str | None = None,
+    query_text: str | None = None,
+    limit: int = 25,
+    offset: int = 0,
+) -> list[dict[str, Any]]:
+    """Query activity events with filtering by harness, event_type, and free-text search."""
+    client = get_supabase_client()
+    cfg = get_config()
+
+    try:
+        q = (
+            client.table("activity_events")
+            .select("id, project, session_id, harness, event_type, title, payload, status, created_at")
+            .eq("user_id", cfg.aethos_user_id)
+        )
+        if project and project != "ALL":
+            q = q.eq("project", project)
+        if harness:
+            q = q.eq("harness", harness)
+        if event_type:
+            q = q.eq("event_type", event_type)
+        if session_id:
+            q = q.eq("session_id", session_id)
+        if query_text:
+            q = q.ilike("title", f"%{query_text}%")
+
+        res = q.order("created_at", desc=True).range(offset, offset + limit - 1).execute()
+        return res.data or []
+    except Exception as e:
+        logger.error(f"Failed to query activity events: {e}")
+        return []
+
+
+def get_activity_event_by_id(event_id: str) -> dict[str, Any] | None:
+    """Fetch a single activity event by ID with complete payload."""
+    client = get_supabase_client()
+    cfg = get_config()
+
+    try:
+        res = (
+            client.table("activity_events")
+            .select("*")
+            .eq("id", event_id)
+            .eq("user_id", cfg.aethos_user_id)
+            .execute()
+        )
+        return res.data[0] if res.data else None
+    except Exception as e:
+        logger.error(f"Failed to get activity event {event_id}: {e}")
+        return None
+
+
+# =====================================================================
+# Memory Distillation & Candidates Lifecycle Methods
+# =====================================================================
+
+def insert_memory_candidate(
+    title: str,
+    body: str,
+    kind: str = "workflow",
+    applicability: str = "",
+    project: str = "global",
+    tags: list[str] | None = None,
+    evidence: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Insert a new distilled memory candidate awaiting user review."""
+    client = get_supabase_client()
+    cfg = get_config()
+
+    row = {
+        "user_id": cfg.aethos_user_id,
+        "project": project or "global",
+        "state": "candidate",
+        "kind": kind if kind in {"workflow", "correction", "debugging_pattern", "gotcha", "convention", "preference", "decision"} else "workflow",
+        "title": title,
+        "body": body,
+        "applicability": applicability or "",
+        "tags": tags or [],
+        "evidence": evidence or {},
+    }
+
+    try:
+        res = client.table("memory_candidates").insert(row).execute()
+        if res.data:
+            return res.data[0]
+    except Exception as e:
+        logger.error(f"Failed to insert memory candidate: {e}")
+    return {"id": "candidate_fallback", **row}
+
+
+def query_memory_candidates(
+    project: str = "global",
+    state: str | None = None,
+    kind: str | None = None,
+    limit: int = 25,
+    offset: int = 0,
+) -> list[dict[str, Any]]:
+    """List memory candidates filtered by state and kind."""
+    client = get_supabase_client()
+    cfg = get_config()
+
+    try:
+        q = (
+            client.table("memory_candidates")
+            .select("id, project, memory_id, state, kind, title, body, applicability, tags, evidence, review_reason, created_at, updated_at, approved_at")
+            .eq("user_id", cfg.aethos_user_id)
+        )
+        if project and project != "ALL":
+            q = q.eq("project", project)
+        if state:
+            q = q.eq("state", state)
+        if kind:
+            q = q.eq("kind", kind)
+
+        res = q.order("created_at", desc=True).range(offset, offset + limit - 1).execute()
+        return res.data or []
+    except Exception as e:
+        logger.error(f"Failed to query memory candidates: {e}")
+        return []
+
+
+def get_memory_candidate_by_id(candidate_id: str) -> dict[str, Any] | None:
+    """Fetch a single candidate item by ID."""
+    client = get_supabase_client()
+    cfg = get_config()
+
+    try:
+        res = (
+            client.table("memory_candidates")
+            .select("*")
+            .eq("id", candidate_id)
+            .eq("user_id", cfg.aethos_user_id)
+            .execute()
+        )
+        return res.data[0] if res.data else None
+    except Exception as e:
+        logger.error(f"Failed to get memory candidate {candidate_id}: {e}")
+        return None
+
+
+def update_candidate_state(
+    candidate_id: str,
+    state: str,
+    review_reason: str = "",
+    memory_id: str | None = None,
+    superseded_by: str | None = None,
+    title: str | None = None,
+    body: str | None = None,
+    kind: str | None = None,
+    applicability: str | None = None,
+    tags: list[str] | None = None,
+) -> dict[str, Any]:
+    """Update review state (approved, rejected, superseded) and attributes of a candidate."""
+    client = get_supabase_client()
+    cfg = get_config()
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    updates: dict[str, Any] = {
+        "state": state,
+        "review_reason": review_reason,
+        "updated_at": now_iso,
+    }
+    if state == "approved":
+        updates["approved_at"] = now_iso
+    if memory_id:
+        updates["memory_id"] = memory_id
+    if superseded_by:
+        updates["superseded_by"] = superseded_by
+    if title:
+        updates["title"] = title
+    if body:
+        updates["body"] = body
+    if kind:
+        updates["kind"] = kind
+    if applicability is not None:
+        updates["applicability"] = applicability
+    if tags is not None:
+        updates["tags"] = tags
+
+    try:
+        res = (
+            client.table("memory_candidates")
+            .update(updates)
+            .eq("id", candidate_id)
+            .eq("user_id", cfg.aethos_user_id)
+            .execute()
+        )
+        return res.data[0] if res.data else updates
+    except Exception as e:
+        logger.error(f"Failed to update candidate state: {e}")
+        return updates
+
