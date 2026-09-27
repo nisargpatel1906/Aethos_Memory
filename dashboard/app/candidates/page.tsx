@@ -87,11 +87,9 @@ export default function CandidatesPage() {
     setLoading(true);
     try {
       const supabase = getSupabase();
-      const userId = getUserId();
       const { data, error } = await supabase
         .from("memory_candidates")
         .select("*")
-        .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(100);
 

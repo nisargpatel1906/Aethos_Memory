@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { getSupabase, getUserId } from "../../lib/supabaseClient";
+import { getSupabase } from "../../lib/supabaseClient";
 
 interface ActivityEvent {
   id: string;
@@ -86,11 +86,9 @@ export default function ActivityPage() {
     setLoading(true);
     try {
       const supabase = getSupabase();
-      const userId = getUserId();
       const { data, error } = await supabase
         .from("activity_events")
         .select("*")
-        .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(100);
 

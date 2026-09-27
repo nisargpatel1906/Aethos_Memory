@@ -66,6 +66,20 @@ async def remember(
 
         project = project or "global"
 
+        # Auto-record memory activity in flight recorder
+        try:
+            harness_name = get_config().aethos_source_tool
+            activity.record_activity_event(
+                event_type="user_message",
+                harness=harness_name,
+                title=f"Saved memory via {harness_name}: {actual_content[:60]}...",
+                tool_output=actual_content[:1500],
+                project=project,
+                status="success",
+            )
+        except Exception as e:
+            logger.debug(f"Failed to record activity in remember: {e}")
+
 
         # 1. Embed raw content for similarity search / dedup context
         raw_embedding = await providers.call_embedding(actual_content)
@@ -169,6 +183,22 @@ async def recall(
 
         actual_query = (query or q or text or query_text or search_query or "").strip()
         project = project or "global"
+
+        # Auto-record recall query in activity telemetry
+        try:
+            harness_name = get_config().aethos_source_tool
+            activity.record_activity_event(
+                event_type="tool_call",
+                harness=harness_name,
+                title=f"Recall via {harness_name}: {actual_query[:60] if actual_query else 'Recent Context'}",
+                tool_name="recall",
+                tool_input=actual_query,
+                project=project,
+                status="success",
+            )
+        except Exception as e:
+            logger.debug(f"Failed to record activity in recall: {e}")
+
         results = []
 
         if actual_query:
@@ -313,6 +343,23 @@ async def audit_action(
     credential/token scraping, security config edits, and prompt injection patterns.
     Returns verdict ('ALLOW', 'WARN', 'BLOCK'), risk score (0.0 to 1.0), and safety recommendations."""
     report = threat_rules.audit_action(action_type=action_type, target=target, content=content, context=context)
+
+    # Auto-log audit verdict to activity telemetry
+    try:
+        harness_name = get_config().aethos_source_tool
+        verdict = report.get("verdict", "ALLOW")
+        ev_type = "approval" if verdict == "ALLOW" else ("command" if verdict == "WARN" else "error")
+        ev_status = "success" if verdict == "ALLOW" else ("warning" if verdict == "WARN" else "blocked")
+        activity.record_activity_event(
+            event_type=ev_type,
+            harness=harness_name,
+            title=f"Sentinel {verdict}: {action_type} on {target[:40] if target else 'content'}",
+            status=ev_status,
+            metadata=report,
+        )
+    except Exception as e:
+        logger.debug(f"Failed to record activity in audit_action: {e}")
+
     return json.dumps(report, indent=2)
 
 
