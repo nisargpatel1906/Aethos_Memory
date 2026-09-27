@@ -26,4 +26,4 @@ sys.path.insert(0, str(_script_dir / "src"))
 from aethos_memory.server import mcp
 
 if __name__ == "__main__":
-    mcp.run()
+    mcp.run(show_banner=False)

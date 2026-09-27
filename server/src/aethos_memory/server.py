@@ -1,3 +1,5 @@
+import os
+os.environ["FASTMCP_SHOW_BANNER"] = "false"
 import asyncio
 import json
 import logging
@@ -686,7 +688,7 @@ async def delete_memory(memory_id: str = None, description: str = None, project:
 
 
 def main():
-    mcp.run()
+    mcp.run(show_banner=False)
 
 
 
