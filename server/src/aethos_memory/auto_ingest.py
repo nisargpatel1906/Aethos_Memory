@@ -193,7 +193,39 @@ async def ingest_opencode_sqlite_db(state: dict, is_first_run: bool = False) -> 
                 m_json = json.loads(msg_data_raw)
                 p_json = json.loads(part_data_raw)
                 role = m_json.get("role", "unknown")
+                p_type = p_json.get("type", "")
                 text = p_json.get("text", "").strip()
+
+                # Record agent internal reasoning tokens into Flight Recorder
+                if p_type == "reasoning" and text:
+                    try:
+                        activity.record_activity_event(
+                            event_type="agent_thought",
+                            harness="OpenCode",
+                            title=f"OpenCode Thought: {text[:60].strip()}...",
+                            agent_thought=text,
+                            session_id=session_id,
+                            project="global",
+                        )
+                    except Exception:
+                        pass
+
+                # Record tool invocations into Flight Recorder
+                elif p_type in ["tool-call", "tool_call"]:
+                    tool_name = p_json.get("toolName") or p_json.get("name", "tool")
+                    args = p_json.get("args") or p_json.get("input", {})
+                    try:
+                        activity.record_activity_event(
+                            event_type="tool_call",
+                            harness="OpenCode",
+                            title=f"OpenCode Call: {tool_name}",
+                            tool_name=tool_name,
+                            tool_input=args,
+                            session_id=session_id,
+                            project="global",
+                        )
+                    except Exception:
+                        pass
 
                 if text and len(text) > 15:
                     if session_id not in sessions:
