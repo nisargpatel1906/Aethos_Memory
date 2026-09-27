@@ -457,6 +457,35 @@ function FeedContent() {
 
   return (
     <div style={{ maxWidth: "1000px" }}>
+      {/* Primary Page Header & H1 */}
+      <div style={{ marginBottom: "1.25rem", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "0.75rem" }}>
+        <div>
+          <h1 style={{ fontSize: "1.65rem", fontWeight: 800, letterSpacing: "-0.02em", color: "var(--text-primary)" }}>
+            Universal Context Feed
+          </h1>
+          <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginTop: "0.2rem" }}>
+            Real-time proactive memory stream synchronized across Claude Code, Cursor, OpenCode, and Antigravity IDE.
+          </p>
+        </div>
+        <Link
+          href="/add"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.4rem",
+            padding: "0.45rem 0.95rem",
+            borderRadius: "8px",
+            backgroundColor: "#10b981",
+            color: "#042f2e",
+            fontWeight: 600,
+            fontSize: "0.8125rem",
+            textDecoration: "none",
+          }}
+        >
+          <span>+</span> Add Memory
+        </Link>
+      </div>
+
       {/* Setup banner for new users */}
       <SetupBanner memoryCount={memories.length} />
 

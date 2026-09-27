@@ -1,13 +1,17 @@
 <div align="center">
 
-<img src="Aethos Memory.svg" alt="Aethos Memory" width="220" />
+<img src="Aethos Memory.svg" alt="Aethos Memory - Universal Persistent Context Bank Logo for AI Assistants" width="220" />
 
 <br/>
 <br/>
 
 # Aethos Memory
 
-### Universal, Cross-Tool Persistent Memory for AI Assistants
+## Universal, Cross-Tool Persistent Memory for AI Assistants
+
+<p align="center">
+  <strong>Aethos Memory</strong> is an open-source, universal persistent memory layer for AI coding assistants. It connects tools like Claude Code, Cursor, OpenCode, Windsurf, and Antigravity IDE to a centralized Supabase pgvector memory bank via the Model Context Protocol (MCP), eliminating context loss across development sessions.
+</p>
 
 <br/>
 
@@ -17,19 +21,20 @@
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square)](https://nextjs.org)
 [![FastMCP](https://img.shields.io/badge/FastMCP-3.4%2B-39CD96?style=flat-square)](https://gofastmcp.com)
 [![Supabase](https://img.shields.io/badge/Supabase-pgvector-3ECF8E?style=flat-square)](https://supabase.com)
+[![llms.txt](https://img.shields.io/badge/llms.txt-Standardized-blue.svg?style=flat-square)](llms.txt)
 [![YouTube Video](https://img.shields.io/badge/YouTube-Watch%20Demo-red?style=flat-square&logo=youtube)](https://youtu.be/rjjStwPlTk0)
 
 <br/>
 <br/>
 
-### <svg width="22" height="22" viewBox="0 0 24 24" fill="#FF0000" style="vertical-align: middle; margin-right: 6px;"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> Watch the Official Launch Video
+<p><strong><svg width="22" height="22" viewBox="0 0 24 24" fill="#FF0000" style="vertical-align: middle; margin-right: 6px;"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> Watch the Official Launch Video</strong></p>
 
 [![Aethos Memory Official Demo](https://img.youtube.com/vi/rjjStwPlTk0/maxresdefault.jpg)](https://youtu.be/rjjStwPlTk0)
 
 <br/>
 <br/>
 
-<img src="Aethos-Memory-Master-Workflow.svg" width="100%" alt="Aethos Memory System Architecture and Animated Workflow"/>
+<img src="Aethos-Memory-Master-Workflow.svg" width="100%" alt="Aethos Memory System Architecture and Animated Workflow Diagram"/>
 
 <br/>
 
@@ -41,7 +46,9 @@
     <td align="center"><a href="#setup-guide--macos"><b>macOS Setup</b></a></td>
     <td align="center"><a href="#setup-guide--gemini-spark"><b>Gemini Spark</b></a></td>
     <td align="center"><a href="#mcp-tools"><b>MCP Tools</b></a></td>
+    <td align="center"><a href="#supported-ai-tools"><b>Supported Tools</b></a></td>
     <td align="center"><a href="#privacy--security"><b>Privacy</b></a></td>
+    <td align="center"><a href="#frequently-asked-questions-faq"><b>FAQ</b></a></td>
   </tr>
 </table>
 
@@ -121,6 +128,21 @@ Every time you start a new chat, your AI assistant forgets everything — your s
 ```
 
 The AI never sees your full database. Aethos converts queries into 768-dimensional vectors, extracts structured knowledge entities, searches Supabase for closest matches by cosine similarity, and maps multi-hop tech relationships in a real-time Knowledge Graph.
+
+<br/>
+
+### Architecture & Technical Specifications
+
+| Dimension | Specification | Details |
+|---|---|---|
+| **Protocol** | Model Context Protocol (MCP) | FastMCP Python 3.10+ server (supports stdio & SSE/HTTP) |
+| **Database** | PostgreSQL 15+ (`pgvector`) | Supabase hosted or self-hosted PostgreSQL instance |
+| **Embeddings** | 768-dimensional vectors | Google Gemini `text-embedding-004` (default), Groq, or OpenAI |
+| **Index Strategy** | HNSW Index | Cosine similarity (`vector_cosine_ops`) with sub-millisecond query time |
+| **Retrieval Engine** | 3-Pass Agentic RAG | Vector Match (0.50) $\to$ Query Expansion (0.40) $\to$ LLM Reranking |
+| **Local Cache** | SQLite Local Tier | 0ms instant turn memory retrieval & offline fallback |
+| **UI Dashboard** | Next.js 14 (App Router) | React 18, TypeScript, Tailwind CSS, 2D Force Graph Visualizer |
+| **Security & Privacy** | Zero Central Servers | 100% self-hosted, Row-Level Security (RLS) isolation, MIT License |
 
 <br/>
 
@@ -764,6 +786,33 @@ Aethos_Memory/
     +-- lib/
         +-- supabaseClient.ts            Supabase client and credential helpers
 ```
+
+<br/>
+
+---
+
+## Frequently Asked Questions (FAQ)
+
+### What is Aethos Memory and what problem does it solve?
+**Aethos Memory is an open-source, universal persistent memory layer for AI coding assistants.** It eliminates the context-loss problem where AI tools (Claude Code, Cursor, OpenCode, Windsurf, Antigravity IDE) forget your tech stack, architectural decisions, and personal conventions across sessions. By unifying all tools on a single PostgreSQL database with `pgvector`, your assistants remember context permanently.
+
+### Which AI coding assistants and IDEs are supported?
+Aethos Memory natively supports any tool that implements the **Model Context Protocol (MCP)**. This includes **Claude Code** (Desktop and CLI), **Cursor IDE**, **OpenCode**, **Windsurf**, **Antigravity IDE**, **Cline**, **Roo Code**, **Continue**, **Goose CLI**, **Zed Editor**, and **Gemini Spark** (via cloud HTTPS tunnel).
+
+### How does the 3-pass Agentic RAG retrieval work?
+When an AI assistant requests context via `recall()`, Aethos Memory executes a 3-pass retrieval strategy:
+1. **Pass 1 (Direct Vector Match):** Computes cosine similarity over 768-dimensional Gemini embeddings stored in Supabase pgvector using an HNSW index (threshold: 0.50).
+2. **Pass 2 (Query Expansion):** If direct matches are sparse, the LLM expands and broadens the search query to capture related architectural concepts (threshold: 0.40).
+3. **Pass 3 (LLM Relevance Reranking):** The LLM scores candidate memories and returns only high-relevance items, deduplicating stale knowledge.
+
+### Where is my memory data stored and is it private?
+**Your memory bank is 100% self-hosted and private.** Memories live exclusively in your own personal or cloud Supabase PostgreSQL database. Aethos Memory never routes your code, prompts, or credentials through any central third-party servers. All memories are protected by Row-Level Security (RLS) scoped to your user UUID.
+
+### Does Aethos Memory work offline or with local LLMs?
+Yes. Aethos Memory maintains an ultra-fast local SQLite cache for instant 0ms turn recall. You can also configure local embedding models or private OpenAI-compatible endpoints (Ollama, LM Studio) for fully offline operation.
+
+### How does automatic memory extraction work without explicit commands?
+Aethos Memory provides system prompt directives and the `auto_save_turn()` tool. When connected, your AI assistant passively analyzes dialogue turns and silently saves decisions, stack preferences, and rules in the background—without requiring you to explicitly say "remember this".
 
 <br/>
 

@@ -22,6 +22,25 @@ class Config(BaseModel):
             "AETHOS_USER_ID",
         ]
 
+        # Auto-load fallback .env from server directory if environment variables are not pre-set
+        if not os.getenv("SUPABASE_URL"):
+            from pathlib import Path
+            potential_envs = [
+                Path(__file__).resolve().parents[2] / ".env",
+                Path.cwd() / ".env",
+                Path.cwd() / "server" / ".env",
+            ]
+            for env_path in potential_envs:
+                if env_path.exists():
+                    for line in env_path.read_text(encoding="utf-8").splitlines():
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            k, _, v = line.partition("=")
+                            k, v = k.strip(), v.strip()
+                            if not os.environ.get(k):
+                                os.environ[k] = v
+                    break
+
         missing = [var for var in required_vars if not os.getenv(var)]
         if missing:
             missing_str = ", ".join(missing)

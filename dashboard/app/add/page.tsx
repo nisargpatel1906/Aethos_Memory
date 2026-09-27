@@ -107,9 +107,9 @@ function AddMemoryForm() {
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
           <div>
-            <h2 style={{ fontSize: "1.25rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <h1 style={{ fontSize: "1.25rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <span style={{ color: "#10b981" }}>+</span> Add New Memory
-            </h2>
+            </h1>
             <p style={{ color: "var(--text-secondary)", fontSize: "0.8125rem", marginTop: "0.25rem" }}>
               Manually insert a fact, rule, or preference into your AI memory vault. Available across all sessions instantly.
             </p>

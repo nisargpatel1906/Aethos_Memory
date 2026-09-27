@@ -110,9 +110,9 @@ export default function Sidebar() {
         <div style={{ display: "flex", alignItems: "center", marginBottom: "1.5rem", paddingLeft: "0.25rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
             <AethosLogo size={26} />
-            <h1 style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+            <span style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
               Aethos <span style={{ color: "#10b981" }}>Memory</span>
-            </h1>
+            </span>
           </div>
         </div>
 

@@ -1,0 +1,77 @@
+# Aethos Memory — Comprehensive Technical Specification (llms-full.txt)
+
+> Complete reference manual for large language models, AI crawlers, and retrieval-augmented generation (RAG) agents ingesting Aethos Memory architecture, tools, and data model.
+
+## 1. Executive Summary
+Aethos Memory is a cross-tool, persistent memory layer for modern AI assistants and developer environments. Instead of maintaining siloed memory contexts across different tools (e.g. Claude Code storing `.claude.json`, Cursor using `.cursorrules`, OpenCode keeping local sqlite), Aethos Memory introduces a universal Model Context Protocol (MCP) server backed by PostgreSQL + pgvector.
+
+## 2. Technical Stack
+- **Server Framework**: FastMCP (Python 3.10+) running over stdio or SSE/HTTP.
+- **Database**: PostgreSQL 15+ with `pgvector` extension enabled.
+- **Embeddings**: Google Gemini `text-embedding-004` (768 dimensions), Groq, or OpenAI `text-embedding-3-small`.
+- **Search Algorithm**: HNSW index with cosine distance (`vector_cosine_ops`) for sub-millisecond retrieval.
+- **Frontend Dashboard**: Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS, Lucide icons.
+- **Caching**: Local memory cache for instant <1ms turn execution and offline fallback.
+
+## 3. Database Schema
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE IF NOT EXISTS memories (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project TEXT NOT NULL DEFAULT 'global',
+    category TEXT CHECK (category IN ('preference', 'decision', 'project_detail', 'other')) NOT NULL,
+    content TEXT NOT NULL,
+    source_tool TEXT DEFAULT 'unknown',
+    tags TEXT[] DEFAULT '{}',
+    entities TEXT[] DEFAULT '{}',
+    embedding vector(768),
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS memories_embedding_idx ON memories
+USING hnsw (embedding vector_cosine_ops);
+```
+
+## 4. MCP Tools Specification
+1. `remember(content: str, category: str = "preference", tags: list[str] = [], project: str = "global") -> dict`
+   Stores a newly discovered fact, rule, or architectural choice. Calculates vector embedding and extracts named entities automatically.
+
+2. `recall(query: str, project: str = "global", limit: int = 5, threshold: float = 0.5) -> list[dict]`
+   Performs cosine similarity search against stored embeddings. Returns top matching memories sorted by relevance.
+
+3. `get_skeleton_context(project: str = "global") -> str`
+   Generates a high-density, token-efficient system prompt summary containing active preferences and project constraints for agent injection.
+
+4. `get_knowledge_graph(project: str = "global") -> dict`
+   Returns graph nodes (entities, tools, tags) and directed edges indicating shared memory associations.
+
+5. `auto_save_turn(user_message: str, assistant_response: str, project: str = "global") -> dict`
+   Passively parses dialogue turns, identifying actionable decisions or preferences without requiring explicit user commands.
+
+6. `forget(memory_id: str) -> bool`
+   Deletes an obsolete or retracted memory record.
+
+## 5. Client Integrations
+### OpenCode / Antigravity IDE / Claude Code Configuration
+```json
+{
+  "mcpServers": {
+    "aethos-memory": {
+      "command": "python",
+      "args": ["-m", "aethos_memory"],
+      "env": {
+        "SUPABASE_URL": "https://your-project.supabase.co",
+        "SUPABASE_SERVICE_KEY": "your-service-role-key",
+        "GEMINI_API_KEY": "your-gemini-api-key"
+      }
+    }
+  }
+}
+```
+
+## 6. Privacy & Security
+- Credentials stay exclusively on the developer's workstation or within their private Supabase tenant.
+- No telemetry or memory text is transmitted to central Aethos servers.
+- MIT Licensed: completely open source for personal and enterprise deployment.

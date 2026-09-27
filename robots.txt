@@ -1,0 +1,102 @@
+# robots.txt for Aethos Memory (https://aethosmemory.com)
+# Configured for optimal search engine SEO and AI search / answer engine discoverability (GEO / AEO)
+
+# Content-Signal header convention (signals permission for AI search, retrieval, and training)
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+# -------------------------------------------------------------
+# 1. AI Search & Retrieval Crawlers (Must remain allowed for citations & answers)
+# -------------------------------------------------------------
+
+# OpenAI Search & Conversational Retrieval
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+
+# Anthropic Search & Direct User Queries
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+
+# Perplexity Search & User RAG Retrieval
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+
+# Google Standard Search Engine & Gemini Live Grounding
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+
+# Apple Search & Siri Suggestions
+User-agent: Applebot
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+
+# -------------------------------------------------------------
+# 2. AI Model Training Crawlers
+# Note for site owner: If you wish to restrict model training while
+# preserving AI answer discoverability, switch 'Allow: /' to 'Disallow: /'
+# for this section ONLY.
+# -------------------------------------------------------------
+
+# OpenAI Model Training
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+
+# Anthropic Model Training
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+
+# Google Gemini / Vertex Model Training
+User-agent: Google-Extended
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+
+# Apple Intelligence Model Training
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+
+# Common Crawl Foundation Scraper
+User-agent: CCBot
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+
+# Amazon Alexa / Bedrock Scraper
+User-agent: Amazonbot
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+
+# ByteDance / TikTok AI Scraper
+User-agent: Bytespider
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+
+# -------------------------------------------------------------
+# 3. Default Wildcard Rules for All Web Crawlers
+# -------------------------------------------------------------
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+
+# Sitemap location
+Sitemap: https://aethosmemory.com/sitemap.xml
