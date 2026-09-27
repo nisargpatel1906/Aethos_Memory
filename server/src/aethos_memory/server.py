@@ -539,6 +539,52 @@ async def promote_to_skill(
 # =====================================================================
 
 @mcp.tool()
+async def get_session_handoff(project: str = "global", limit: int = 8) -> str:
+    """[AUTOMATIC CRASH RECOVERY & PASSIVE SESSION HANDOFF]
+    Automatically reconstructs where the previous session left off across ANY tool (Antigravity, OpenCode, Claude Code, Cursor, Windsurf).
+    Use this whenever:
+    1. Switching from one AI assistant or IDE to another.
+    2. Resuming after an unexpected crash, rate limit cutoff, or context window limit.
+    3. The user asks 'what were we doing?', 'continue', or 'where did we leave off?'.
+    Fetches the latest execution traces, recent commands run, and newly stored architectural memories without requiring any manual handoff."""
+    try:
+        recent_mems = db.fetch_all_memories(limit=5)
+        recent_events = db.query_activity_events(project=project, limit=limit)
+
+        sections = ["### 🔄 Aethos Continuous Session Recovery & Handoff"]
+
+        if recent_events:
+            last_event = recent_events[0]
+            sections.append(f"**Last Active Tool / Harness:** {last_event.get('harness', 'Unknown')}")
+            sections.append(f"**Last Recorded Action:** `[{last_event.get('event_type')}]` {last_event.get('title')} ({last_event.get('status')})")
+
+            event_lines = []
+            for ev in recent_events[:6]:
+                payload = ev.get("payload") or {}
+                cmd_extra = f" | cmd: `{payload.get('command')}`" if payload.get("command") else ""
+                tool_extra = f" | tool: `{payload.get('tool_name')}`" if payload.get("tool_name") else ""
+                event_lines.append(f"- `[{ev.get('harness')}][{ev.get('event_type')}]` {ev.get('title')}{cmd_extra}{tool_extra}")
+            sections.append("\n**Recent Execution Timeline (Flight Recorder):**\n" + "\n".join(event_lines))
+
+        if recent_mems:
+            mem_lines = []
+            for m in recent_mems[:5]:
+                cat = m.get("category", "general")
+                tool = m.get("source_tool", "Aethos")
+                mem_lines.append(f"- `[{tool}][{cat}]` {m.get('content')}")
+            sections.append("\n**Recently Stored Context & Decisions:**\n" + "\n".join(mem_lines))
+
+        if not recent_events and not recent_mems:
+            return "No previous session activity or memories found to recover."
+
+        sections.append("\n**Resume State:** All prior activity and decisions recovered from Supabase. Ready to continue seamlessly.")
+        return "\n".join(sections)
+    except Exception as e:
+        logger.error(f"Error in get_session_handoff: {e}")
+        return f"Failed to retrieve session handoff: {e}"
+
+
+@mcp.tool()
 async def get_memory_context(
     task: str = "",
     project: str = "global",
@@ -546,7 +592,13 @@ async def get_memory_context(
     kind: str = "",
 ) -> str:
     """[TASK-ORIENTED APPROVED MEMORY CONTEXT]
-    Return high-relevance approved memories, lessons, conventions, and debugging patterns for the current task before starting execution."""
+    Return high-relevance approved memories, lessons, conventions, and debugging patterns for the current task before starting execution.
+    Automatically detects continuation requests ('continue', 'resume', 'where did we leave off') and recovers previous session handoff."""
+    task_lower = (task or "").lower()
+    if any(k in task_lower for k in ["continue", "resume", "handoff", "left off", "previous", "prior", "last session"]):
+        handoff = await get_session_handoff(project=project)
+        recalled = await recall(query=task, project=project)
+        return f"{handoff}\n\n### Relevant Memories for Task:\n{recalled}"
     return await recall(query=task, project=project)
 
 
